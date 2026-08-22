@@ -52,8 +52,8 @@ def get_player(psn):
     soup = BeautifulSoup(response.text, "html.parser")
     text = soup.get_text(" ", strip=True)
 
-    # Pobieranie DR i SR
-    dr_sr_match = re.search(
+    # Pobieranie PK i PFK
+    pk_pfk_match = re.search(
         rf"{re.escape(psn)}.*?\b([A-E]\+?|S)\s+([A-E]|S)\b",
         text,
         re.IGNORECASE
@@ -66,14 +66,14 @@ def get_player(psn):
         re.IGNORECASE
     )
 
-    dr = dr_sr_match.group(1) if dr_sr_match else "?"
-    sr = dr_sr_match.group(2) if dr_sr_match else "?"
+    pk = pk_pfk_match.group(1) if pk_pfk_match else "?"
+    pfk = pk_pfk_match.group(2) if pk_pfk_match else "?"
     score = float(score_match.group(1)) if score_match else 0.0
 
     return {
         "psn": psn,
-        "dr": dr,
-        "sr": sr,
+        "pk": pk,
+        "pfk": pfk,
         "score": score
     }
 
@@ -106,10 +106,10 @@ def main():
         reverse=True
     )
 
-    # Nagłówek
+    # Nagłówek rankingu
     current_message = (
         "🏆 **SRS DRIVER RANKING**\n"
-        "📊 Ranking według Edge Score\n\n"
+        "📊 Ranking według Score\n\n"
     )
 
     message_number = 1
@@ -129,11 +129,11 @@ def main():
 
         player_text = (
             f"{medal} **{i}. {player['psn']}**\n"
-            f"🏅 DR **{player['dr']}** • SR **{player['sr']}**\n"
+            f"🏅 PK **{player['pk']}** • PFK **{player['pfk']}**\n"
             f"📊 Score: **{player['score']:.2f}**\n\n"
         )
 
-        # Discord ma limit 2000 znaków
+        # Limit wiadomości Discord to 2000 znaków
         if len(current_message) + len(player_text) > 1900:
             messages.append(current_message)
             message_number += 1
@@ -148,14 +148,14 @@ def main():
     if current_message:
         messages.append(current_message)
 
-    # Data aktualizacji do ostatniej wiadomości
+    # Data aktualizacji w ostatniej wiadomości
     messages[-1] += (
         "━━━━━━━━━━━━━━━━━━━━\n"
         f"🔄 **Ostatnia aktualizacja:** "
         f"{datetime.now().strftime('%d.%m.%Y %H:%M')}"
     )
 
-    # Wysyłanie wszystkich części rankingu
+    # Wysyłanie rankingu na Discord
     for number, message in enumerate(messages, start=1):
         send_discord_message(message)
         print(f"Wysłano część {number}/{len(messages)}")
