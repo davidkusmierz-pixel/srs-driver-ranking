@@ -108,6 +108,7 @@ def main():
 
     # Nagłówek rankingu
     current_message = (
+        "\u200b\n"
         "📈 **RANKING GŁÓWNY**\n\n"
         "🏁 Klasyfikacja według **EDGE SCORE**\n\n"
         "🔄 **Aktualizacja: raz w tygodniu**\n\n"
