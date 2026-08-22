@@ -91,7 +91,7 @@ def send_discord_message(message):
 def main():
     ranking = []
 
-    # Pobieranie danych wszystkich kierowców
+    # Pobieranie danych kierowców
     for player in PLAYERS:
         try:
             print(f"Pobieram: {player}")
@@ -100,7 +100,7 @@ def main():
         except Exception as error:
             print(f"BŁĄD {player}: {error}")
 
-    # Sortowanie od najwyższego Score
+    # Sortowanie od najwyższego Edge Score
     ranking.sort(
         key=lambda x: x["score"],
         reverse=True
@@ -108,7 +108,6 @@ def main():
 
     # Nagłówek rankingu
     current_message = (
-        "🏆 **SRS DRIVER RANKING**\n\n"
         "📈 **RANKING GŁÓWNY**\n"
         "🏁 Klasyfikacja według **EDGE SCORE**\n\n"
         "━━━━━━━━━━━━━━━━━━━━\n\n"
@@ -135,13 +134,14 @@ def main():
             f"📊 Score: **{player['score']:.2f}**\n\n"
         )
 
-        # Podział na wiadomości przy większej liczbie kierowców
+        # Podział na kilka wiadomości, jeśli ranking jest za długi
         if len(current_message) + len(player_text) > 1900:
             messages.append(current_message)
             message_number += 1
 
             current_message = (
-                f"🏆 **SRS DRIVER RANKING — CZĘŚĆ {message_number}**\n\n"
+                f"📈 **RANKING GŁÓWNY — CZĘŚĆ {message_number}**\n"
+                "━━━━━━━━━━━━━━━━━━━━\n\n"
             )
 
         current_message += player_text
@@ -150,14 +150,14 @@ def main():
     if current_message:
         messages.append(current_message)
 
-    # Data aktualizacji w ostatniej wiadomości
+    # Data aktualizacji
     messages[-1] += (
         "━━━━━━━━━━━━━━━━━━━━\n"
         f"🔄 **Ostatnia aktualizacja:** "
         f"{datetime.now().strftime('%d.%m.%Y %H:%M')}"
     )
 
-    # Wysyłanie wszystkich części rankingu
+    # Wysyłanie wszystkich części rankingu na Discord
     for number, message in enumerate(messages, start=1):
         send_discord_message(message)
         print(f"Wysłano część {number}/{len(messages)}")
