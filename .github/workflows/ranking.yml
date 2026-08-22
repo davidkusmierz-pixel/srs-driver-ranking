@@ -2,8 +2,10 @@ name: Update SRS Driver Ranking
 
 on:
   schedule:
-    - cron: "0 20 * * 0"
+    # Niedziela, 20:00 czasu polskiego (obecnie czas letni)
+    - cron: "0 18 * * 0"
 
+  # Możliwość ręcznego uruchomienia
   workflow_dispatch:
 
 jobs:
