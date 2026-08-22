@@ -2,6 +2,7 @@ import os
 import re
 import requests
 from bs4 import BeautifulSoup
+from datetime import datetime
 
 PLAYERS = [
     "SolidSnakePoland",
@@ -26,33 +27,27 @@ def get_player(psn):
         headers=HEADERS,
         timeout=30
     )
+
     response.raise_for_status()
 
     soup = BeautifulSoup(response.text, "html.parser")
     text = soup.get_text(" ", strip=True)
 
-    # Szuka DR i SR, np. "A+ S Poland"
     dr_sr_match = re.search(
         rf"{re.escape(psn)}.*?\b([A-E]\+?|S)\s+([A-E]|S)\b",
         text,
         re.IGNORECASE
     )
 
-    # Szuka Edge Score, np. "54.73 Edge Score"
     score_match = re.search(
         r"(\d{1,3}\.\d{1,2})\s+Edge Score",
         text,
         re.IGNORECASE
     )
 
-    dr = "?"
-    sr = "?"
-
-    if dr_sr_match:
-        dr = dr_sr_match.group(1)
-        sr = dr_sr_match.group(2)
-
-    score = score_match.group(1) if score_match else "?"
+    dr = dr_sr_match.group(1) if dr_sr_match else "?"
+    sr = dr_sr_match.group(2) if dr_sr_match else "?"
+    score = float(score_match.group(1)) if score_match else 0.0
 
     return {
         "psn": psn,
@@ -63,29 +58,41 @@ def get_player(psn):
 
 
 def main():
-    message = "🏆 **SRS DRIVER RANKING — TEST**\n\n"
+    ranking = []
 
     for player in PLAYERS:
         try:
-            data = get_player(player)
-
-            message += (
-                f"👤 **{data['psn']}**\n"
-                f"🏅 DR: **{data['dr']}** | SR: **{data['sr']}**\n"
-                f"📊 Score: **{data['score']}**\n\n"
-            )
-
-            print(data)
-
+            ranking.append(get_player(player))
         except Exception as error:
-            message += f"❌ **{player}** — błąd pobierania\n"
             print(f"BŁĄD {player}: {error}")
 
-    requests.post(
+    # Sortowanie od najwyższego Score
+    ranking.sort(key=lambda x: x["score"], reverse=True)
+
+    medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"]
+
+    message = "🏆 **SRS DRIVER RANKING**\n\n"
+
+    for i, player in enumerate(ranking):
+        message += (
+            f"{medals[i]} **{player['psn']}**\n"
+            f"🏅 DR: **{player['dr']}** | SR: **{player['sr']}**\n"
+            f"📊 Score: **{player['score']:.2f}**\n\n"
+        )
+
+    message += (
+        "━━━━━━━━━━━━━━━━━━━━\n"
+        f"🔄 **Aktualizacja:** "
+        f"{datetime.now().strftime('%d.%m.%Y %H:%M')}"
+    )
+
+    response = requests.post(
         WEBHOOK_URL,
         json={"content": message},
         timeout=30
     )
+
+    response.raise_for_status()
 
 
 if __name__ == "__main__":
