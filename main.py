@@ -1,6 +1,7 @@
 import os
 import requests
 from bs4 import BeautifulSoup
+from datetime import datetime
 
 PLAYERS = [
     "SolidSnakePoland",
@@ -16,35 +17,55 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0"
 }
 
-message = "🏆 **SRS DRIVER RANKING**\n\n"
 
-for player in PLAYERS:
-    try:
-        response = requests.get(
-            "https://gtstats.live/",
-            params={"psn": player},
-            headers=HEADERS,
-            timeout=30
-        )
+def get_player(psn):
+    url = f"https://www.dg-edge.com/players/{psn}"
 
-        response.raise_for_status()
+    response = requests.get(
+        url,
+        headers=HEADERS,
+        timeout=30
+    )
 
-        soup = BeautifulSoup(response.text, "html.parser")
+    response.raise_for_status()
 
-        message += f"👤 **{player}** — sprawdzanie DR\n"
+    soup = BeautifulSoup(response.text, "html.parser")
+    text = soup.get_text(" ", strip=True)
 
-        print(f"\n===== {player} =====")
-        print(soup.get_text(" ", strip=True)[:5000])
+    return {
+        "psn": psn,
+        "text": text
+    }
 
-    except Exception as error:
-        message += f"❌ **{player}** — błąd\n"
-        print(f"BŁĄD {player}: {error}")
 
-message += "\n🔄 **Test pobierania danych**"
+def main():
+    message = "🏆 **SRS DRIVER RANKING**\n\n"
 
-if WEBHOOK_URL:
+    for player in PLAYERS:
+        try:
+            data = get_player(player)
+
+            # Na razie testujemy pobieranie profili
+            message += f"👤 **{data['psn']}** — profil znaleziony\n"
+
+            print(f"\n===== {player} =====")
+            print(data["text"][:3000])
+
+        except Exception as error:
+            message += f"❌ **{player}** — profil nie znaleziony\n"
+            print(f"BŁĄD {player}: {error}")
+
+    message += (
+        "\n━━━━━━━━━━━━━━━━━━━━\n"
+        f"🔄 **Test:** {datetime.now().strftime('%d.%m.%Y %H:%M')}"
+    )
+
     requests.post(
         WEBHOOK_URL,
         json={"content": message},
         timeout=30
     )
+
+
+if __name__ == "__main__":
+    main()
