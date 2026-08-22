@@ -100,7 +100,7 @@ def main():
         except Exception as error:
             print(f"BŁĄD {player}: {error}")
 
-    # Sortowanie od najwyższego Edge Score
+    # Sortowanie według Edge Score
     ranking.sort(
         key=lambda x: x["score"],
         reverse=True
@@ -108,8 +108,9 @@ def main():
 
     # Nagłówek rankingu
     current_message = (
-        "📈 **RANKING GŁÓWNY**\n"
+        "📈 **RANKING GŁÓWNY**\n\n"
         "🏁 Klasyfikacja według **EDGE SCORE**\n\n"
+        "🔄 **Aktualizacja: raz w tygodniu**\n\n"
         "━━━━━━━━━━━━━━━━━━━━\n\n"
     )
 
@@ -134,13 +135,13 @@ def main():
             f"📊 Score: **{player['score']:.2f}**\n\n"
         )
 
-        # Podział na kilka wiadomości, jeśli ranking jest za długi
+        # Podział rankingu na kilka wiadomości
         if len(current_message) + len(player_text) > 1900:
             messages.append(current_message)
             message_number += 1
 
             current_message = (
-                f"📈 **RANKING GŁÓWNY — CZĘŚĆ {message_number}**\n"
+                f"📈 **RANKING GŁÓWNY — CZĘŚĆ {message_number}**\n\n"
                 "━━━━━━━━━━━━━━━━━━━━\n\n"
             )
 
@@ -150,14 +151,14 @@ def main():
     if current_message:
         messages.append(current_message)
 
-    # Data aktualizacji
+    # Informacja o ostatniej aktualizacji
     messages[-1] += (
-        "━━━━━━━━━━━━━━━━━━━━\n"
-        f"🔄 **Ostatnia aktualizacja:** "
+        "━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"🕒 **Ostatnia aktualizacja:** "
         f"{datetime.now().strftime('%d.%m.%Y %H:%M')}"
     )
 
-    # Wysyłanie wszystkich części rankingu na Discord
+    # Wysyłanie rankingu na Discord
     for number, message in enumerate(messages, start=1):
         send_discord_message(message)
         print(f"Wysłano część {number}/{len(messages)}")
