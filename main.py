@@ -9,25 +9,25 @@ PLAYERS = [
     "ALF7",
     "lucekbks",
     "MTE_JaXoN_GT",
-    "Przemo7117"
-    "Dawid-y6q"
-    "Oligo1234"
-    "MaddMikke992"
-    "Chudinius47"
-    "sajgon89"
-    "DoMeme_21"
-    "Tomasz225566"
-    "szymson70"
-    "TastyLsD"
-    "JankesKP"
-    "BoloBagno"
-    "GrandNoobPI"
-    "adihanys85"
-    "betterWanzzi"
-    "ActiveShockPL"
-    "Hrupek98"
-    "Jaras_GD"
-    "PRT_El_Chapo"
+    "Przemo7117",
+    "Dawid-y6q",
+    "Oligo1234",
+    "MaddMikke992",
+    "Chudinius47",
+    "sajgon89",
+    "DoMeme_21",
+    "Tomasz225566",
+    "szymson70",
+    "TastyLsD",
+    "JankesKP",
+    "BoloBagno",
+    "GrandNoobPI",
+    "adihanys85",
+    "betterWanzzi",
+    "ActiveShockPL",
+    "Hrupek98",
+    "Jaras_GD",
+    "PRT_El_Chapo",
     "demon23mor"
 ]
 
@@ -78,13 +78,25 @@ def get_player(psn):
     }
 
 
+def send_discord_message(message):
+    response = requests.post(
+        WEBHOOK_URL,
+        json={"content": message},
+        timeout=30
+    )
+
+    response.raise_for_status()
+
+
 def main():
     ranking = []
 
-    # Pobieranie danych kierowców
+    # Pobieranie danych wszystkich kierowców
     for player in PLAYERS:
         try:
+            print(f"Pobieram: {player}")
             ranking.append(get_player(player))
+
         except Exception as error:
             print(f"BŁĄD {player}: {error}")
 
@@ -94,9 +106,16 @@ def main():
         reverse=True
     )
 
-    message = "🏆 **SRS DRIVER RANKING**\n\n"
+    # Nagłówek
+    current_message = (
+        "🏆 **SRS DRIVER RANKING**\n"
+        "📊 Ranking według Edge Score\n\n"
+    )
 
-    # Tworzenie czytelnego rankingu
+    message_number = 1
+    messages = []
+
+    # Tworzenie rankingu
     for i, player in enumerate(ranking, start=1):
 
         if i == 1:
@@ -108,27 +127,38 @@ def main():
         else:
             medal = "🏁"
 
-        message += (
+        player_text = (
             f"{medal} **{i}. {player['psn']}**\n"
             f"🏅 DR **{player['dr']}** • SR **{player['sr']}**\n"
             f"📊 Score: **{player['score']:.2f}**\n\n"
         )
 
-    # Data aktualizacji
-    message += (
+        # Discord ma limit 2000 znaków
+        if len(current_message) + len(player_text) > 1900:
+            messages.append(current_message)
+            message_number += 1
+
+            current_message = (
+                f"🏆 **SRS DRIVER RANKING — CZĘŚĆ {message_number}**\n\n"
+            )
+
+        current_message += player_text
+
+    # Dodanie ostatniej części
+    if current_message:
+        messages.append(current_message)
+
+    # Data aktualizacji do ostatniej wiadomości
+    messages[-1] += (
         "━━━━━━━━━━━━━━━━━━━━\n"
         f"🔄 **Ostatnia aktualizacja:** "
         f"{datetime.now().strftime('%d.%m.%Y %H:%M')}"
     )
 
-    # Wysyłanie rankingu na Discord
-    response = requests.post(
-        WEBHOOK_URL,
-        json={"content": message},
-        timeout=30
-    )
-
-    response.raise_for_status()
+    # Wysyłanie wszystkich części rankingu
+    for number, message in enumerate(messages, start=1):
+        send_discord_message(message)
+        print(f"Wysłano część {number}/{len(messages)}")
 
     print("Ranking SRS został wysłany na Discord!")
 
