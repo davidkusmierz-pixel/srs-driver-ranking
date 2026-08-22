@@ -108,8 +108,10 @@ def main():
 
     # Nagłówek rankingu
     current_message = (
-        "🏆 **SRS DRIVER RANKING**\n"
-        "📊 Ranking według Score\n\n"
+        "🏆 **SRS DRIVER RANKING**\n\n"
+        "📈 **RANKING GŁÓWNY**\n"
+        "🏁 Klasyfikacja według **EDGE SCORE**\n\n"
+        "━━━━━━━━━━━━━━━━━━━━\n\n"
     )
 
     message_number = 1
@@ -133,7 +135,7 @@ def main():
             f"📊 Score: **{player['score']:.2f}**\n\n"
         )
 
-        # Limit wiadomości Discord to 2000 znaków
+        # Podział na wiadomości przy większej liczbie kierowców
         if len(current_message) + len(player_text) > 1900:
             messages.append(current_message)
             message_number += 1
@@ -155,7 +157,7 @@ def main():
         f"{datetime.now().strftime('%d.%m.%Y %H:%M')}"
     )
 
-    # Wysyłanie rankingu na Discord
+    # Wysyłanie wszystkich części rankingu
     for number, message in enumerate(messages, start=1):
         send_discord_message(message)
         print(f"Wysłano część {number}/{len(messages)}")
