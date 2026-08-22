@@ -16,7 +16,7 @@ PLAYERS = [
     "Chudinius47",
     "sajgon89",
     "DoMeme_21",
-    "Tomasz225566",
+    "Tomas225566",
     "szymson70",
     "TastyLsD",
     "JankesKP",
