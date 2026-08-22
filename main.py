@@ -77,7 +77,7 @@ def main():
 
     message = "🏆 **SRS DRIVER RANKING**\n\n"
 
-    # Tworzenie rankingu
+    # Tworzenie czytelnego rankingu
     for i, player in enumerate(ranking, start=1):
 
         if i == 1:
@@ -87,11 +87,11 @@ def main():
         elif i == 3:
             medal = "🥉"
         else:
-            medal = f"**{i}.**"
+            medal = "🏁"
 
         message += (
-            f"{medal} **{i}. MIEJSCE — {player['psn']}**\n"
-            f"🏅 DR: **{player['dr']}** | SR: **{player['sr']}**\n"
+            f"{medal} **{i}. {player['psn']}**\n"
+            f"🏅 DR **{player['dr']}** • SR **{player['sr']}**\n"
             f"📊 Score: **{player['score']:.2f}**\n\n"
         )
 
@@ -102,7 +102,7 @@ def main():
         f"{datetime.now().strftime('%d.%m.%Y %H:%M')}"
     )
 
-    # Wysyłanie na Discord
+    # Wysyłanie rankingu na Discord
     response = requests.post(
         WEBHOOK_URL,
         json={"content": message},
