@@ -1,7 +1,7 @@
 import os
+import re
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime
 
 PLAYERS = [
     "SolidSnakePoland",
@@ -26,39 +26,60 @@ def get_player(psn):
         headers=HEADERS,
         timeout=30
     )
-
     response.raise_for_status()
 
     soup = BeautifulSoup(response.text, "html.parser")
     text = soup.get_text(" ", strip=True)
 
+    # Szuka DR i SR, np. "A+ S Poland"
+    dr_sr_match = re.search(
+        rf"{re.escape(psn)}.*?\b([A-E]\+?|S)\s+([A-E]|S)\b",
+        text,
+        re.IGNORECASE
+    )
+
+    # Szuka Edge Score, np. "54.73 Edge Score"
+    score_match = re.search(
+        r"(\d{1,3}\.\d{1,2})\s+Edge Score",
+        text,
+        re.IGNORECASE
+    )
+
+    dr = "?"
+    sr = "?"
+
+    if dr_sr_match:
+        dr = dr_sr_match.group(1)
+        sr = dr_sr_match.group(2)
+
+    score = score_match.group(1) if score_match else "?"
+
     return {
         "psn": psn,
-        "text": text
+        "dr": dr,
+        "sr": sr,
+        "score": score
     }
 
 
 def main():
-    message = "🏆 **SRS DRIVER RANKING**\n\n"
+    message = "🏆 **SRS DRIVER RANKING — TEST**\n\n"
 
     for player in PLAYERS:
         try:
             data = get_player(player)
 
-            # Na razie testujemy pobieranie profili
-            message += f"👤 **{data['psn']}** — profil znaleziony\n"
+            message += (
+                f"👤 **{data['psn']}**\n"
+                f"🏅 DR: **{data['dr']}** | SR: **{data['sr']}**\n"
+                f"📊 Score: **{data['score']}**\n\n"
+            )
 
-            print(f"\n===== {player} =====")
-            print(data["text"][:3000])
+            print(data)
 
         except Exception as error:
-            message += f"❌ **{player}** — profil nie znaleziony\n"
+            message += f"❌ **{player}** — błąd pobierania\n"
             print(f"BŁĄD {player}: {error}")
-
-    message += (
-        "\n━━━━━━━━━━━━━━━━━━━━\n"
-        f"🔄 **Test:** {datetime.now().strftime('%d.%m.%Y %H:%M')}"
-    )
 
     requests.post(
         WEBHOOK_URL,
