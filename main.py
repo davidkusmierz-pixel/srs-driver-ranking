@@ -10,6 +10,25 @@ PLAYERS = [
     "lucekbks",
     "MTE_JaXoN_GT",
     "Przemo7117"
+    "Dawid-y6q"
+    "Oligo1234"
+    "MaddMikke992"
+    "Chudinius47"
+    "sajgon89"
+    "DoMeme_21"
+    "Tomasz225566"
+    "szymson70"
+    "TastyLsD"
+    "JankesKP"
+    "BoloBagno"
+    "GrandNoobPI"
+    "adihanys85"
+    "betterWanzzi"
+    "ActiveShockPL"
+    "Hrupek98"
+    "Jaras_GD"
+    "PRT_El_Chapo"
+    "demon23mor"
 ]
 
 WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK")
