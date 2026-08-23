@@ -54,6 +54,6 @@ jobs:
           curl -H "Content-Type: application/json" \
           -d '{
             "username": "SRS Ranking",
-            "content": "🏆 **SRS DRIVER RANKING**\n📊 Ranking został automatycznie zaktualizowany!\n🔗 https://dawidkusmierz-pixel.github.io/srs-driver-ranking/"
+            "content": "🏆 **SRS DRIVER RANKING**\n📊 Ranking został automatycznie zaktualizowany!\n\n[🏆 SPRAWDŹ RANKING SRS](https://dawidkusmierz-pixel.github.io/srs-driver-ranking/)"
           }' \
           "$DISCORD_WEBHOOK"
