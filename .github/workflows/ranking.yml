@@ -14,127 +14,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
-      - name: Pobierz repozytorium
+      - name: Pobieranie plików
         uses: actions/checkout@v4
 
-      - name: Ustaw Python
+      - name: Instalacja Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Zainstaluj biblioteki
+      - name: Instalacja bibliotek
         run: |
-          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Uruchom aktualizację rankingu
-        run: |
-          python main.py
-
-      - name: Zapisz ranking do GitHub
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git add ranking.json
-
-          if git diff --cached --quiet; then
-            echo "Brak zmian w rankingu"
-          else
-            git commit -m "Automatyczna aktualizacja rankingu"
-            git push
-          fi
-
-      - name: Wyślij ranking na Discord
-        if: success()
+      - name: Aktualizacja rankingu
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: python main.py
+
+      - name: Zapisanie ID wiadomości
         run: |
-          python - <<'PYTHON'
-          import json
-          import os
-          import urllib.request
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          with open("ranking.json", "r", encoding="utf-8") as file:
-              data = json.load(file)
+          git add message_ids.txt
 
-          update = data.get("last_update", "")
-          drivers = data.get("drivers", [])
+          git diff --cached --quiet || git commit -m "Aktualizacja ID rankingu"
 
-          lines = [
-              "🏆 **SRS DRIVER RANKING**",
-              f"📅 Ostatnia aktualizacja: **{update}**",
-              ""
-          ]
-
-          for driver in drivers:
-
-              position = driver.get("position", "-")
-              name = driver.get("name", "Brak nazwy")
-              dr = driver.get("dr", "-")
-              sr = driver.get("sr", "-")
-              pk = driver.get("pk", 0)
-              races = driver.get("races", 0)
-
-              if position == 1:
-                  medal = "🥇"
-              elif position == 2:
-                  medal = "🥈"
-              elif position == 3:
-                  medal = "🥉"
-              else:
-                  medal = f"**{position}.**"
-
-              lines.append(
-                  f"{medal} **{name}** — DR {dr} | SR {sr} | "
-                  f"**{pk} PK** | 🏁 {races}"
-              )
-
-          lines += [
-              "",
-              "🔗 Pełny ranking:",
-              "https://dawidkusmierz-pixel.github.io/srs-driver-ranking/"
-          ]
-
-          message = "\n".join(lines)
-
-          # Discord ma limit długości jednej wiadomości.
-          chunks = []
-
-          while message:
-              if len(message) <= 2000:
-                  chunks.append(message)
-                  break
-
-              split_position = message.rfind("\n", 0, 2000)
-
-              if split_position == -1:
-                  split_position = 2000
-
-              chunks.append(message[:split_position])
-              message = message[split_position:].lstrip()
-
-          for chunk in chunks:
-
-              payload = {
-                  "username": "SRS Ranking",
-                  "content": chunk
-              }
-
-              request = urllib.request.Request(
-                  os.environ["DISCORD_WEBHOOK"],
-                  data=json.dumps(payload).encode("utf-8"),
-                  headers={
-                      "Content-Type": "application/json",
-                      "User-Agent": "SRS-Ranking"
-                  },
-                  method="POST"
-              )
-
-              with urllib.request.urlopen(request) as response:
-                  print(
-                      "Wiadomość wysłana na Discord. Status:",
-                      response.status
-                  )
-          PYTHON
+          git push
