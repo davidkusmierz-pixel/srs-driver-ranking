@@ -12,7 +12,7 @@ PLAYERS = [
     "MTE_JaXoN_GT",
     "Przemo7117",
     "Dawid-y6q",
-    "Oligo1234",
+    "Olilgo1234",
     "MaddMikke992",
     "Chudinius47",
     "sajgon89",
@@ -29,6 +29,8 @@ PLAYERS = [
     "Hrupek98",
     "Jaras_GD",
     "PRT_El_Chapo",
+    "SRS-Tony-Montana",
+    
     "demon23mor"
 ]
 
