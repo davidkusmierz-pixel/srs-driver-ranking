@@ -1,0 +1,26 @@
+name: SRS Ranking Bot
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Pobieranie plików
+        uses: actions/checkout@v4
+
+      - name: Instalacja Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalacja bibliotek
+        run: |
+          pip install discord.py
+
+      - name: Uruchomienie bota
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        run: python bot.py
