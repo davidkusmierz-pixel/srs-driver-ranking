@@ -32,7 +32,7 @@ PLAYERS = [
     "Piko88-Z",
     "destro2207",
     "Wojtek_Kl",
-    "zeusek22:,
+    "zeusek22",
     "jupiter977gaudy:,
     "demon23mor"
 ]
