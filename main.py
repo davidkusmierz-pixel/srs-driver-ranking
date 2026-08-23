@@ -1,5 +1,7 @@
+```python
 import os
 import re
+import json
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -52,6 +54,7 @@ HEADERS = {
 }
 
 MESSAGE_IDS_FILE = "message_ids.txt"
+RANKING_FILE = "ranking.json"
 
 
 def get_player(psn, username):
@@ -115,6 +118,26 @@ def get_player(psn, username):
     }
 
 
+# ==================================================
+# ZAPIS AKTUALNEGO RANKINGU DLA BOTA
+# ==================================================
+
+def save_ranking(ranking):
+
+    with open(
+        RANKING_FILE,
+        "w",
+        encoding="utf-8"
+    ) as file:
+
+        json.dump(
+            ranking,
+            file,
+            ensure_ascii=False,
+            indent=4
+        )
+
+
 def load_message_ids():
     if not os.path.exists(MESSAGE_IDS_FILE):
         return []
@@ -164,12 +187,16 @@ def update_discord_message(message_id, message):
 
 
 def main():
+
     ranking = []
 
     # Pobieranie danych kierowców
     for psn, username in PLAYERS.items():
+
         try:
-            print(f"Pobieram dane kierowcy: {username}")
+            print(
+                f"Pobieram dane kierowcy: {username}"
+            )
 
             ranking.append(
                 get_player(
@@ -179,12 +206,22 @@ def main():
             )
 
         except Exception as error:
-            print(f"BŁĄD: {username}: {error}")
+
+            print(
+                f"BŁĄD: {username}: {error}"
+            )
 
     # Sortowanie według Edge Score
     ranking.sort(
         key=lambda x: x["score"],
         reverse=True
+    )
+
+    # Zapis aktualnego rankingu dla bota
+    save_ranking(ranking)
+
+    print(
+        "Zapisano aktualny ranking do ranking.json"
     )
 
     # Nagłówek rankingu
@@ -194,8 +231,10 @@ def main():
         "🏁 Klasyfikacja według **EDGE SCORE**\n\n"
 
         "📊 **Punkty są liczone na podstawie:**\n"
-        "⏱️ **Czasówek Daily Race** – uzyskanych czasów kwalifikacyjnych\n"
-        "🏁 **Wyzwań i czasówek** – uzyskanych wyników i czasów\n\n"
+        "⏱️ **Czasówek Daily Race** – "
+        "uzyskanych czasów kwalifikacyjnych\n"
+        "🏁 **Wyzwań i czasówek** – "
+        "uzyskanych wyników i czasów\n\n"
 
         "💬 **Im lepsze czasy i wyniki, "
         "tym więcej punktów zdobywa kierowca.**\n\n"
@@ -215,25 +254,35 @@ def main():
 
         if i == 1:
             medal = "🥇"
+
         elif i == 2:
             medal = "🥈"
+
         elif i == 3:
             medal = "🥉"
+
         else:
             medal = "🏁"
 
-        # TUTAJ WYŚWIETLANA JEST TYLKO NAZWA UŻYTKOWNIKA
         player_text = (
-            f"{medal} **{i}. {player['username']}**\n"
+            f"{medal} **{i}. "
+            f"{player['username']}**\n"
             f"🏅 PK **{player['pk']}** • "
             f"PFK **{player['pfk']}**\n"
-            f"📊 Score: **{player['score']:.2f}**\n\n"
+            f"📊 Score: "
+            f"**{player['score']:.2f}**\n\n"
         )
 
         # Podział rankingu na kilka wiadomości
-        if len(current_message) + len(player_text) > 1900:
+        if (
+            len(current_message)
+            + len(player_text)
+            > 1900
+        ):
 
-            messages.append(current_message)
+            messages.append(
+                current_message
+            )
 
             message_number += 1
 
@@ -247,12 +296,15 @@ def main():
 
     # Dodanie ostatniej części
     if current_message:
-        messages.append(current_message)
+
+        messages.append(
+            current_message
+        )
 
     # Polska data i godzina
     messages[-1] += (
         "━━━━━━━━━━━━━━━━━━━━\n\n"
-        f"🕒 **Ostatnia aktualizacja:** "
+        "🕒 **Ostatnia aktualizacja:** "
         f"{datetime.now(ZoneInfo('Europe/Warsaw')).strftime('%d.%m.%Y %H:%M')}"
     )
 
@@ -262,11 +314,14 @@ def main():
     new_message_ids = []
 
     # Aktualizacja lub wysyłanie wiadomości
-    for number, message in enumerate(messages):
+    for number, message in enumerate(
+        messages
+    ):
 
         if number < len(old_message_ids):
 
             try:
+
                 update_discord_message(
                     old_message_ids[number],
                     message
@@ -282,19 +337,29 @@ def main():
                 )
 
             except Exception as error:
+
                 print(
                     f"Błąd aktualizacji części "
                     f"{number + 1}: {error}"
                 )
 
-                message_id = send_discord_message(message)
+                message_id = send_discord_message(
+                    message
+                )
 
-                new_message_ids.append(message_id)
+                new_message_ids.append(
+                    message_id
+                )
 
         else:
-            message_id = send_discord_message(message)
 
-            new_message_ids.append(message_id)
+            message_id = send_discord_message(
+                message
+            )
+
+            new_message_ids.append(
+                message_id
+            )
 
             print(
                 f"Wysłano część "
@@ -302,10 +367,15 @@ def main():
             )
 
     # Zapisanie ID wiadomości
-    save_message_ids(new_message_ids)
+    save_message_ids(
+        new_message_ids
+    )
 
-    print("Ranking SRS został zaktualizowany!")
+    print(
+        "Ranking SRS został zaktualizowany!"
+    )
 
 
 if __name__ == "__main__":
     main()
+```
