@@ -7,6 +7,7 @@
     <title>SRS Driver Ranking</title>
 
     <style>
+
         * {
             box-sizing: border-box;
         }
@@ -15,61 +16,82 @@
             margin: 0;
             padding: 20px;
             font-family: Arial, sans-serif;
-            background: #111;
+            background:
+                radial-gradient(circle at top, #252525 0%, #111 55%);
             color: white;
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 1050px;
             margin: auto;
         }
 
-        h1 {
+        .header {
             text-align: center;
-            margin-bottom: 5px;
+            margin-bottom: 30px;
+            padding: 30px 20px;
+            background: #1b1b1b;
+            border: 1px solid #333;
+            border-radius: 18px;
+            box-shadow: 0 0 25px rgba(255, 208, 0, 0.08);
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 36px;
             color: #ffd000;
         }
 
         .subtitle {
-            text-align: center;
             color: #aaa;
-            margin-bottom: 25px;
+            font-size: 16px;
         }
 
         .update {
             text-align: center;
-            margin-bottom: 20px;
+            margin-top: 18px;
             color: #00d4ff;
             font-weight: bold;
+        }
+
+        #ranking {
+            overflow-x: auto;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
             background: #1b1b1b;
-            border-radius: 10px;
+            border-radius: 15px;
             overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
         }
 
         th {
             background: #ffd000;
             color: black;
-            padding: 14px;
+            padding: 15px 12px;
             text-align: left;
+            font-size: 14px;
         }
 
         td {
-            padding: 12px;
-            border-bottom: 1px solid #333;
+            padding: 14px 12px;
+            border-bottom: 1px solid #303030;
+        }
+
+        tr {
+            transition: 0.2s;
         }
 
         tr:hover {
-            background: #252525;
+            background: #292929;
         }
 
         .position {
             font-weight: bold;
             text-align: center;
+            width: 70px;
         }
 
         .driver {
@@ -81,6 +103,26 @@
             color: #00d4ff;
             font-weight: bold;
         }
+
+        /* TOP 3 */
+
+        .top1 {
+            background: rgba(255, 208, 0, 0.16);
+        }
+
+        .top2 {
+            background: rgba(200, 200, 200, 0.10);
+        }
+
+        .top3 {
+            background: rgba(205, 127, 50, 0.12);
+        }
+
+        .medal {
+            font-size: 22px;
+        }
+
+        /* DR */
 
         .dr-a-plus {
             color: #ff4040;
@@ -112,6 +154,8 @@
             font-weight: bold;
         }
 
+        /* SR */
+
         .sr-s {
             color: #00ff88;
             font-weight: bold;
@@ -131,12 +175,21 @@
             text-align: center;
             color: #ff5555;
             font-size: 18px;
+            padding: 30px;
         }
 
         .loading {
             text-align: center;
             color: #aaa;
             font-size: 18px;
+            padding: 30px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 25px;
+            color: #666;
+            font-size: 13px;
         }
 
         @media (max-width: 600px) {
@@ -145,20 +198,34 @@
                 padding: 10px;
             }
 
+            .header {
+                padding: 22px 10px;
+            }
+
             h1 {
-                font-size: 24px;
+                font-size: 25px;
+            }
+
+            .subtitle {
+                font-size: 13px;
             }
 
             th,
             td {
-                padding: 9px 5px;
-                font-size: 13px;
+                padding: 10px 6px;
+                font-size: 12px;
             }
 
-            table {
-                font-size: 13px;
+            .position {
+                width: 45px;
             }
+
+            .medal {
+                font-size: 17px;
+            }
+
         }
+
     </style>
 </head>
 
@@ -166,23 +233,34 @@
 
     <div class="container">
 
-        <h1>🏆 SRS DRIVER RANKING</h1>
+        <div class="header">
 
-        <div class="subtitle">
-            Sim Racing Squad — Gran Turismo 7
-        </div>
+            <h1>🏆 SRS DRIVER RANKING</h1>
 
-        <div id="update" class="update">
-            Ładowanie daty aktualizacji...
+            <div class="subtitle">
+                Sim Racing Squad — Gran Turismo 7
+            </div>
+
+            <div id="update" class="update">
+                Ładowanie daty aktualizacji...
+            </div>
+
         </div>
 
         <div id="ranking">
+
             <div class="loading">
-                Ładowanie rankingu...
+                🏁 Ładowanie rankingu...
             </div>
+
+        </div>
+
+        <div class="footer">
+            SRS DRIVER RANKING • Sim Racing Squad
         </div>
 
     </div>
+
 
     <script>
 
@@ -194,11 +272,10 @@
                 }
 
                 return response.json();
+
             })
 
             .then(data => {
-
-                console.log(data);
 
                 let drivers = [];
 
@@ -210,7 +287,11 @@
 
                 } else {
 
-                    drivers = data.ranking || data.drivers || data.results || [];
+                    drivers =
+                        data.ranking ||
+                        data.drivers ||
+                        data.results ||
+                        [];
 
                     updateDate =
                         data.updated_at ||
@@ -221,7 +302,9 @@
                 }
 
 
-                const updateBox = document.getElementById("update");
+                const updateBox =
+                    document.getElementById("update");
+
 
                 if (updateDate) {
 
@@ -246,12 +329,16 @@
                         '<div class="error">Brak danych w rankingu.</div>';
 
                     return;
+
                 }
 
 
                 let html = `
+
                     <table>
+
                         <thead>
+
                             <tr>
                                 <th>#</th>
                                 <th>Kierowca</th>
@@ -260,9 +347,11 @@
                                 <th>PK</th>
                                 <th>Zawody</th>
                             </tr>
+
                         </thead>
 
                         <tbody>
+
                 `;
 
 
@@ -273,6 +362,7 @@
                         driver.pozycja ||
                         index + 1;
 
+
                     const name =
                         driver.name ||
                         driver.nick ||
@@ -280,21 +370,25 @@
                         driver.driver ||
                         "Brak nazwy";
 
+
                     const dr =
                         driver.dr ||
                         driver.DR ||
                         "-";
+
 
                     const sr =
                         driver.sr ||
                         driver.SR ||
                         "-";
 
+
                     const pk =
                         driver.pk ||
                         driver.PK ||
                         driver.dr_points ||
                         0;
+
 
                     const races =
                         driver.races ||
@@ -305,78 +399,146 @@
 
                     let drClass = "dr-e";
 
+
                     if (dr === "A+") {
+
                         drClass = "dr-a-plus";
+
                     }
 
                     else if (dr === "A") {
+
                         drClass = "dr-a";
+
                     }
 
                     else if (dr === "B") {
+
                         drClass = "dr-b";
+
                     }
 
                     else if (dr === "C") {
+
                         drClass = "dr-c";
+
                     }
 
                     else if (dr === "D") {
+
                         drClass = "dr-d";
+
                     }
 
 
                     let srClass = "";
 
+
                     if (sr === "S") {
+
                         srClass = "sr-s";
+
                     }
 
                     else if (sr === "A") {
+
                         srClass = "sr-a";
+
                     }
 
                     else if (sr === "B") {
+
                         srClass = "sr-b";
+
+                    }
+
+
+                    let rowClass = "";
+
+                    let positionDisplay = position;
+
+
+                    if (index === 0) {
+
+                        rowClass = "top1";
+
+                        positionDisplay =
+                            '<span class="medal">🥇</span>';
+
+                    }
+
+                    else if (index === 1) {
+
+                        rowClass = "top2";
+
+                        positionDisplay =
+                            '<span class="medal">🥈</span>';
+
+                    }
+
+                    else if (index === 2) {
+
+                        rowClass = "top3";
+
+                        positionDisplay =
+                            '<span class="medal">🥉</span>';
+
                     }
 
 
                     html += `
-                        <tr>
+
+                        <tr class="${rowClass}">
 
                             <td class="position">
-                                ${position}
+
+                                ${positionDisplay}
+
                             </td>
 
                             <td class="driver">
+
                                 ${name}
+
                             </td>
 
                             <td class="${drClass}">
+
                                 ${dr}
+
                             </td>
 
                             <td class="${srClass}">
+
                                 ${sr}
+
                             </td>
 
                             <td class="pk">
+
                                 ${pk}
+
                             </td>
 
                             <td>
+
                                 ${races}
+
                             </td>
 
                         </tr>
+
                     `;
 
                 });
 
 
                 html += `
+
                         </tbody>
+
                     </table>
+
                 `;
 
 
@@ -384,14 +546,19 @@
 
             })
 
+
             .catch(error => {
 
                 console.error(error);
 
+
                 document.getElementById("ranking").innerHTML =
+
                     '<div class="error">❌ Nie udało się pobrać rankingu.</div>';
 
+
                 document.getElementById("update").textContent =
+
                     "Sprawdź plik ranking.json";
 
             });
