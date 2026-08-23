@@ -52,10 +52,6 @@ def line():
 
 
 def xor_decrypt(data, key):
-    """
-    Odszyfrowuje dane z GTSH.
-    """
-
     key_bytes = key.encode("utf-8")
 
     decrypted = bytes(
@@ -67,10 +63,6 @@ def xor_decrypt(data, key):
 
 
 def get_value(data, path, default=None):
-    """
-    Bezpieczne pobieranie wartości z zagnieżdżonego słownika.
-    """
-
     current = data
 
     for key in path:
@@ -104,9 +96,6 @@ def get_encryption_key(session):
         return None
 
     html = response.text
-
-    # Klucz znajduje się w atrybucie:
-    # <body header="...">
 
     marker = 'header="'
 
@@ -175,10 +164,6 @@ def get_driver(session, player_name, key):
 
         response_data = response.json()
 
-        # ====================================================
-        # BŁĄD Z GTSH
-        # ====================================================
-
         if response_data.get("error"):
 
             print(
@@ -188,19 +173,11 @@ def get_driver(session, player_name, key):
 
             return None
 
-        # ====================================================
-        # SPRAWDZANIE DANYCH
-        # ====================================================
-
         encrypted_data = response_data.get("data")
 
         if not encrypted_data:
             print("BŁĄD: Brak danych profilu.")
             return None
-
-        # ====================================================
-        # ODSZYFROWANIE
-        # ====================================================
 
         data = decrypt_response(
             encrypted_data,
@@ -208,10 +185,6 @@ def get_driver(session, player_name, key):
         )
 
         print("PROFIL POBRANY POPRAWNIE")
-
-        # ====================================================
-        # UŻYTKOWNIK
-        # ====================================================
 
         user = get_value(
             data,
@@ -221,10 +194,6 @@ def get_driver(session, player_name, key):
 
         if not isinstance(user, dict):
             user = {}
-
-        # ====================================================
-        # DR
-        # ====================================================
 
         driver_rating_mapping = {
             1: "E",
@@ -242,10 +211,6 @@ def get_driver(session, player_name, key):
             driver_rating,
             user.get("dr_level", "-")
         )
-
-        # ====================================================
-        # SR
-        # ====================================================
 
         sportsmanship_rating_mapping = {
             1: "E",
@@ -265,10 +230,6 @@ def get_driver(session, player_name, key):
             "-"
         )
 
-        # ====================================================
-        # PK / DR POINTS
-        # ====================================================
-
         pk = user.get(
             "dr_points",
             0
@@ -281,12 +242,6 @@ def get_driver(session, player_name, key):
             pk = int(pk)
         except (ValueError, TypeError):
             pk = 0
-
-        # ====================================================
-        # LICZBA ZAWODÓW
-        #
-        # Najpierw próbujemy pobrać total_entries
-        # ====================================================
 
         summary = get_value(
             data,
@@ -309,10 +264,6 @@ def get_driver(session, player_name, key):
             races = int(races)
         except (ValueError, TypeError):
             races = 0
-
-        # ====================================================
-        # WYNIK
-        # ====================================================
 
         result = {
             "name": player_name,
@@ -361,10 +312,6 @@ def main():
         )
     })
 
-    # ========================================================
-    # POBIERANIE KLUCZA
-    # ========================================================
-
     key = get_encryption_key(session)
 
     if not key:
@@ -373,10 +320,6 @@ def main():
         print("NIE UDAŁO SIĘ POBRAĆ KLUCZA.")
 
         return
-
-    # ========================================================
-    # POBIERANIE KIEROWCÓW
-    # ========================================================
 
     line()
     print("ROZPOCZYNAM POBIERANIE KIEROWCÓW")
@@ -408,8 +351,6 @@ def main():
                 f"{player}"
             )
 
-        # Nie czekamy po ostatnim kierowcy
-
         if index < total_players:
 
             print()
@@ -419,29 +360,16 @@ def main():
 
             time.sleep(WAIT_SECONDS)
 
-    # ========================================================
-    # SORTOWANIE WEDŁUG PK
-    # ========================================================
-
     results.sort(
         key=lambda driver: driver["pk"],
         reverse=True
     )
 
-    # ========================================================
-    # DODANIE POZYCJI
-    # ========================================================
-
     for position, driver in enumerate(
         results,
         start=1
     ):
-
         driver["position"] = position
-
-    # ========================================================
-    # WYNIKI KOŃCOWE
-    # ========================================================
 
     line()
     print("WYNIKI KOŃCOWE")
@@ -458,28 +386,16 @@ def main():
             f"Zawody {driver['races']}"
         )
 
-    # ========================================================
-    # DATA AKTUALIZACJI
-    # ========================================================
-
     now = datetime.now()
 
     update_date = now.strftime(
         "%d.%m.%Y %H:%M"
     )
 
-    # ========================================================
-    # PRZYGOTOWANIE PLIKU JSON
-    # ========================================================
-
     ranking_data = {
         "last_update": update_date,
         "drivers": results
     }
-
-    # ========================================================
-    # ZAPIS DO ranking.json
-    # ========================================================
 
     with open(
         "ranking.json",
