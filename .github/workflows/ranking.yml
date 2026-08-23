@@ -31,13 +31,14 @@ jobs:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: python main.py
 
-      - name: Zapisanie ID wiadomości
+      - name: Zapisanie nowego rankingu
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+          git add ranking.json
           git add message_ids.txt
 
-          git diff --cached --quiet || git commit -m "Aktualizacja ID rankingu"
+          git diff --cached --quiet || git commit -m "Automatyczna aktualizacja rankingu"
 
           git push
