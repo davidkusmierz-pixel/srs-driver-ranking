@@ -4,6 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 from zoneinfo import ZoneInfo
+from urllib.parse import quote
 
 
 PLAYERS = [
@@ -37,28 +38,30 @@ PLAYERS = [
 
 WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK")
 
+
 HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 "
         "(Windows NT 10.0; Win64; x64) "
         "AppleWebKit/537.36 "
-        "Chrome/120 Safari/537.36"
+        "Chrome/120.0 Safari/537.36"
     )
 }
 
+
 MESSAGE_IDS_FILE = "message_ids.txt"
 
-RANKING_URL = "https://gtsh-rank.com/ranking/"
 
+def get_player(psn):
 
-def normalize_name(name):
-    return name.strip().lower()
-
-
-def get_all_players():
+    # Profil konkretnego zawodnika
+    url = (
+        "https://gtsh-rank.com/profile/?id="
+        + quote(psn)
+    )
 
     response = requests.get(
-        RANKING_URL,
+        url,
         headers=HEADERS,
         timeout=30
     )
@@ -70,115 +73,187 @@ def get_all_players():
         "html.parser"
     )
 
+    # Cały tekst strony
     text = soup.get_text(
         "\n",
         strip=True
     )
 
+    # Usuwamy nadmiarowe spacje
+    text = re.sub(
+        r"[ \t]+",
+        " ",
+        text
+    )
+
+    # DR Points
+    points_match = re.search(
+        r"DR Points:\s*([0-9\s,]+)",
+        text,
+        re.IGNORECASE
+    )
+
+    # Liczba zawodów
+    races_match = re.search(
+        r"Races:\s*([0-9,]+)",
+        text,
+        re.IGNORECASE
+    )
+
+    # Online ID
+    online_id_match = re.search(
+        r"Online ID:\s*([^\n]+)",
+        text,
+        re.IGNORECASE
+    )
+
+    # Pobranie DR i SR z tekstu strony
     lines = [
         line.strip()
         for line in text.splitlines()
         if line.strip()
     ]
 
-    players_data = []
+    dr = "?"
+    sr = "?"
+
+    # GTSH pokazuje na profilu:
+    #
+    # DR
+    # SR
+    # C
+    # S
+    #
+    # Szukamy tego układu
 
     for index, line in enumerate(lines):
 
-        # Szukamy klasy DR
-        if line in [
-            "E", "E+",
-            "D", "D+",
-            "C", "C+",
-            "B", "B+",
-            "A", "A+",
-            "S"
-        ]:
+        if line.upper() == "DR":
 
-            dr_class = line
+            for offset in range(
+                1,
+                min(10, len(lines) - index)
+            ):
 
-            # Szukamy kolejnej liczby będącej PK
-            for offset in range(1, 10):
+                possible_dr = (
+                    lines[index + offset]
+                    .upper()
+                )
 
-                if index + offset >= len(lines):
+                if possible_dr in [
+                    "E",
+                    "E+",
+                    "D",
+                    "D+",
+                    "C",
+                    "C+",
+                    "B",
+                    "B+",
+                    "A",
+                    "A+",
+                    "S"
+                ]:
+
+                    dr = possible_dr
                     break
 
-                value = lines[index + offset]
 
-                if re.fullmatch(r"\d{4,6}", value):
+        if line.upper() == "SR":
 
-                    # Szukamy nazwy kierowcy przed PK
-                    player_name = None
+            for offset in range(
+                1,
+                min(10, len(lines) - index)
+            ):
 
-                    for back in range(
-                        1,
-                        min(index, 10) + 1
-                    ):
+                possible_sr = (
+                    lines[index + offset]
+                    .upper()
+                )
 
-                        possible_name = (
-                            lines[index - back]
-                        )
+                if possible_sr in [
+                    "E",
+                    "E+",
+                    "D",
+                    "D+",
+                    "C",
+                    "C+",
+                    "B",
+                    "B+",
+                    "A",
+                    "A+",
+                    "S"
+                ]:
 
-                        if (
-                            not re.fullmatch(
-                                r"\d+\.?",
-                                possible_name
-                            )
-                            and possible_name not in [
-                                "Global",
-                                "TOP Split 1",
-                                "TOP Split 2",
-                                "TOP Split 3",
-                                "TOP Split 4",
-                                "Nat.",
-                                "Driver / Brand",
-                                "DR / Avg",
-                                "Stat",
-                                "Trend"
-                            ]
-                        ):
-
-                            player_name = possible_name
-                            break
-
-                    if player_name:
-
-                        players_data.append({
-                            "psn": player_name,
-                            "pk": int(value),
-                            "dr": dr_class
-                        })
-
+                    sr = possible_sr
                     break
 
-    return players_data
 
+    # DR Points
+    if points_match:
 
-def get_player_data(all_players, psn):
-
-    target = normalize_name(psn)
-
-    for player in all_players:
-
-        current_name = normalize_name(
-            player["psn"]
+        points_text = (
+            points_match.group(1)
+            .replace(" ", "")
+            .replace(",", "")
         )
 
-        if current_name == target:
+        points = int(points_text)
 
-            return {
-                "psn": psn,
-                "pk": player["pk"],
-                "dr": player["dr"]
-            }
+    else:
+
+        points = 0
+
+
+    # Liczba zawodów
+    if races_match:
+
+        races_text = (
+            races_match.group(1)
+            .replace(",", "")
+        )
+
+        races = int(races_text)
+
+    else:
+
+        races = 0
+
+
+    # Sprawdzenie, czy profil faktycznie został znaleziony
+    if not online_id_match:
+
+        print(
+            f"Nie znaleziono profilu: {psn}"
+        )
+
+        return {
+            "psn": psn,
+            "dr": "?",
+            "sr": "?",
+            "points": 0,
+            "races": 0
+        }
+
+
+    print(
+        f"Znaleziono: {psn} | "
+        f"DR {dr} | "
+        f"SR {sr} | "
+        f"PK {points} | "
+        f"Zawody {races}"
+    )
+
 
     return {
         "psn": psn,
-        "pk": 0,
-        "dr": "?"
+        "dr": dr,
+        "sr": sr,
+        "points": points,
+        "races": races
     }
 
 
+# Pobieranie zapisanych ID wiadomości
 def load_message_ids():
 
     if not os.path.exists(
@@ -199,6 +274,7 @@ def load_message_ids():
         ]
 
 
+# Zapisywanie ID wiadomości
 def save_message_ids(message_ids):
 
     with open(
@@ -214,6 +290,7 @@ def save_message_ids(message_ids):
             )
 
 
+# Wysyłanie nowej wiadomości
 def send_discord_message(message):
 
     response = requests.post(
@@ -229,6 +306,7 @@ def send_discord_message(message):
     return response.json()["id"]
 
 
+# Aktualizacja istniejącej wiadomości
 def update_discord_message(
     message_id,
     message
@@ -256,60 +334,25 @@ def main():
         return
 
 
-    print(
-        "Pobieram ranking z GTSH-Rank..."
-    )
-
-    try:
-
-        all_players = get_all_players()
-
-        print(
-            f"Pobrano {len(all_players)} zawodników."
-        )
-
-    except Exception as error:
-
-        print(
-            f"BŁĄD pobierania rankingu: {error}"
-        )
-
-        return
-
-
     ranking = []
 
 
+    # Pobieranie każdego zawodnika osobno
     for player in PLAYERS:
 
         try:
 
             print(
-                f"Sprawdzam: {player}"
+                f"Pobieram: {player}"
             )
 
-            data = get_player_data(
-                all_players,
+            data = get_player(
                 player
             )
 
-            ranking.append(data)
-
-
-            if data["pk"] == 0:
-
-                print(
-                    f"Nie znaleziono: {player}"
-                )
-
-            else:
-
-                print(
-                    f"Znaleziono: "
-                    f"{player} | "
-                    f"{data['dr']} | "
-                    f"{data['pk']}"
-                )
+            ranking.append(
+                data
+            )
 
         except Exception as error:
 
@@ -317,14 +360,23 @@ def main():
                 f"BŁĄD {player}: {error}"
             )
 
+            ranking.append({
+                "psn": player,
+                "dr": "?",
+                "sr": "?",
+                "points": 0,
+                "races": 0
+            })
 
-    # Sortowanie według PK
+
+    # Sortowanie według DR Points
     ranking.sort(
-        key=lambda x: x["pk"],
+        key=lambda x: x["points"],
         reverse=True
     )
 
 
+    # Nagłówek rankingu
     current_message = (
         "\u200b\n"
         "📈 **RANKING GŁÓWNY SRS**\n\n"
@@ -340,6 +392,7 @@ def main():
     message_number = 1
 
 
+    # Tworzenie rankingu
     for i, player in enumerate(
         ranking,
         start=1
@@ -362,26 +415,40 @@ def main():
             medal = "🏁"
 
 
-        if player["pk"] > 0:
+        if player["points"] > 0:
 
-            pk_text = (
-                f"{player['pk']:,}"
+            points_text = (
+                f"{player['points']:,}"
                 .replace(",", " ")
             )
 
         else:
 
-            pk_text = "Brak danych"
+            points_text = "Brak danych"
+
+
+        if player["races"] > 0:
+
+            races_text = (
+                f"{player['races']:,}"
+                .replace(",", " ")
+            )
+
+        else:
+
+            races_text = "Brak danych"
 
 
         player_text = (
-            f"{medal} **{i}. "
-            f"{player['psn']}**\n"
-            f"🏅 PK **{player['dr']}**"
-            f" • **{pk_text} PK**\n\n"
+            f"{medal} **{i}. {player['psn']}**\n"
+            f"🏅 DR **{player['dr']}**"
+            f" • SR **{player['sr']}**\n"
+            f"📊 PK: **{points_text}**\n"
+            f"🏁 Zawody: **{races_text}**\n\n"
         )
 
 
+        # Podział na kilka wiadomości
         if (
             len(current_message)
             + len(player_text)
@@ -396,8 +463,7 @@ def main():
 
             current_message = (
                 f"📈 **RANKING GŁÓWNY SRS "
-                f"— CZĘŚĆ "
-                f"{message_number}**\n\n"
+                f"— CZĘŚĆ {message_number}**\n\n"
                 "━━━━━━━━━━━━━━━━━━━━\n\n"
             )
 
@@ -405,6 +471,7 @@ def main():
         current_message += player_text
 
 
+    # Dodanie ostatniej części
     if current_message:
 
         messages.append(
@@ -412,6 +479,7 @@ def main():
         )
 
 
+    # Data aktualizacji
     messages[-1] += (
         "━━━━━━━━━━━━━━━━━━━━\n\n"
         "🕒 **Ostatnia aktualizacja:** "
@@ -419,6 +487,7 @@ def main():
     )
 
 
+    # Pobranie starych ID wiadomości
     old_message_ids = (
         load_message_ids()
     )
@@ -426,10 +495,10 @@ def main():
     new_message_ids = []
 
 
+    # Aktualizacja lub wysyłanie
     for number, message in enumerate(
         messages
     ):
-
 
         if number < len(
             old_message_ids
@@ -455,9 +524,9 @@ def main():
             except Exception as error:
 
                 print(
-                    f"Nie udało się zaktualizować "
-                    f"części {number + 1}: "
-                    f"{error}"
+                    f"Nie udało się "
+                    f"zaktualizować części "
+                    f"{number + 1}: {error}"
                 )
 
                 message_id = (
@@ -489,6 +558,7 @@ def main():
             )
 
 
+    # Zapisanie ID wiadomości
     save_message_ids(
         new_message_ids
     )
