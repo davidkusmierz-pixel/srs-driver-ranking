@@ -56,8 +56,8 @@ jobs:
           import os
           import urllib.request
 
-          with open("ranking.json", "r", encoding="utf-8") as f:
-              data = json.load(f)
+          with open("ranking.json", "r", encoding="utf-8") as file:
+              data = json.load(file)
 
           update = data.get("last_update", "")
           drivers = data.get("drivers", [])
@@ -65,16 +65,17 @@ jobs:
           lines = [
               "🏆 **SRS DRIVER RANKING**",
               f"📅 Ostatnia aktualizacja: **{update}**",
-              "",
-              "**TOP 10 KIEROWCÓW**"
+              ""
           ]
 
-          for driver in drivers[:10]:
+          for driver in drivers:
+
               position = driver.get("position", "-")
               name = driver.get("name", "Brak nazwy")
               dr = driver.get("dr", "-")
               sr = driver.get("sr", "-")
               pk = driver.get("pk", 0)
+              races = driver.get("races", 0)
 
               if position == 1:
                   medal = "🥇"
@@ -86,7 +87,8 @@ jobs:
                   medal = f"**{position}.**"
 
               lines.append(
-                  f"{medal} **{name}** — DR {dr} | SR {sr} | **{pk} PK**"
+                  f"{medal} **{name}** — DR {dr} | SR {sr} | "
+                  f"**{pk} PK** | 🏁 {races}"
               )
 
           lines += [
@@ -95,21 +97,44 @@ jobs:
               "https://dawidkusmierz-pixel.github.io/srs-driver-ranking/"
           ]
 
-          payload = {
-              "username": "SRS Ranking",
-              "content": "\n".join(lines)
-          }
+          message = "\n".join(lines)
 
-          request = urllib.request.Request(
-              os.environ["DISCORD_WEBHOOK"],
-              data=json.dumps(payload).encode("utf-8"),
-              headers={
-                  "Content-Type": "application/json",
-                  "User-Agent": "SRS-Ranking"
-              },
-              method="POST"
-          )
+          # Discord ma limit długości jednej wiadomości.
+          chunks = []
 
-          with urllib.request.urlopen(request) as response:
-              print("Wiadomość wysłana na Discord. Status:", response.status)
+          while message:
+              if len(message) <= 2000:
+                  chunks.append(message)
+                  break
+
+              split_position = message.rfind("\n", 0, 2000)
+
+              if split_position == -1:
+                  split_position = 2000
+
+              chunks.append(message[:split_position])
+              message = message[split_position:].lstrip()
+
+          for chunk in chunks:
+
+              payload = {
+                  "username": "SRS Ranking",
+                  "content": chunk
+              }
+
+              request = urllib.request.Request(
+                  os.environ["DISCORD_WEBHOOK"],
+                  data=json.dumps(payload).encode("utf-8"),
+                  headers={
+                      "Content-Type": "application/json",
+                      "User-Agent": "SRS-Ranking"
+                  },
+                  method="POST"
+              )
+
+              with urllib.request.urlopen(request) as response:
+                  print(
+                      "Wiadomość wysłana na Discord. Status:",
+                      response.status
+                  )
           PYTHON
