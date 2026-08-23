@@ -150,11 +150,10 @@ def main():
         "🏁 Klasyfikacja według **EDGE SCORE**\n\n"
 
         "📊 **Punkty są liczone na podstawie:**\n"
-        "🏎️ **PK** – poziomu i tempa jazdy\n"
-        "🛡️ **PFK** – czystej i bezpiecznej jazdy\n"
-        "📈 **Aktywności** – udziału w wyścigach\n\n"
+        "⏱️ **Czasówek Daily Race** – uzyskanych czasów kwalifikacyjnych\n"
+        "🏁 **Wyzwań i czasówek** – uzyskanych wyników i czasów\n\n"
 
-        "💬 **Im lepsze tempo, wyższy poziom i czystsza jazda, "
+        "💬 **Im lepsze czasy i wyniki, "
         "tym więcej punktów zdobywa kierowca.**\n\n"
 
         "🔄 **Aktualizacja: raz w tygodniu**\n\n"
