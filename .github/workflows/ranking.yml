@@ -35,6 +35,6 @@ jobs:
         run: |
           git config --global user.name "SRS Ranking Bot"
           git config --global user.email "ranking@srs.local"
-          git add message_ids.txt
-          git commit -m "Aktualizacja ID wiadomości rankingu" || exit 0
+          git add message_ids.txt ranking.json
+          git commit -m "Aktualizacja rankingu SRS" || exit 0
           git push
