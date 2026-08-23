@@ -29,6 +29,11 @@ PLAYERS = [
     "Hrupek98",
     "Jaras_GD",
     "PRT_El_Chapo",
+    "Piko88-Z",
+    "destro2207",
+    "Wojtek_Kl",
+    "zeusek22:,
+    "jupiter977gaudy:,
     "demon23mor"
 ]
 
