@@ -1,15 +1,13 @@
 import requests
-from bs4 import BeautifulSoup
 import base64
 import json
-import re
 import time
+from bs4 import BeautifulSoup
 
-URL = "https://gtsh-rank.com/profile/"
 
-# ==========================================
-# LISTA KIEROWCÓW SRS
-# ==========================================
+# ============================================
+# USTAWIENIA
+# ============================================
 
 KIEROWCY = [
     "SolidSnakePoland",
@@ -39,9 +37,48 @@ KIEROWCY = [
     "demon23mor"
 ]
 
-# ==========================================
+URL = "https://gtsh-rank.com/profile/"
+
+
+# ============================================
+# XOR DECRYPT
+# ============================================
+
+def xor_decrypt(data, key):
+    result = ""
+
+    for i, char in enumerate(data):
+        result += chr(
+            ord(char) ^ ord(key[i % len(key)])
+        )
+
+    return result
+
+
+# ============================================
+# BEZPIECZNE POBIERANIE DANYCH
+# ============================================
+
+def safe_get(data, path, default=None):
+
+    current = data
+
+    for key in path:
+
+        if not isinstance(current, dict):
+            return default
+
+        current = current.get(key)
+
+        if current is None:
+            return default
+
+    return current
+
+
+# ============================================
 # SESJA
-# ==========================================
+# ============================================
 
 session = requests.Session()
 
@@ -50,306 +87,404 @@ session.headers.update({
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
         "AppleWebKit/537.36 "
         "(KHTML, like Gecko) "
-        "Chrome/131.0.0.0 Safari/537.36"
-    ),
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "en-US,en;q=0.9"
+        "Chrome/120 Safari/537.36"
+    )
 })
 
 
-# ==========================================
-# ODSZYFROWANIE XOR
-# ==========================================
+# ============================================
+# POBRANIE KLUCZA
+# ============================================
 
-def xor_decrypt(data, key):
-    result = []
+print()
+print("=" * 60)
+print("POBIERAM STRONĘ GTSH")
+print("=" * 60)
 
-    for i, char in enumerate(data):
-        result.append(
-            chr(ord(char) ^ ord(key[i % len(key)]))
-        )
+response = session.get(URL, timeout=30)
 
-    return "".join(result)
+print("STATUS:", response.status_code)
 
+if response.status_code != 200:
+    print("BŁĄD POBIERANIA STRONY!")
+    raise SystemExit()
 
-# ==========================================
-# POBRANIE KLUCZA ZE STRONY
-# ==========================================
+soup = BeautifulSoup(response.text, "html.parser")
 
-def pobierz_klucz():
+body = soup.find("body")
 
-    print("=" * 60)
-    print("POBIERAM STRONĘ GTSH")
-    print("=" * 60)
+if body is None:
+    print("BŁĄD: Nie znaleziono BODY")
+    raise SystemExit()
 
-    response = session.get(URL, timeout=30)
+KEY = body.get("header")
 
-    print("STATUS:", response.status_code)
+if not KEY:
+    print("BŁĄD: Nie znaleziono klucza")
+    raise SystemExit()
 
-    if response.status_code != 200:
-        print("BŁĄD POBIERANIA STRONY")
-        return None
-
-    soup = BeautifulSoup(response.text, "html.parser")
-
-    body = soup.find("body")
-
-    if not body:
-        print("NIE ZNALEZIONO TAGU BODY")
-        return None
-
-    key = body.get("header")
-
-    if not key:
-        print("NIE ZNALEZIONO KLUCZA 'header'")
-        return None
-
-    print("ZNALEZIONO KLUCZ:", key[:15] + "...")
-
-    return key
+print("ZNALEZIONO KLUCZ:", KEY[:15] + "...")
 
 
-# ==========================================
+# ============================================
 # POBIERANIE PROFILU
-# ==========================================
+# ============================================
 
-def pobierz_kierowce(psnid, key):
+def pobierz_profil(psn):
 
     print()
     print("=" * 60)
-    print("POBIERAM:", psnid)
+    print("POBIERAM:", psn)
     print("=" * 60)
 
-    try:
+    maks_prob = 3
 
-        response = session.post(
-            URL,
-            data={
-                "psnid": psnid
-            },
-            headers={
-                "Content-Type": "application/x-www-form-urlencoded",
-                "Referer": URL,
-                "Accept": "application/json, text/javascript, */*; q=0.01"
-            },
-            timeout=30
-        )
-
-        print("STATUS POST:", response.status_code)
-
-        if response.status_code != 200:
-            print("BŁĄD ODPOWIEDZI")
-            return None
+    for proba in range(1, maks_prob + 1):
 
         try:
-            response_data = response.json()
+
+            response = session.post(
+                URL,
+                data={
+                    "psnid": psn
+                },
+                headers={
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                timeout=30
+            )
+
+            print("STATUS POST:", response.status_code)
+
+            dane_odpowiedzi = response.json()
 
         except Exception as e:
-            print("ODPOWIEDŹ NIE JEST JSON:")
-            print(response.text[:500])
+
+            print("BŁĄD POŁĄCZENIA:", e)
+
+            if proba < maks_prob:
+
+                print("Czekam 12 sekund...")
+                time.sleep(12)
+
+                continue
+
             return None
 
-        if "error" in response_data:
-            print("BŁĄD GTSH:", response_data["error"])
+        # ========================================
+        # BŁĄD GTSH
+        # ========================================
+
+        if dane_odpowiedzi.get("error"):
+
+            blad = str(
+                dane_odpowiedzi.get("error", "")
+            )
+
+            print("BŁĄD GTSH:", blad)
+
+            if "Too many requests" in blad:
+
+                if proba < maks_prob:
+
+                    print()
+                    print("LIMIT ZAPYTAŃ!")
+                    print("Czekam 12 sekund...")
+                    print(
+                        f"PRÓBA: {proba + 1} / {maks_prob}"
+                    )
+
+                    time.sleep(12)
+
+                    continue
+
             return None
 
-        if "data" not in response_data:
-            print("BRAK POLA DATA")
-            print(response_data)
+        # ========================================
+        # POBRANIE DANYCH
+        # ========================================
+
+        encrypted = dane_odpowiedzi.get("data")
+
+        if not encrypted:
+
+            print("BŁĄD: Brak pola DATA")
+
             return None
 
-        encrypted_base64 = response_data["data"]
+        # ========================================
+        # ODKODOWANIE
+        # ========================================
 
-        # BASE64 -> TEKST
-        encrypted_bytes = base64.b64decode(encrypted_base64)
+        try:
 
-        # Javascript używa atob()
-        encrypted_data = encrypted_bytes.decode(
-            "latin-1",
-            errors="ignore"
-        )
+            encrypted_bytes = base64.b64decode(
+                encrypted
+            )
 
-        # XOR DECRYPT
-        decrypted_data = xor_decrypt(
-            encrypted_data,
-            key
-        )
+            encrypted_text = encrypted_bytes.decode(
+                "latin-1"
+            )
 
-        # JSON
-        data = json.loads(decrypted_data)
+            decrypted = xor_decrypt(
+                encrypted_text,
+                KEY
+            )
 
-        print("PROFIL POBRANY POPRAWNIE")
+            data = json.loads(decrypted)
 
-        return data
+            print("PROFIL POBRANY POPRAWNIE")
 
-    except Exception as e:
+            return data
 
-        print("BŁĄD:", str(e))
+        except Exception as e:
 
-        return None
+            print("BŁĄD ODKODOWANIA:", e)
+
+            return None
+
+    return None
 
 
-# ==========================================
-# ODCZYT DANYCH
-# ==========================================
+# ============================================
+# ODCZYT KIEROWCY
+# ============================================
 
-def odczytaj_dane(data):
+def odczytaj_kierowce(psn, data):
 
-    wynik = {
-        "dr": "-",
-        "sr": "-",
-        "pk": 0,
-        "zawody": 0
+    if not isinstance(data, dict):
+
+        return {
+            "psn": psn,
+            "dr": "-",
+            "sr": "-",
+            "pk": 0,
+            "zawody": 0
+        }
+
+    # ========================================
+    # USER
+    # ========================================
+
+    user = safe_get(
+        data,
+        [
+            "monthly_stats",
+            "result",
+            "user"
+        ],
+        {}
+    )
+
+    if not isinstance(user, dict):
+        user = {}
+
+    # ========================================
+    # DR
+    # ========================================
+
+    dr_map = {
+        1: "E",
+        2: "D",
+        3: "C",
+        4: "B",
+        5: "A",
+        6: "A+",
+        7: "S"
     }
 
+    dr_rating = user.get("driver_rating")
+
+    dr = dr_map.get(
+        dr_rating,
+        user.get("dr_level", "-")
+    )
+
+    if not dr:
+        dr = "-"
+
+    # ========================================
+    # SR
+    # ========================================
+
+    sr_map = {
+        1: "E",
+        2: "D",
+        3: "C",
+        4: "B",
+        5: "A",
+        6: "S"
+    }
+
+    sr_rating = user.get(
+        "sportsmanship_rating"
+    )
+
+    sr = sr_map.get(
+        sr_rating,
+        "-"
+    )
+
+    # ========================================
+    # PK
+    # ========================================
+
+    pk = user.get(
+        "dr_points",
+        0
+    )
+
+    if pk is None:
+        pk = 0
+
     try:
+        pk = int(pk)
+    except:
+        pk = 0
 
-        user = (
-            data
-            .get("monthly_stats", {})
-            .get("result", {})
-            .get("user", {})
-        )
+    # ========================================
+    # ZAWODY
+    # ========================================
 
-        driver_rating_mapping = {
-            1: "E",
-            2: "D",
-            3: "C",
-            4: "B",
-            5: "A",
-            6: "A+",
-            7: "S"
-        }
+    zawody = 0
 
-        sportsmanship_rating_mapping = {
-            1: "E",
-            2: "D",
-            3: "C",
-            4: "B",
-            5: "A",
-            6: "S"
-        }
+    stats = data.get("stats")
 
-        driver_rating = user.get("driver_rating")
+    if isinstance(stats, dict):
 
-        wynik["dr"] = (
-            driver_rating_mapping.get(
-                driver_rating,
-                user.get("dr_level", "-")
+        summary = stats.get("summary")
+
+        if isinstance(summary, dict):
+
+            # Główne pole
+            zawody = summary.get(
+                "total_entries"
             )
-        )
 
-        sportsmanship_rating = user.get(
-            "sportsmanship_rating"
-        )
+            # Alternatywne pola
+            if zawody is None:
+                zawody = summary.get(
+                    "total_races"
+                )
 
-        wynik["sr"] = (
-            sportsmanship_rating_mapping.get(
-                sportsmanship_rating,
-                "-"
-            )
-        )
+            if zawody is None:
+                zawody = summary.get(
+                    "races"
+                )
 
-        # PK / punkty DR
-        wynik["pk"] = int(
-            user.get("dr_points", 0) or 0
-        )
+            if zawody is None:
+                zawody = 0
 
-        # Liczba zawodów
-        summary = (
+    try:
+        zawody = int(zawody)
+    except:
+        zawody = 0
+
+    return {
+        "psn": psn,
+        "dr": dr,
+        "sr": sr,
+        "pk": pk,
+        "zawody": zawody
+    }
+
+
+# ============================================
+# POBIERANIE WSZYSTKICH KIEROWCÓW
+# ============================================
+
+print()
+print("=" * 60)
+print("ROZPOCZYNAM POBIERANIE KIEROWCÓW")
+print("=" * 60)
+
+wyniki = []
+
+for numer, psn in enumerate(
+    KIEROWCY,
+    start=1
+):
+
+    print()
+    print(
+        f"KIEROWCA {numer} / {len(KIEROWCY)}"
+    )
+
+    data = pobierz_profil(psn)
+
+    if data is not None:
+
+        kierowca = odczytaj_kierowce(
+            psn,
             data
-            .get("stats", {})
-            .get("summary", {})
         )
-
-        wynik["zawody"] = int(
-            summary.get("total_entries", 0) or 0
-        )
-
-    except Exception as e:
-
-        print("BŁĄD ODCZYTU:", e)
-
-    return wynik
-
-
-# ==========================================
-# TEST
-# ==========================================
-
-def main():
-
-    key = pobierz_klucz()
-
-    if not key:
 
         print()
-        print("NIE UDAŁO SIĘ POBRAĆ KLUCZA.")
-        return
-
-    print()
-    print("=" * 60)
-    print("ROZPOCZYNAM POBIERANIE KIEROWCÓW")
-    print("=" * 60)
-
-    ranking = []
-
-    for psnid in KIEROWCY:
-
-        data = pobierz_kierowce(
-            psnid,
-            key
-        )
-
-        if data:
-
-            dane = odczytaj_dane(data)
-
-            print(
-                f"WYNIK: {psnid} | "
-                f"DR: {dane['dr']} | "
-                f"SR: {dane['sr']} | "
-                f"PK: {dane['pk']} | "
-                f"Zawody: {dane['zawody']}"
-            )
-
-            ranking.append({
-                "psnid": psnid,
-                "dr": dane["dr"],
-                "sr": dane["sr"],
-                "pk": dane["pk"],
-                "zawody": dane["zawody"]
-            })
-
-        else:
-
-            print(
-                f"NIE UDAŁO SIĘ POBRAĆ: {psnid}"
-            )
-
-        # Mała przerwa między kierowcami
-        time.sleep(1)
-
-    print()
-    print("=" * 60)
-    print("WYNIKI")
-    print("=" * 60)
-
-    for zawodnik in ranking:
 
         print(
-            f"{zawodnik['psnid']} | "
-            f"DR {zawodnik['dr']} | "
-            f"SR {zawodnik['sr']} | "
-            f"PK {zawodnik['pk']} | "
-            f"Zawody {zawodnik['zawody']}"
+            f"WYNIK: "
+            f"{kierowca['psn']} | "
+            f"DR: {kierowca['dr']} | "
+            f"SR: {kierowca['sr']} | "
+            f"PK: {kierowca['pk']} | "
+            f"Zawody: {kierowca['zawody']}"
         )
 
-    print()
-    print("=" * 60)
-    print("GOTOWE")
-    print("=" * 60)
+        wyniki.append(kierowca)
+
+    else:
+
+        print(
+            "NIE UDAŁO SIĘ POBRAĆ:",
+            psn
+        )
+
+    # ========================================
+    # PRZERWA MIĘDZY KIEROWCAMI
+    # ========================================
+
+    if numer < len(KIEROWCY):
+
+        print()
+        print("Czekam 4 sekundy...")
+        time.sleep(4)
 
 
-if __name__ == "__main__":
-    main()
+# ============================================
+# SORTOWANIE WEDŁUG PK
+# ============================================
+
+wyniki.sort(
+    key=lambda x: x["pk"],
+    reverse=True
+)
+
+
+# ============================================
+# WYNIKI
+# ============================================
+
+print()
+print("=" * 60)
+print("WYNIKI KOŃCOWE")
+print("=" * 60)
+
+for pozycja, kierowca in enumerate(
+    wyniki,
+    start=1
+):
+
+    print(
+        f"{pozycja}. "
+        f"{kierowca['psn']} | "
+        f"DR {kierowca['dr']} | "
+        f"SR {kierowca['sr']} | "
+        f"PK {kierowca['pk']} | "
+        f"Zawody {kierowca['zawody']}"
+    )
+
+
+print()
+print("=" * 60)
+print("GOTOWE")
+print("=" * 60)
