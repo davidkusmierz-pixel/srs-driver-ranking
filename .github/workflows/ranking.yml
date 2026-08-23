@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
   schedule:
-    - cron: "0 10 * * 0"
+    - cron: "0 18 * * *"
 
 permissions:
   contents: write
@@ -17,27 +17,24 @@ jobs:
       - name: Pobieranie plików
         uses: actions/checkout@v4
 
-      - name: Instalacja Python
+      - name: Ustawienie Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Instalacja bibliotek
         run: |
-          pip install -r requirements.txt
+          pip install requests beautifulsoup4
 
       - name: Aktualizacja rankingu
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        run: python main.py
+        run: python ranking.py
 
-      - name: Zapisanie ID wiadomości
+      - name: Zapisanie zmian
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
+          git config --global user.name "SRS Ranking Bot"
+          git config --global user.email "ranking@srs.local"
           git add message_ids.txt
-
-          git diff --cached --quiet || git commit -m "Aktualizacja ID rankingu"
-
+          git commit -m "Aktualizacja ID wiadomości rankingu" || exit 0
           git push
