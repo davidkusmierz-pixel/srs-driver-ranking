@@ -143,11 +143,20 @@ def main():
         reverse=True
     )
 
-    # Nagłówek rankingu
+    # Nagłówek rankingu + opis punktów
     current_message = (
         "\u200b\n"
         "📈 **RANKING GŁÓWNY**\n\n"
         "🏁 Klasyfikacja według **EDGE SCORE**\n\n"
+
+        "📊 **Punkty są liczone na podstawie:**\n"
+        "🏎️ **PK** – poziomu i tempa jazdy\n"
+        "🛡️ **PFK** – czystej i bezpiecznej jazdy\n"
+        "📈 **Aktywności** – udziału w wyścigach\n\n"
+
+        "💬 **Im lepsze tempo, wyższy poziom i czystsza jazda, "
+        "tym więcej punktów zdobywa kierowca.**\n\n"
+
         "🔄 **Aktualizacja: raz w tygodniu**\n\n"
         "━━━━━━━━━━━━━━━━━━━━\n\n"
     )
