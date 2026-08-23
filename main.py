@@ -1,4 +1,3 @@
-```python
 import os
 import re
 import json
@@ -10,7 +9,6 @@ from zoneinfo import ZoneInfo
 
 # ==================================================
 # PSN ID : NAZWA WYŚWIETLANA NA DISCORDZIE
-# PSN po lewej NIE będzie widoczne na Discordzie
 # ==================================================
 
 PLAYERS = {
@@ -78,14 +76,12 @@ def get_player(psn, username):
         strip=True
     )
 
-    # Pobieranie PK i PFK
     pk_pfk_match = re.search(
         rf"{re.escape(psn)}.*?\b([A-E]\+?|S)\s+([A-E]|S)\b",
         text,
         re.IGNORECASE
     )
 
-    # Pobieranie Edge Score
     score_match = re.search(
         r"(\d{1,3}\.\d{1,2})\s+Edge Score",
         text,
@@ -119,17 +115,15 @@ def get_player(psn, username):
 
 
 # ==================================================
-# ZAPIS AKTUALNEGO RANKINGU DLA BOTA
+# ZAPIS RANKINGU DLA BOTA
 # ==================================================
 
 def save_ranking(ranking):
-
     with open(
         RANKING_FILE,
         "w",
         encoding="utf-8"
     ) as file:
-
         json.dump(
             ranking,
             file,
@@ -187,12 +181,10 @@ def update_discord_message(message_id, message):
 
 
 def main():
-
     ranking = []
 
     # Pobieranie danych kierowców
     for psn, username in PLAYERS.items():
-
         try:
             print(
                 f"Pobieram dane kierowcy: {username}"
@@ -206,7 +198,6 @@ def main():
             )
 
         except Exception as error:
-
             print(
                 f"BŁĄD: {username}: {error}"
             )
@@ -217,7 +208,7 @@ def main():
         reverse=True
     )
 
-    # Zapis aktualnego rankingu dla bota
+    # Zapis rankingu dla bota
     save_ranking(ranking)
 
     print(
@@ -229,16 +220,11 @@ def main():
         "\u200b\n"
         "📈 **RANKING GŁÓWNY**\n\n"
         "🏁 Klasyfikacja według **EDGE SCORE**\n\n"
-
         "📊 **Punkty są liczone na podstawie:**\n"
-        "⏱️ **Czasówek Daily Race** – "
-        "uzyskanych czasów kwalifikacyjnych\n"
-        "🏁 **Wyzwań i czasówek** – "
-        "uzyskanych wyników i czasów\n\n"
-
+        "⏱️ **Czasówek Daily Race** – uzyskanych czasów kwalifikacyjnych\n"
+        "🏁 **Wyzwań i czasówek** – uzyskanych wyników i czasów\n\n"
         "💬 **Im lepsze czasy i wyniki, "
         "tym więcej punktów zdobywa kierowca.**\n\n"
-
         "🔄 **Aktualizacja: raz dziennie**\n\n"
         "━━━━━━━━━━━━━━━━━━━━\n\n"
     )
@@ -251,38 +237,25 @@ def main():
         ranking,
         start=1
     ):
-
         if i == 1:
             medal = "🥇"
-
         elif i == 2:
             medal = "🥈"
-
         elif i == 3:
             medal = "🥉"
-
         else:
             medal = "🏁"
 
         player_text = (
-            f"{medal} **{i}. "
-            f"{player['username']}**\n"
+            f"{medal} **{i}. {player['username']}**\n"
             f"🏅 PK **{player['pk']}** • "
             f"PFK **{player['pfk']}**\n"
-            f"📊 Score: "
-            f"**{player['score']:.2f}**\n\n"
+            f"📊 Score: **{player['score']:.2f}**\n\n"
         )
 
         # Podział rankingu na kilka wiadomości
-        if (
-            len(current_message)
-            + len(player_text)
-            > 1900
-        ):
-
-            messages.append(
-                current_message
-            )
+        if len(current_message) + len(player_text) > 1900:
+            messages.append(current_message)
 
             message_number += 1
 
@@ -296,32 +269,24 @@ def main():
 
     # Dodanie ostatniej części
     if current_message:
+        messages.append(current_message)
 
-        messages.append(
-            current_message
-        )
-
-    # Polska data i godzina
+    # Data i godzina
     messages[-1] += (
         "━━━━━━━━━━━━━━━━━━━━\n\n"
-        "🕒 **Ostatnia aktualizacja:** "
+        f"🕒 **Ostatnia aktualizacja:** "
         f"{datetime.now(ZoneInfo('Europe/Warsaw')).strftime('%d.%m.%Y %H:%M')}"
     )
 
     # Pobieranie ID starych wiadomości
     old_message_ids = load_message_ids()
-
     new_message_ids = []
 
     # Aktualizacja lub wysyłanie wiadomości
-    for number, message in enumerate(
-        messages
-    ):
+    for number, message in enumerate(messages):
 
         if number < len(old_message_ids):
-
             try:
-
                 update_discord_message(
                     old_message_ids[number],
                     message
@@ -337,7 +302,6 @@ def main():
                 )
 
             except Exception as error:
-
                 print(
                     f"Błąd aktualizacji części "
                     f"{number + 1}: {error}"
@@ -352,7 +316,6 @@ def main():
                 )
 
         else:
-
             message_id = send_discord_message(
                 message
             )
@@ -378,4 +341,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-```
