@@ -2,14 +2,16 @@ import requests
 import base64
 import json
 import time
-from bs4 import BeautifulSoup
+from datetime import datetime
 
 
-# ============================================
+# ============================================================
 # USTAWIENIA
-# ============================================
+# ============================================================
 
-KIEROWCY = [
+URL = "https://gtsh-rank.com/profile/"
+
+PLAYERS = [
     "SolidSnakePoland",
     "ALF7",
     "lucekbks",
@@ -37,34 +39,41 @@ KIEROWCY = [
     "demon23mor"
 ]
 
-URL = "https://gtsh-rank.com/profile/"
+WAIT_SECONDS = 4
 
 
-# ============================================
-# XOR DECRYPT
-# ============================================
+# ============================================================
+# POMOCNICZE
+# ============================================================
+
+def line():
+    print()
+    print("=" * 60)
+
 
 def xor_decrypt(data, key):
-    result = ""
+    """
+    Odszyfrowuje dane z GTSH.
+    """
 
-    for i, char in enumerate(data):
-        result += chr(
-            ord(char) ^ ord(key[i % len(key)])
-        )
+    key_bytes = key.encode("utf-8")
 
-    return result
+    decrypted = bytes(
+        byte ^ key_bytes[index % len(key_bytes)]
+        for index, byte in enumerate(data)
+    )
+
+    return decrypted.decode("utf-8")
 
 
-# ============================================
-# BEZPIECZNE POBIERANIE DANYCH
-# ============================================
-
-def safe_get(data, path, default=None):
+def get_value(data, path, default=None):
+    """
+    Bezpieczne pobieranie wartości z zagnieżdżonego słownika.
+    """
 
     current = data
 
     for key in path:
-
         if not isinstance(current, dict):
             return default
 
@@ -76,415 +85,426 @@ def safe_get(data, path, default=None):
     return current
 
 
-# ============================================
-# SESJA
-# ============================================
+# ============================================================
+# POBIERANIE KLUCZA
+# ============================================================
 
-session = requests.Session()
+def get_encryption_key(session):
 
-session.headers.update({
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 "
-        "(KHTML, like Gecko) "
-        "Chrome/120 Safari/537.36"
+    line()
+    print("POBIERAM STRONĘ GTSH")
+    line()
+
+    response = session.get(URL, timeout=30)
+
+    print(f"STATUS: {response.status_code}")
+
+    if response.status_code != 200:
+        print("BŁĄD: Nie udało się pobrać strony.")
+        return None
+
+    html = response.text
+
+    # Klucz znajduje się w atrybucie:
+    # <body header="...">
+
+    marker = 'header="'
+
+    if marker not in html:
+        print("BŁĄD: Nie znaleziono klucza.")
+        return None
+
+    key_start = html.find(marker) + len(marker)
+    key_end = html.find('"', key_start)
+
+    key = html[key_start:key_end]
+
+    if not key:
+        print("BŁĄD: Klucz jest pusty.")
+        return None
+
+    print(f"ZNALEZIONO KLUCZ: {key[:15]}...")
+
+    return key
+
+
+# ============================================================
+# ODSZYFROWANIE DANYCH
+# ============================================================
+
+def decrypt_response(encrypted_text, key):
+
+    encrypted_data = base64.b64decode(encrypted_text)
+
+    decrypted_text = xor_decrypt(
+        encrypted_data,
+        key
     )
-})
+
+    return json.loads(decrypted_text)
 
 
-# ============================================
-# POBRANIE KLUCZA
-# ============================================
+# ============================================================
+# POBIERANIE JEDNEGO KIEROWCY
+# ============================================================
 
-print()
-print("=" * 60)
-print("POBIERAM STRONĘ GTSH")
-print("=" * 60)
+def get_driver(session, player_name, key):
 
-response = session.get(URL, timeout=30)
+    line()
+    print(f"POBIERAM: {player_name}")
+    line()
 
-print("STATUS:", response.status_code)
+    try:
 
-if response.status_code != 200:
-    print("BŁĄD POBIERANIA STRONY!")
-    raise SystemExit()
+        response = session.post(
+            URL,
+            data={
+                "psnid": player_name
+            },
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            timeout=30
+        )
 
-soup = BeautifulSoup(response.text, "html.parser")
+        print(f"STATUS POST: {response.status_code}")
 
-body = soup.find("body")
+        if response.status_code != 200:
+            print("BŁĄD: Niepoprawny status serwera.")
+            return None
 
-if body is None:
-    print("BŁĄD: Nie znaleziono BODY")
-    raise SystemExit()
+        response_data = response.json()
 
-KEY = body.get("header")
+        # ====================================================
+        # BŁĄD Z GTSH
+        # ====================================================
 
-if not KEY:
-    print("BŁĄD: Nie znaleziono klucza")
-    raise SystemExit()
+        if response_data.get("error"):
 
-print("ZNALEZIONO KLUCZ:", KEY[:15] + "...")
-
-
-# ============================================
-# POBIERANIE PROFILU
-# ============================================
-
-def pobierz_profil(psn):
-
-    print()
-    print("=" * 60)
-    print("POBIERAM:", psn)
-    print("=" * 60)
-
-    maks_prob = 3
-
-    for proba in range(1, maks_prob + 1):
-
-        try:
-
-            response = session.post(
-                URL,
-                data={
-                    "psnid": psn
-                },
-                headers={
-                    "Content-Type": "application/x-www-form-urlencoded"
-                },
-                timeout=30
+            print(
+                f"BŁĄD GTSH: "
+                f"{response_data.get('error')}"
             )
-
-            print("STATUS POST:", response.status_code)
-
-            dane_odpowiedzi = response.json()
-
-        except Exception as e:
-
-            print("BŁĄD POŁĄCZENIA:", e)
-
-            if proba < maks_prob:
-
-                print("Czekam 12 sekund...")
-                time.sleep(12)
-
-                continue
 
             return None
 
-        # ========================================
-        # BŁĄD GTSH
-        # ========================================
+        # ====================================================
+        # SPRAWDZANIE DANYCH
+        # ====================================================
 
-        if dane_odpowiedzi.get("error"):
+        encrypted_data = response_data.get("data")
 
-            blad = str(
-                dane_odpowiedzi.get("error", "")
-            )
-
-            print("BŁĄD GTSH:", blad)
-
-            if "Too many requests" in blad:
-
-                if proba < maks_prob:
-
-                    print()
-                    print("LIMIT ZAPYTAŃ!")
-                    print("Czekam 12 sekund...")
-                    print(
-                        f"PRÓBA: {proba + 1} / {maks_prob}"
-                    )
-
-                    time.sleep(12)
-
-                    continue
-
+        if not encrypted_data:
+            print("BŁĄD: Brak danych profilu.")
             return None
 
-        # ========================================
-        # POBRANIE DANYCH
-        # ========================================
+        # ====================================================
+        # ODSZYFROWANIE
+        # ====================================================
 
-        encrypted = dane_odpowiedzi.get("data")
+        data = decrypt_response(
+            encrypted_data,
+            key
+        )
 
-        if not encrypted:
+        print("PROFIL POBRANY POPRAWNIE")
 
-            print("BŁĄD: Brak pola DATA")
+        # ====================================================
+        # UŻYTKOWNIK
+        # ====================================================
 
-            return None
+        user = get_value(
+            data,
+            ["monthly_stats", "result", "user"],
+            {}
+        )
 
-        # ========================================
-        # ODKODOWANIE
-        # ========================================
+        if not isinstance(user, dict):
+            user = {}
 
-        try:
+        # ====================================================
+        # DR
+        # ====================================================
 
-            encrypted_bytes = base64.b64decode(
-                encrypted
-            )
-
-            encrypted_text = encrypted_bytes.decode(
-                "latin-1"
-            )
-
-            decrypted = xor_decrypt(
-                encrypted_text,
-                KEY
-            )
-
-            data = json.loads(decrypted)
-
-            print("PROFIL POBRANY POPRAWNIE")
-
-            return data
-
-        except Exception as e:
-
-            print("BŁĄD ODKODOWANIA:", e)
-
-            return None
-
-    return None
-
-
-# ============================================
-# ODCZYT KIEROWCY
-# ============================================
-
-def odczytaj_kierowce(psn, data):
-
-    if not isinstance(data, dict):
-
-        return {
-            "psn": psn,
-            "dr": "-",
-            "sr": "-",
-            "pk": 0,
-            "zawody": 0
+        driver_rating_mapping = {
+            1: "E",
+            2: "D",
+            3: "C",
+            4: "B",
+            5: "A",
+            6: "A+",
+            7: "S"
         }
 
-    # ========================================
-    # USER
-    # ========================================
+        driver_rating = user.get("driver_rating")
 
-    user = safe_get(
-        data,
-        [
-            "monthly_stats",
-            "result",
-            "user"
-        ],
-        {}
-    )
+        dr = driver_rating_mapping.get(
+            driver_rating,
+            user.get("dr_level", "-")
+        )
 
-    if not isinstance(user, dict):
-        user = {}
+        # ====================================================
+        # SR
+        # ====================================================
 
-    # ========================================
-    # DR
-    # ========================================
+        sportsmanship_rating_mapping = {
+            1: "E",
+            2: "D",
+            3: "C",
+            4: "B",
+            5: "A",
+            6: "S"
+        }
 
-    dr_map = {
-        1: "E",
-        2: "D",
-        3: "C",
-        4: "B",
-        5: "A",
-        6: "A+",
-        7: "S"
-    }
+        sportsmanship_rating = user.get(
+            "sportsmanship_rating"
+        )
 
-    dr_rating = user.get("driver_rating")
+        sr = sportsmanship_rating_mapping.get(
+            sportsmanship_rating,
+            "-"
+        )
 
-    dr = dr_map.get(
-        dr_rating,
-        user.get("dr_level", "-")
-    )
+        # ====================================================
+        # PK / DR POINTS
+        # ====================================================
 
-    if not dr:
-        dr = "-"
+        pk = user.get(
+            "dr_points",
+            0
+        )
 
-    # ========================================
-    # SR
-    # ========================================
+        if pk is None:
+            pk = 0
 
-    sr_map = {
-        1: "E",
-        2: "D",
-        3: "C",
-        4: "B",
-        5: "A",
-        6: "S"
-    }
+        try:
+            pk = int(pk)
+        except (ValueError, TypeError):
+            pk = 0
 
-    sr_rating = user.get(
-        "sportsmanship_rating"
-    )
+        # ====================================================
+        # LICZBA ZAWODÓW
+        #
+        # Najpierw próbujemy pobrać total_entries
+        # ====================================================
 
-    sr = sr_map.get(
-        sr_rating,
-        "-"
-    )
+        summary = get_value(
+            data,
+            ["stats", "summary"],
+            {}
+        )
 
-    # ========================================
-    # PK
-    # ========================================
+        if not isinstance(summary, dict):
+            summary = {}
 
-    pk = user.get(
-        "dr_points",
-        0
-    )
+        races = summary.get(
+            "total_entries",
+            0
+        )
 
-    if pk is None:
-        pk = 0
+        if races is None:
+            races = 0
 
-    try:
-        pk = int(pk)
-    except:
-        pk = 0
+        try:
+            races = int(races)
+        except (ValueError, TypeError):
+            races = 0
 
-    # ========================================
-    # ZAWODY
-    # ========================================
+        # ====================================================
+        # WYNIK
+        # ====================================================
 
-    zawody = 0
+        result = {
+            "name": player_name,
+            "dr": dr,
+            "sr": sr,
+            "pk": pk,
+            "races": races
+        }
 
-    stats = data.get("stats")
+        print()
+        print(
+            f"WYNIK: {player_name} | "
+            f"DR: {dr} | "
+            f"SR: {sr} | "
+            f"PK: {pk} | "
+            f"Zawody: {races}"
+        )
 
-    if isinstance(stats, dict):
+        return result
 
-        summary = stats.get("summary")
+    except Exception as error:
 
-        if isinstance(summary, dict):
+        print(
+            f"BŁĄD PODCZAS POBIERANIA "
+            f"{player_name}: {error}"
+        )
 
-            # Główne pole
-            zawody = summary.get(
-                "total_entries"
+        return None
+
+
+# ============================================================
+# GŁÓWNY PROGRAM
+# ============================================================
+
+def main():
+
+    session = requests.Session()
+
+    session.headers.update({
+        "User-Agent": (
+            "Mozilla/5.0 "
+            "(Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 "
+            "(KHTML, like Gecko) "
+            "Chrome/120.0 Safari/537.36"
+        )
+    })
+
+    # ========================================================
+    # POBIERANIE KLUCZA
+    # ========================================================
+
+    key = get_encryption_key(session)
+
+    if not key:
+
+        print()
+        print("NIE UDAŁO SIĘ POBRAĆ KLUCZA.")
+
+        return
+
+    # ========================================================
+    # POBIERANIE KIEROWCÓW
+    # ========================================================
+
+    line()
+    print("ROZPOCZYNAM POBIERANIE KIEROWCÓW")
+    line()
+
+    results = []
+
+    total_players = len(PLAYERS)
+
+    for index, player in enumerate(PLAYERS, start=1):
+
+        print()
+        print(f"KIEROWCA {index} / {total_players}")
+
+        result = get_driver(
+            session,
+            player,
+            key
+        )
+
+        if result:
+
+            results.append(result)
+
+        else:
+
+            print(
+                f"NIE UDAŁO SIĘ POBRAĆ: "
+                f"{player}"
             )
 
-            # Alternatywne pola
-            if zawody is None:
-                zawody = summary.get(
-                    "total_races"
-                )
+        # Nie czekamy po ostatnim kierowcy
 
-            if zawody is None:
-                zawody = summary.get(
-                    "races"
-                )
+        if index < total_players:
 
-            if zawody is None:
-                zawody = 0
+            print()
+            print(
+                f"Czekam {WAIT_SECONDS} sekundy..."
+            )
 
-    try:
-        zawody = int(zawody)
-    except:
-        zawody = 0
+            time.sleep(WAIT_SECONDS)
 
-    return {
-        "psn": psn,
-        "dr": dr,
-        "sr": sr,
-        "pk": pk,
-        "zawody": zawody
+    # ========================================================
+    # SORTOWANIE WEDŁUG PK
+    # ========================================================
+
+    results.sort(
+        key=lambda driver: driver["pk"],
+        reverse=True
+    )
+
+    # ========================================================
+    # DODANIE POZYCJI
+    # ========================================================
+
+    for position, driver in enumerate(
+        results,
+        start=1
+    ):
+
+        driver["position"] = position
+
+    # ========================================================
+    # WYNIKI KOŃCOWE
+    # ========================================================
+
+    line()
+    print("WYNIKI KOŃCOWE")
+    line()
+
+    for driver in results:
+
+        print(
+            f"{driver['position']}. "
+            f"{driver['name']} | "
+            f"DR {driver['dr']} | "
+            f"SR {driver['sr']} | "
+            f"PK {driver['pk']} | "
+            f"Zawody {driver['races']}"
+        )
+
+    # ========================================================
+    # DATA AKTUALIZACJI
+    # ========================================================
+
+    now = datetime.now()
+
+    update_date = now.strftime(
+        "%d.%m.%Y %H:%M"
+    )
+
+    # ========================================================
+    # PRZYGOTOWANIE PLIKU JSON
+    # ========================================================
+
+    ranking_data = {
+        "last_update": update_date,
+        "drivers": results
     }
 
+    # ========================================================
+    # ZAPIS DO ranking.json
+    # ========================================================
 
-# ============================================
-# POBIERANIE WSZYSTKICH KIEROWCÓW
-# ============================================
+    with open(
+        "ranking.json",
+        "w",
+        encoding="utf-8"
+    ) as file:
 
-print()
-print("=" * 60)
-print("ROZPOCZYNAM POBIERANIE KIEROWCÓW")
-print("=" * 60)
-
-wyniki = []
-
-for numer, psn in enumerate(
-    KIEROWCY,
-    start=1
-):
-
-    print()
-    print(
-        f"KIEROWCA {numer} / {len(KIEROWCY)}"
-    )
-
-    data = pobierz_profil(psn)
-
-    if data is not None:
-
-        kierowca = odczytaj_kierowce(
-            psn,
-            data
+        json.dump(
+            ranking_data,
+            file,
+            ensure_ascii=False,
+            indent=4
         )
 
-        print()
+    line()
+    print("RANKING ZAPISANY DO PLIKU: ranking.json")
+    print(f"DATA AKTUALIZACJI: {update_date}")
+    line()
 
-        print(
-            f"WYNIK: "
-            f"{kierowca['psn']} | "
-            f"DR: {kierowca['dr']} | "
-            f"SR: {kierowca['sr']} | "
-            f"PK: {kierowca['pk']} | "
-            f"Zawody: {kierowca['zawody']}"
-        )
-
-        wyniki.append(kierowca)
-
-    else:
-
-        print(
-            "NIE UDAŁO SIĘ POBRAĆ:",
-            psn
-        )
-
-    # ========================================
-    # PRZERWA MIĘDZY KIEROWCAMI
-    # ========================================
-
-    if numer < len(KIEROWCY):
-
-        print()
-        print("Czekam 4 sekundy...")
-        time.sleep(4)
+    print("GOTOWE")
 
 
-# ============================================
-# SORTOWANIE WEDŁUG PK
-# ============================================
+# ============================================================
+# START PROGRAMU
+# ============================================================
 
-wyniki.sort(
-    key=lambda x: x["pk"],
-    reverse=True
-)
-
-
-# ============================================
-# WYNIKI
-# ============================================
-
-print()
-print("=" * 60)
-print("WYNIKI KOŃCOWE")
-print("=" * 60)
-
-for pozycja, kierowca in enumerate(
-    wyniki,
-    start=1
-):
-
-    print(
-        f"{pozycja}. "
-        f"{kierowca['psn']} | "
-        f"DR {kierowca['dr']} | "
-        f"SR {kierowca['sr']} | "
-        f"PK {kierowca['pk']} | "
-        f"Zawody {kierowca['zawody']}"
-    )
-
-
-print()
-print("=" * 60)
-print("GOTOWE")
-print("=" * 60)
+if __name__ == "__main__":
+    main()
