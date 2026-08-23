@@ -45,3 +45,71 @@ jobs:
             git commit -m "Automatyczna aktualizacja rankingu"
             git push
           fi
+
+      - name: Wyślij ranking na Discord
+        if: success()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          python - <<'PYTHON'
+          import json
+          import os
+          import urllib.request
+
+          with open("ranking.json", "r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          update = data.get("last_update", "")
+          drivers = data.get("drivers", [])
+
+          lines = [
+              "🏆 **SRS DRIVER RANKING**",
+              f"📅 Ostatnia aktualizacja: **{update}**",
+              "",
+              "**TOP 10 KIEROWCÓW**"
+          ]
+
+          for driver in drivers[:10]:
+              position = driver.get("position", "-")
+              name = driver.get("name", "Brak nazwy")
+              dr = driver.get("dr", "-")
+              sr = driver.get("sr", "-")
+              pk = driver.get("pk", 0)
+
+              if position == 1:
+                  medal = "🥇"
+              elif position == 2:
+                  medal = "🥈"
+              elif position == 3:
+                  medal = "🥉"
+              else:
+                  medal = f"**{position}.**"
+
+              lines.append(
+                  f"{medal} **{name}** — DR {dr} | SR {sr} | **{pk} PK**"
+              )
+
+          lines += [
+              "",
+              "🔗 Pełny ranking:",
+              "https://dawidkusmierz-pixel.github.io/srs-driver-ranking/"
+          ]
+
+          payload = {
+              "username": "SRS Ranking",
+              "content": "\n".join(lines)
+          }
+
+          request = urllib.request.Request(
+              os.environ["DISCORD_WEBHOOK"],
+              data=json.dumps(payload).encode("utf-8"),
+              headers={
+                  "Content-Type": "application/json",
+                  "User-Agent": "SRS-Ranking"
+              },
+              method="POST"
+          )
+
+          with urllib.request.urlopen(request) as response:
+              print("Wiadomość wysłana na Discord. Status:", response.status)
+          PYTHON
