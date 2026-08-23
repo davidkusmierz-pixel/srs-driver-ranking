@@ -44,8 +44,17 @@ HEADERS = {
         "Mozilla/5.0 "
         "(Windows NT 10.0; Win64; x64) "
         "AppleWebKit/537.36 "
-        "Chrome/120.0 Safari/537.36"
-    )
+        "(KHTML, like Gecko) "
+        "Chrome/131.0.0.0 "
+        "Safari/537.36"
+    ),
+    "Accept": (
+        "text/html,application/xhtml+xml,"
+        "application/xml;q=0.9,"
+        "image/avif,image/webp,*/*;q=0.8"
+    ),
+    "Accept-Language": "en-US,en;q=0.9",
+    "Referer": "https://gtsh-rank.com/"
 }
 
 
@@ -54,17 +63,25 @@ MESSAGE_IDS_FILE = "message_ids.txt"
 
 def get_player(psn):
 
-    # Profil konkretnego zawodnika
     url = (
         "https://gtsh-rank.com/profile/?id="
         + quote(psn)
     )
+
+    print("")
+    print("========================================")
+    print(f"Pobieram profil: {psn}")
+    print(f"URL: {url}")
+    print("========================================")
 
     response = requests.get(
         url,
         headers=HEADERS,
         timeout=30
     )
+
+    print(f"Status strony: {response.status_code}")
+    print(f"Adres po przekierowaniu: {response.url}")
 
     response.raise_for_status()
 
@@ -73,41 +90,32 @@ def get_player(psn):
         "html.parser"
     )
 
-    # Cały tekst strony
     text = soup.get_text(
         "\n",
         strip=True
     )
 
-    # Usuwamy nadmiarowe spacje
-    text = re.sub(
-        r"[ \t]+",
-        " ",
-        text
-    )
+    print("")
+    print(f"===== POCZĄTEK DANYCH GTSH: {psn} =====")
+    print(text[:5000])
+    print(f"===== KONIEC DANYCH GTSH: {psn} =====")
+    print("")
 
     # DR Points
     points_match = re.search(
-        r"DR Points:\s*([0-9\s,]+)",
+        r"DR\s*Points\s*:\s*([0-9\s,]+)",
         text,
         re.IGNORECASE
     )
 
-    # Liczba zawodów
+    # Races
     races_match = re.search(
-        r"Races:\s*([0-9,]+)",
+        r"Races\s*:\s*([0-9\s,]+)",
         text,
         re.IGNORECASE
     )
 
-    # Online ID
-    online_id_match = re.search(
-        r"Online ID:\s*([^\n]+)",
-        text,
-        re.IGNORECASE
-    )
-
-    # Pobranie DR i SR z tekstu strony
+    # Linie strony
     lines = [
         line.strip()
         for line in text.splitlines()
@@ -117,78 +125,59 @@ def get_player(psn):
     dr = "?"
     sr = "?"
 
-    # GTSH pokazuje na profilu:
-    #
-    # DR
-    # SR
-    # C
-    # S
-    #
-    # Szukamy tego układu
+    dr_classes = [
+        "E",
+        "E+",
+        "D",
+        "D+",
+        "C",
+        "C+",
+        "B",
+        "B+",
+        "A",
+        "A+",
+        "S"
+    ]
 
+    # Szukanie DR
     for index, line in enumerate(lines):
 
         if line.upper() == "DR":
 
-            for offset in range(
-                1,
-                min(10, len(lines) - index)
-            ):
+            for offset in range(1, 8):
 
-                possible_dr = (
-                    lines[index + offset]
-                    .upper()
-                )
+                position = index + offset
 
-                if possible_dr in [
-                    "E",
-                    "E+",
-                    "D",
-                    "D+",
-                    "C",
-                    "C+",
-                    "B",
-                    "B+",
-                    "A",
-                    "A+",
-                    "S"
-                ]:
+                if position >= len(lines):
+                    break
+
+                possible_dr = lines[position].upper()
+
+                if possible_dr in dr_classes:
 
                     dr = possible_dr
                     break
 
+    # Szukanie SR
+    for index, line in enumerate(lines):
 
         if line.upper() == "SR":
 
-            for offset in range(
-                1,
-                min(10, len(lines) - index)
-            ):
+            for offset in range(1, 8):
 
-                possible_sr = (
-                    lines[index + offset]
-                    .upper()
-                )
+                position = index + offset
 
-                if possible_sr in [
-                    "E",
-                    "E+",
-                    "D",
-                    "D+",
-                    "C",
-                    "C+",
-                    "B",
-                    "B+",
-                    "A",
-                    "A+",
-                    "S"
-                ]:
+                if position >= len(lines):
+                    break
+
+                possible_sr = lines[position].upper()
+
+                if possible_sr in dr_classes:
 
                     sr = possible_sr
                     break
 
-
-    # DR Points
+    # Pobieranie PK
     if points_match:
 
         points_text = (
@@ -203,12 +192,12 @@ def get_player(psn):
 
         points = 0
 
-
-    # Liczba zawodów
+    # Pobieranie liczby zawodów
     if races_match:
 
         races_text = (
             races_match.group(1)
+            .replace(" ", "")
             .replace(",", "")
         )
 
@@ -218,31 +207,13 @@ def get_player(psn):
 
         races = 0
 
-
-    # Sprawdzenie, czy profil faktycznie został znaleziony
-    if not online_id_match:
-
-        print(
-            f"Nie znaleziono profilu: {psn}"
-        )
-
-        return {
-            "psn": psn,
-            "dr": "?",
-            "sr": "?",
-            "points": 0,
-            "races": 0
-        }
-
-
     print(
-        f"Znaleziono: {psn} | "
-        f"DR {dr} | "
-        f"SR {sr} | "
-        f"PK {points} | "
-        f"Zawody {races}"
+        f"WYNIK: {psn} | "
+        f"DR: {dr} | "
+        f"SR: {sr} | "
+        f"PK: {points} | "
+        f"Zawody: {races}"
     )
-
 
     return {
         "psn": psn,
@@ -253,7 +224,6 @@ def get_player(psn):
     }
 
 
-# Pobieranie zapisanych ID wiadomości
 def load_message_ids():
 
     if not os.path.exists(
@@ -274,7 +244,6 @@ def load_message_ids():
         ]
 
 
-# Zapisywanie ID wiadomości
 def save_message_ids(message_ids):
 
     with open(
@@ -290,7 +259,6 @@ def save_message_ids(message_ids):
             )
 
 
-# Wysyłanie nowej wiadomości
 def send_discord_message(message):
 
     response = requests.post(
@@ -306,7 +274,6 @@ def send_discord_message(message):
     return response.json()["id"]
 
 
-# Aktualizacja istniejącej wiadomości
 def update_discord_message(
     message_id,
     message
@@ -333,26 +300,15 @@ def main():
 
         return
 
-
     ranking = []
 
-
-    # Pobieranie każdego zawodnika osobno
     for player in PLAYERS:
 
         try:
 
-            print(
-                f"Pobieram: {player}"
-            )
+            data = get_player(player)
 
-            data = get_player(
-                player
-            )
-
-            ranking.append(
-                data
-            )
+            ranking.append(data)
 
         except Exception as error:
 
@@ -368,15 +324,12 @@ def main():
                 "races": 0
             })
 
-
-    # Sortowanie według DR Points
+    # Sortowanie według PK
     ranking.sort(
         key=lambda x: x["points"],
         reverse=True
     )
 
-
-    # Nagłówek rankingu
     current_message = (
         "\u200b\n"
         "📈 **RANKING GŁÓWNY SRS**\n\n"
@@ -386,13 +339,10 @@ def main():
         "━━━━━━━━━━━━━━━━━━━━\n\n"
     )
 
-
     messages = []
 
     message_number = 1
 
-
-    # Tworzenie rankingu
     for i, player in enumerate(
         ranking,
         start=1
@@ -414,7 +364,6 @@ def main():
 
             medal = "🏁"
 
-
         if player["points"] > 0:
 
             points_text = (
@@ -425,7 +374,6 @@ def main():
         else:
 
             points_text = "Brak danych"
-
 
         if player["races"] > 0:
 
@@ -438,17 +386,14 @@ def main():
 
             races_text = "Brak danych"
 
-
         player_text = (
             f"{medal} **{i}. {player['psn']}**\n"
-            f"🏅 DR **{player['dr']}**"
-            f" • SR **{player['sr']}**\n"
+            f"🏅 DR **{player['dr']}** • "
+            f"SR **{player['sr']}**\n"
             f"📊 PK: **{points_text}**\n"
             f"🏁 Zawody: **{races_text}**\n\n"
         )
 
-
-        # Podział na kilka wiadomości
         if (
             len(current_message)
             + len(player_text)
@@ -467,42 +412,27 @@ def main():
                 "━━━━━━━━━━━━━━━━━━━━\n\n"
             )
 
-
         current_message += player_text
 
-
-    # Dodanie ostatniej części
     if current_message:
 
         messages.append(
             current_message
         )
 
-
-    # Data aktualizacji
     messages[-1] += (
         "━━━━━━━━━━━━━━━━━━━━\n\n"
         "🕒 **Ostatnia aktualizacja:** "
         f"{datetime.now(ZoneInfo('Europe/Warsaw')).strftime('%d.%m.%Y %H:%M')}"
     )
 
-
-    # Pobranie starych ID wiadomości
-    old_message_ids = (
-        load_message_ids()
-    )
+    old_message_ids = load_message_ids()
 
     new_message_ids = []
 
+    for number, message in enumerate(messages):
 
-    # Aktualizacja lub wysyłanie
-    for number, message in enumerate(
-        messages
-    ):
-
-        if number < len(
-            old_message_ids
-        ):
+        if number < len(old_message_ids):
 
             try:
 
@@ -520,32 +450,25 @@ def main():
                     f"{number + 1}/{len(messages)}"
                 )
 
-
             except Exception as error:
 
                 print(
-                    f"Nie udało się "
-                    f"zaktualizować części "
-                    f"{number + 1}: {error}"
+                    f"Nie udało się zaktualizować "
+                    f"części {number + 1}: {error}"
                 )
 
-                message_id = (
-                    send_discord_message(
-                        message
-                    )
+                message_id = send_discord_message(
+                    message
                 )
 
                 new_message_ids.append(
                     message_id
                 )
 
-
         else:
 
-            message_id = (
-                send_discord_message(
-                    message
-                )
+            message_id = send_discord_message(
+                message
             )
 
             new_message_ids.append(
@@ -557,18 +480,13 @@ def main():
                 f"{number + 1}/{len(messages)}"
             )
 
-
-    # Zapisanie ID wiadomości
     save_message_ids(
         new_message_ids
     )
 
-
-    print(
-        "Ranking SRS został zaktualizowany!"
-    )
+    print("")
+    print("Ranking SRS został zaktualizowany!")
 
 
 if __name__ == "__main__":
-
     main()
