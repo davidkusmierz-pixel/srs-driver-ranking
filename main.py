@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
+
 PLAYERS = [
     "SolidSnakePoland",
     "ALF7",
@@ -30,65 +31,167 @@ PLAYERS = [
     "Jaras_GD",
     "PRT_El_Chapo",
     "SRS-Tony-Montana",
-    
     "demon23mor"
 ]
+
 
 WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK")
 
 HEADERS = {
-    "User-Agent": "Mozilla/5.0"
+    "User-Agent": (
+        "Mozilla/5.0 "
+        "(Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 "
+        "Chrome/120 Safari/537.36"
+    )
 }
 
 MESSAGE_IDS_FILE = "message_ids.txt"
 
+RANKING_URL = "https://gtsh-rank.com/ranking/"
 
-def get_player(psn):
-    url = f"https://www.dg-edge.com/players/{psn}"
+
+def normalize_name(name):
+    return name.strip().lower()
+
+
+def get_all_players():
 
     response = requests.get(
-        url,
+        RANKING_URL,
         headers=HEADERS,
         timeout=30
     )
 
     response.raise_for_status()
 
-    soup = BeautifulSoup(response.text, "html.parser")
-    text = soup.get_text(" ", strip=True)
-
-    # Pobieranie PK i PFK
-    pk_pfk_match = re.search(
-        rf"{re.escape(psn)}.*?\b([A-E]\+?|S)\s+([A-E]|S)\b",
-        text,
-        re.IGNORECASE
+    soup = BeautifulSoup(
+        response.text,
+        "html.parser"
     )
 
-    # Pobieranie Edge Score
-    score_match = re.search(
-        r"(\d{1,3}\.\d{1,2})\s+Edge Score",
-        text,
-        re.IGNORECASE
+    text = soup.get_text(
+        "\n",
+        strip=True
     )
 
-    pk = pk_pfk_match.group(1) if pk_pfk_match else "?"
-    pfk = pk_pfk_match.group(2) if pk_pfk_match else "?"
-    score = float(score_match.group(1)) if score_match else 0.0
+    lines = [
+        line.strip()
+        for line in text.splitlines()
+        if line.strip()
+    ]
+
+    players_data = []
+
+    for index, line in enumerate(lines):
+
+        # Szukamy klasy DR
+        if line in [
+            "E", "E+",
+            "D", "D+",
+            "C", "C+",
+            "B", "B+",
+            "A", "A+",
+            "S"
+        ]:
+
+            dr_class = line
+
+            # Szukamy kolejnej liczby będącej PK
+            for offset in range(1, 10):
+
+                if index + offset >= len(lines):
+                    break
+
+                value = lines[index + offset]
+
+                if re.fullmatch(r"\d{4,6}", value):
+
+                    # Szukamy nazwy kierowcy przed PK
+                    player_name = None
+
+                    for back in range(
+                        1,
+                        min(index, 10) + 1
+                    ):
+
+                        possible_name = (
+                            lines[index - back]
+                        )
+
+                        if (
+                            not re.fullmatch(
+                                r"\d+\.?",
+                                possible_name
+                            )
+                            and possible_name not in [
+                                "Global",
+                                "TOP Split 1",
+                                "TOP Split 2",
+                                "TOP Split 3",
+                                "TOP Split 4",
+                                "Nat.",
+                                "Driver / Brand",
+                                "DR / Avg",
+                                "Stat",
+                                "Trend"
+                            ]
+                        ):
+
+                            player_name = possible_name
+                            break
+
+                    if player_name:
+
+                        players_data.append({
+                            "psn": player_name,
+                            "pk": int(value),
+                            "dr": dr_class
+                        })
+
+                    break
+
+    return players_data
+
+
+def get_player_data(all_players, psn):
+
+    target = normalize_name(psn)
+
+    for player in all_players:
+
+        current_name = normalize_name(
+            player["psn"]
+        )
+
+        if current_name == target:
+
+            return {
+                "psn": psn,
+                "pk": player["pk"],
+                "dr": player["dr"]
+            }
 
     return {
         "psn": psn,
-        "pk": pk,
-        "pfk": pfk,
-        "score": score
+        "pk": 0,
+        "dr": "?"
     }
 
 
-# Pobieranie zapisanych ID wiadomości
 def load_message_ids():
-    if not os.path.exists(MESSAGE_IDS_FILE):
+
+    if not os.path.exists(
+        MESSAGE_IDS_FILE
+    ):
         return []
 
-    with open(MESSAGE_IDS_FILE, "r", encoding="utf-8") as file:
+    with open(
+        MESSAGE_IDS_FILE,
+        "r",
+        encoding="utf-8"
+    ) as file:
+
         return [
             line.strip()
             for line in file.readlines()
@@ -96,18 +199,28 @@ def load_message_ids():
         ]
 
 
-# Zapisywanie ID wiadomości
 def save_message_ids(message_ids):
-    with open(MESSAGE_IDS_FILE, "w", encoding="utf-8") as file:
+
+    with open(
+        MESSAGE_IDS_FILE,
+        "w",
+        encoding="utf-8"
+    ) as file:
+
         for message_id in message_ids:
-            file.write(f"{message_id}\n")
+
+            file.write(
+                f"{message_id}\n"
+            )
 
 
-# Wysyłanie nowej wiadomości
 def send_discord_message(message):
+
     response = requests.post(
         f"{WEBHOOK_URL}?wait=true",
-        json={"content": message},
+        json={
+            "content": message
+        },
         timeout=30
     )
 
@@ -116,11 +229,16 @@ def send_discord_message(message):
     return response.json()["id"]
 
 
-# Aktualizacja istniejącej wiadomości
-def update_discord_message(message_id, message):
+def update_discord_message(
+    message_id,
+    message
+):
+
     response = requests.patch(
         f"{WEBHOOK_URL}/messages/{message_id}",
-        json={"content": message},
+        json={
+            "content": message
+        },
         timeout=30
     )
 
@@ -128,90 +246,197 @@ def update_discord_message(message_id, message):
 
 
 def main():
+
+    if not WEBHOOK_URL:
+
+        print(
+            "BŁĄD: Brak DISCORD_WEBHOOK!"
+        )
+
+        return
+
+
+    print(
+        "Pobieram ranking z GTSH-Rank..."
+    )
+
+    try:
+
+        all_players = get_all_players()
+
+        print(
+            f"Pobrano {len(all_players)} zawodników."
+        )
+
+    except Exception as error:
+
+        print(
+            f"BŁĄD pobierania rankingu: {error}"
+        )
+
+        return
+
+
     ranking = []
 
-    # Pobieranie danych kierowców
+
     for player in PLAYERS:
+
         try:
-            print(f"Pobieram: {player}")
-            ranking.append(get_player(player))
+
+            print(
+                f"Sprawdzam: {player}"
+            )
+
+            data = get_player_data(
+                all_players,
+                player
+            )
+
+            ranking.append(data)
+
+
+            if data["pk"] == 0:
+
+                print(
+                    f"Nie znaleziono: {player}"
+                )
+
+            else:
+
+                print(
+                    f"Znaleziono: "
+                    f"{player} | "
+                    f"{data['dr']} | "
+                    f"{data['pk']}"
+                )
 
         except Exception as error:
-            print(f"BŁĄD {player}: {error}")
 
-    # Sortowanie według Edge Score
+            print(
+                f"BŁĄD {player}: {error}"
+            )
+
+
+    # Sortowanie według PK
     ranking.sort(
-        key=lambda x: x["score"],
+        key=lambda x: x["pk"],
         reverse=True
     )
 
-    # Nagłówek rankingu
+
     current_message = (
         "\u200b\n"
-        "📈 **RANKING GŁÓWNY**\n\n"
-        "🏁 Klasyfikacja według **EDGE SCORE**\n\n"
+        "📈 **RANKING GŁÓWNY SRS**\n\n"
+        "🏁 Klasyfikacja według **PK**\n\n"
+        "🌐 Źródło: **GTSH-Rank**\n\n"
         "🔄 **Aktualizacja: raz w tygodniu**\n\n"
         "━━━━━━━━━━━━━━━━━━━━\n\n"
     )
 
-    message_number = 1
+
     messages = []
 
-    # Tworzenie rankingu
-    for i, player in enumerate(ranking, start=1):
+    message_number = 1
+
+
+    for i, player in enumerate(
+        ranking,
+        start=1
+    ):
 
         if i == 1:
+
             medal = "🥇"
+
         elif i == 2:
+
             medal = "🥈"
+
         elif i == 3:
+
             medal = "🥉"
+
         else:
+
             medal = "🏁"
 
+
+        if player["pk"] > 0:
+
+            pk_text = (
+                f"{player['pk']:,}"
+                .replace(",", " ")
+            )
+
+        else:
+
+            pk_text = "Brak danych"
+
+
         player_text = (
-            f"{medal} **{i}. {player['psn']}**\n"
-            f"🏅 PK **{player['pk']}** • PFK **{player['pfk']}**\n"
-            f"📊 Score: **{player['score']:.2f}**\n\n"
+            f"{medal} **{i}. "
+            f"{player['psn']}**\n"
+            f"🏅 PK **{player['dr']}**"
+            f" • **{pk_text} PK**\n\n"
         )
 
-        # Podział rankingu na kilka wiadomości
-        if len(current_message) + len(player_text) > 1900:
-            messages.append(current_message)
+
+        if (
+            len(current_message)
+            + len(player_text)
+            > 1900
+        ):
+
+            messages.append(
+                current_message
+            )
 
             message_number += 1
 
             current_message = (
-                f"📈 **RANKING GŁÓWNY — CZĘŚĆ {message_number}**\n\n"
+                f"📈 **RANKING GŁÓWNY SRS "
+                f"— CZĘŚĆ "
+                f"{message_number}**\n\n"
                 "━━━━━━━━━━━━━━━━━━━━\n\n"
             )
 
+
         current_message += player_text
 
-    # Dodanie ostatniej części
-    if current_message:
-        messages.append(current_message)
 
-    # Polska data i godzina
+    if current_message:
+
+        messages.append(
+            current_message
+        )
+
+
     messages[-1] += (
         "━━━━━━━━━━━━━━━━━━━━\n\n"
-        f"🕒 **Ostatnia aktualizacja:** "
+        "🕒 **Ostatnia aktualizacja:** "
         f"{datetime.now(ZoneInfo('Europe/Warsaw')).strftime('%d.%m.%Y %H:%M')}"
     )
 
-    # Pobieranie ID starych wiadomości
-    old_message_ids = load_message_ids()
 
-    # Nowe ID wiadomości
+    old_message_ids = (
+        load_message_ids()
+    )
+
     new_message_ids = []
 
-    # Aktualizacja lub wysyłanie wiadomości
-    for number, message in enumerate(messages):
 
-        # Jeśli wiadomość już istnieje
-        if number < len(old_message_ids):
+    for number, message in enumerate(
+        messages
+    ):
+
+
+        if number < len(
+            old_message_ids
+        ):
 
             try:
+
                 update_discord_message(
                     old_message_ids[number],
                     message
@@ -226,39 +451,54 @@ def main():
                     f"{number + 1}/{len(messages)}"
                 )
 
+
             except Exception as error:
-                print(
-                    f"Nie udało się zaktualizować części "
-                    f"{number + 1}: {error}"
-                )
-
-                # Jeśli wiadomość została usunięta,
-                # wysyłamy nową
-                message_id = send_discord_message(message)
-
-                new_message_ids.append(message_id)
 
                 print(
-                    f"Wysłano nową część "
-                    f"{number + 1}/{len(messages)}"
+                    f"Nie udało się zaktualizować "
+                    f"części {number + 1}: "
+                    f"{error}"
                 )
 
-        # Pierwsze uruchomienie
+                message_id = (
+                    send_discord_message(
+                        message
+                    )
+                )
+
+                new_message_ids.append(
+                    message_id
+                )
+
+
         else:
-            message_id = send_discord_message(message)
 
-            new_message_ids.append(message_id)
+            message_id = (
+                send_discord_message(
+                    message
+                )
+            )
+
+            new_message_ids.append(
+                message_id
+            )
 
             print(
                 f"Wysłano część "
                 f"{number + 1}/{len(messages)}"
             )
 
-    # Zapisanie ID wiadomości
-    save_message_ids(new_message_ids)
 
-    print("Ranking SRS został zaktualizowany!")
+    save_message_ids(
+        new_message_ids
+    )
+
+
+    print(
+        "Ranking SRS został zaktualizowany!"
+    )
 
 
 if __name__ == "__main__":
+
     main()
