@@ -45,15 +45,3 @@ jobs:
             git commit -m "Automatyczna aktualizacja rankingu"
             git push
           fi
-
-      - name: Wyślij aktualizację na Discord
-        if: success()
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        run: |
-          curl -H "Content-Type: application/json" \
-          -d '{
-            "username": "SRS Ranking",
-            "content": "🏆 **SRS DRIVER RANKING**\n📊 Ranking został automatycznie zaktualizowany!\n\n[🏆 SPRAWDŹ RANKING SRS](https://dawidkusmierz-pixel.github.io/srs-driver-ranking/)"
-          }' \
-          "$DISCORD_WEBHOOK"
