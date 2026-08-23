@@ -12,7 +12,7 @@ PLAYERS = [
     "MTE_JaXoN_GT",
     "Przemo7117",
     "Dawid-y6q",
-    "Olilgo1234",
+    "OliIgo1234",
     "MaddMikke992",
     "Chudinius47",
     "sajgon89",
