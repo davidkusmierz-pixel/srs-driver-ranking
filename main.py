@@ -3,6 +3,7 @@ import re
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 PLAYERS = [
     "SolidSnakePoland",
@@ -54,12 +55,14 @@ def get_player(psn):
     soup = BeautifulSoup(response.text, "html.parser")
     text = soup.get_text(" ", strip=True)
 
+    # Pobieranie PK i PFK
     pk_pfk_match = re.search(
         rf"{re.escape(psn)}.*?\b([A-E]\+?|S)\s+([A-E]|S)\b",
         text,
         re.IGNORECASE
     )
 
+    # Pobieranie Edge Score
     score_match = re.search(
         r"(\d{1,3}\.\d{1,2})\s+Edge Score",
         text,
@@ -78,11 +81,12 @@ def get_player(psn):
     }
 
 
+# Pobieranie zapisanych ID wiadomości
 def load_message_ids():
     if not os.path.exists(MESSAGE_IDS_FILE):
         return []
 
-    with open(MESSAGE_IDS_FILE, "r") as file:
+    with open(MESSAGE_IDS_FILE, "r", encoding="utf-8") as file:
         return [
             line.strip()
             for line in file.readlines()
@@ -90,12 +94,14 @@ def load_message_ids():
         ]
 
 
+# Zapisywanie ID wiadomości
 def save_message_ids(message_ids):
-    with open(MESSAGE_IDS_FILE, "w") as file:
+    with open(MESSAGE_IDS_FILE, "w", encoding="utf-8") as file:
         for message_id in message_ids:
             file.write(f"{message_id}\n")
 
 
+# Wysyłanie nowej wiadomości
 def send_discord_message(message):
     response = requests.post(
         f"{WEBHOOK_URL}?wait=true",
@@ -108,6 +114,7 @@ def send_discord_message(message):
     return response.json()["id"]
 
 
+# Aktualizacja istniejącej wiadomości
 def update_discord_message(message_id, message):
     response = requests.patch(
         f"{WEBHOOK_URL}/messages/{message_id}",
@@ -121,6 +128,7 @@ def update_discord_message(message_id, message):
 def main():
     ranking = []
 
+    # Pobieranie danych kierowców
     for player in PLAYERS:
         try:
             print(f"Pobieram: {player}")
@@ -129,11 +137,13 @@ def main():
         except Exception as error:
             print(f"BŁĄD {player}: {error}")
 
+    # Sortowanie według Edge Score
     ranking.sort(
         key=lambda x: x["score"],
         reverse=True
     )
 
+    # Nagłówek rankingu
     current_message = (
         "\u200b\n"
         "📈 **RANKING GŁÓWNY**\n\n"
@@ -145,6 +155,7 @@ def main():
     message_number = 1
     messages = []
 
+    # Tworzenie rankingu
     for i, player in enumerate(ranking, start=1):
 
         if i == 1:
@@ -162,6 +173,7 @@ def main():
             f"📊 Score: **{player['score']:.2f}**\n\n"
         )
 
+        # Podział rankingu na kilka wiadomości
         if len(current_message) + len(player_text) > 1900:
             messages.append(current_message)
 
@@ -174,20 +186,27 @@ def main():
 
         current_message += player_text
 
+    # Dodanie ostatniej części
     if current_message:
         messages.append(current_message)
 
+    # Polska data i godzina
     messages[-1] += (
         "━━━━━━━━━━━━━━━━━━━━\n\n"
         f"🕒 **Ostatnia aktualizacja:** "
-        f"{datetime.now().strftime('%d.%m.%Y %H:%M')}"
+        f"{datetime.now(ZoneInfo('Europe/Warsaw')).strftime('%d.%m.%Y %H:%M')}"
     )
 
+    # Pobieranie ID starych wiadomości
     old_message_ids = load_message_ids()
+
+    # Nowe ID wiadomości
     new_message_ids = []
 
+    # Aktualizacja lub wysyłanie wiadomości
     for number, message in enumerate(messages):
 
+        # Jeśli wiadomość już istnieje
         if number < len(old_message_ids):
 
             try:
@@ -207,14 +226,25 @@ def main():
 
             except Exception as error:
                 print(
-                    f"Nie udało się zaktualizować: {error}"
+                    f"Nie udało się zaktualizować części "
+                    f"{number + 1}: {error}"
                 )
 
+                # Jeśli wiadomość została usunięta,
+                # wysyłamy nową
                 message_id = send_discord_message(message)
+
                 new_message_ids.append(message_id)
 
+                print(
+                    f"Wysłano nową część "
+                    f"{number + 1}/{len(messages)}"
+                )
+
+        # Pierwsze uruchomienie
         else:
             message_id = send_discord_message(message)
+
             new_message_ids.append(message_id)
 
             print(
@@ -222,6 +252,7 @@ def main():
                 f"{number + 1}/{len(messages)}"
             )
 
+    # Zapisanie ID wiadomości
     save_message_ids(new_message_ids)
 
     print("Ranking SRS został zaktualizowany!")
