@@ -1,10 +1,10 @@
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-import re
 
 
 URL = "https://gtsh-rank.com/profile/"
+
 
 HEADERS = {
     "User-Agent": (
@@ -31,116 +31,225 @@ def main():
     )
 
     print("Status:", response.status_code)
+    print("Adres:", response.url)
+
+    response.raise_for_status()
 
     soup = BeautifulSoup(
         response.text,
         "html.parser"
     )
 
-    # Wszystkie pliki JavaScript
-    scripts = []
-
-    for script in soup.find_all("script"):
-
-        src = script.get("src")
-
-        if src:
-
-            script_url = urljoin(
-                URL,
-                src
-            )
-
-            scripts.append(script_url)
+    # ========================================
+    # FORMULARZE
+    # ========================================
 
     print("")
     print("========================================")
-    print("ZNALEZIONE PLIKI JAVASCRIPT")
+    print("ZNALEZIONE FORMULARZE")
     print("========================================")
 
-    for script_url in scripts:
+    forms = soup.find_all("form")
 
-        print(script_url)
+    print("Liczba formularzy:", len(forms))
 
-    print("")
-    print("========================================")
-    print("ANALIZA JAVASCRIPT")
-    print("========================================")
-
-    # Pobieranie każdego pliku JS
-    for script_url in scripts:
+    for number, form in enumerate(forms, start=1):
 
         print("")
         print("----------------------------------------")
-        print("PLIK:")
-        print(script_url)
+        print(f"FORMULARZ NR {number}")
         print("----------------------------------------")
 
-        try:
+        print(
+            "ACTION:",
+            form.get("action")
+        )
 
-            js_response = requests.get(
-                script_url,
-                headers=HEADERS,
-                timeout=30
-            )
+        print(
+            "METHOD:",
+            form.get("method")
+        )
 
-            print(
-                "Status:",
-                js_response.status_code
-            )
+        print(
+            "ID:",
+            form.get("id")
+        )
 
-            js_text = js_response.text
+        print(
+            "CLASS:",
+            form.get("class")
+        )
 
-            # Szukamy słów związanych z API
-            keywords = [
-                "fetch(",
-                "axios",
-                "ajax",
-                "XMLHttpRequest",
-                "/api/",
-                "profile",
-                "player",
-                "driver",
-                "psn",
-                "GET"
+        print("")
+        print("CAŁY FORMULARZ:")
+        print(form.prettify())
+
+        print("")
+        print("POLA FORMULARZA:")
+
+        fields = form.find_all(
+            [
+                "input",
+                "button",
+                "select",
+                "textarea"
             ]
+        )
 
-            for keyword in keywords:
+        for field in fields:
 
-                if keyword.lower() in js_text.lower():
-
-                    print("")
-                    print(
-                        f"ZNALEZIONO SŁOWO: {keyword}"
-                    )
-
-                    # Wypisanie fragmentów
-                    for match in re.finditer(
-                        re.escape(keyword),
-                        js_text,
-                        re.IGNORECASE
-                    ):
-
-                        start = max(
-                            0,
-                            match.start() - 250
-                        )
-
-                        end = min(
-                            len(js_text),
-                            match.end() + 500
-                        )
-
-                        print("")
-                        print(js_text[start:end])
-                        print("")
-
-        except Exception as error:
+            print("")
+            print(
+                "TAG:",
+                field.name
+            )
 
             print(
-                "BŁĄD:",
-                error
+                "TYPE:",
+                field.get("type")
             )
+
+            print(
+                "NAME:",
+                field.get("name")
+            )
+
+            print(
+                "ID:",
+                field.get("id")
+            )
+
+            print(
+                "VALUE:",
+                field.get("value")
+            )
+
+            print(
+                "ONCLICK:",
+                field.get("onclick")
+            )
+
+            print(
+                "ONCHANGE:",
+                field.get("onchange")
+            )
+
+            print(
+                "CLASS:",
+                field.get("class")
+            )
+
+    # ========================================
+    # PRZYCISKI
+    # ========================================
+
+    print("")
+    print("========================================")
+    print("WSZYSTKIE PRZYCISKI")
+    print("========================================")
+
+    buttons = soup.find_all(
+        ["button", "input"]
+    )
+
+    for button in buttons:
+
+        button_text = button.get_text(
+            " ",
+            strip=True
+        )
+
+        value = button.get("value")
+
+        button_type = button.get("type")
+
+        if (
+            button_text
+            or value
+        ):
+
+            print("")
+            print(
+                "TEKST:",
+                button_text
+            )
+
+            print(
+                "VALUE:",
+                value
+            )
+
+            print(
+                "TYPE:",
+                button_type
+            )
+
+            print(
+                "ID:",
+                button.get("id")
+            )
+
+            print(
+                "NAME:",
+                button.get("name")
+            )
+
+            print(
+                "ONCLICK:",
+                button.get("onclick")
+            )
+
+            print(
+                "HTML:"
+            )
+
+            print(
+                str(button)
+            )
+
+    # ========================================
+    # SKRYPTY INLINE
+    # ========================================
+
+    print("")
+    print("========================================")
+    print("SKRYPTY INLINE")
+    print("========================================")
+
+    scripts = soup.find_all("script")
+
+    inline_count = 0
+
+    for number, script in enumerate(
+        scripts,
+        start=1
+    ):
+
+        # Pomijamy zewnętrzne JS
+        if script.get("src"):
+
+            continue
+
+        script_text = script.get_text(
+            "\n",
+            strip=True
+        )
+
+        if not script_text:
+
+            continue
+
+        inline_count += 1
+
+        print("")
+        print("----------------------------------------")
+        print(
+            f"SKRYPT INLINE NR "
+            f"{inline_count}"
+        )
+        print("----------------------------------------")
+
+        print(script_text)
 
     print("")
     print("========================================")
