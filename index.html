@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>SRS Driver Ranking</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #111;
+            color: white;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 5px;
+            color: #ffd000;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #aaa;
+            margin-bottom: 25px;
+        }
+
+        .update {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #00d4ff;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #1b1b1b;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        th {
+            background: #ffd000;
+            color: black;
+            padding: 14px;
+            text-align: left;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #333;
+        }
+
+        tr:hover {
+            background: #252525;
+        }
+
+        .position {
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .driver {
+            font-weight: bold;
+            color: white;
+        }
+
+        .pk {
+            color: #00d4ff;
+            font-weight: bold;
+        }
+
+        .dr-a-plus {
+            color: #ff4040;
+            font-weight: bold;
+        }
+
+        .dr-a {
+            color: #ff8c00;
+            font-weight: bold;
+        }
+
+        .dr-b {
+            color: #ffd000;
+            font-weight: bold;
+        }
+
+        .dr-c {
+            color: #00d4ff;
+            font-weight: bold;
+        }
+
+        .dr-d {
+            color: #00ff88;
+            font-weight: bold;
+        }
+
+        .dr-e {
+            color: #aaa;
+            font-weight: bold;
+        }
+
+        .sr-s {
+            color: #00ff88;
+            font-weight: bold;
+        }
+
+        .sr-a {
+            color: #ffd000;
+            font-weight: bold;
+        }
+
+        .sr-b {
+            color: #ff8c00;
+            font-weight: bold;
+        }
+
+        .error {
+            text-align: center;
+            color: #ff5555;
+            font-size: 18px;
+        }
+
+        .loading {
+            text-align: center;
+            color: #aaa;
+            font-size: 18px;
+        }
+
+        @media (max-width: 600px) {
+
+            body {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            th,
+            td {
+                padding: 9px 5px;
+                font-size: 13px;
+            }
+
+            table {
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>🏆 SRS DRIVER RANKING</h1>
+
+        <div class="subtitle">
+            Sim Racing Squad — Gran Turismo 7
+        </div>
+
+        <div id="update" class="update">
+            Ładowanie daty aktualizacji...
+        </div>
+
+        <div id="ranking">
+            <div class="loading">
+                Ładowanie rankingu...
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+
+        fetch("ranking.json")
+            .then(response => {
+
+                if (!response.ok) {
+                    throw new Error("Nie można pobrać rankingu");
+                }
+
+                return response.json();
+            })
+
+            .then(data => {
+
+                console.log(data);
+
+                let drivers = [];
+
+                let updateDate = "";
+
+                if (Array.isArray(data)) {
+
+                    drivers = data;
+
+                } else {
+
+                    drivers = data.ranking || data.drivers || data.results || [];
+
+                    updateDate =
+                        data.updated_at ||
+                        data.update_date ||
+                        data.data_aktualizacji ||
+                        "";
+
+                }
+
+
+                const updateBox = document.getElementById("update");
+
+                if (updateDate) {
+
+                    updateBox.textContent =
+                        "📅 Ostatnia aktualizacja: " + updateDate;
+
+                } else {
+
+                    updateBox.textContent =
+                        "📅 Ranking SRS";
+
+                }
+
+
+                const rankingBox =
+                    document.getElementById("ranking");
+
+
+                if (!drivers.length) {
+
+                    rankingBox.innerHTML =
+                        '<div class="error">Brak danych w rankingu.</div>';
+
+                    return;
+                }
+
+
+                let html = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Kierowca</th>
+                                <th>DR</th>
+                                <th>SR</th>
+                                <th>PK</th>
+                                <th>Zawody</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                `;
+
+
+                drivers.forEach((driver, index) => {
+
+                    const position =
+                        driver.position ||
+                        driver.pozycja ||
+                        index + 1;
+
+                    const name =
+                        driver.name ||
+                        driver.nick ||
+                        driver.psnid ||
+                        driver.driver ||
+                        "Brak nazwy";
+
+                    const dr =
+                        driver.dr ||
+                        driver.DR ||
+                        "-";
+
+                    const sr =
+                        driver.sr ||
+                        driver.SR ||
+                        "-";
+
+                    const pk =
+                        driver.pk ||
+                        driver.PK ||
+                        driver.dr_points ||
+                        0;
+
+                    const races =
+                        driver.races ||
+                        driver.zawody ||
+                        driver.entries ||
+                        0;
+
+
+                    let drClass = "dr-e";
+
+                    if (dr === "A+") {
+                        drClass = "dr-a-plus";
+                    }
+
+                    else if (dr === "A") {
+                        drClass = "dr-a";
+                    }
+
+                    else if (dr === "B") {
+                        drClass = "dr-b";
+                    }
+
+                    else if (dr === "C") {
+                        drClass = "dr-c";
+                    }
+
+                    else if (dr === "D") {
+                        drClass = "dr-d";
+                    }
+
+
+                    let srClass = "";
+
+                    if (sr === "S") {
+                        srClass = "sr-s";
+                    }
+
+                    else if (sr === "A") {
+                        srClass = "sr-a";
+                    }
+
+                    else if (sr === "B") {
+                        srClass = "sr-b";
+                    }
+
+
+                    html += `
+                        <tr>
+
+                            <td class="position">
+                                ${position}
+                            </td>
+
+                            <td class="driver">
+                                ${name}
+                            </td>
+
+                            <td class="${drClass}">
+                                ${dr}
+                            </td>
+
+                            <td class="${srClass}">
+                                ${sr}
+                            </td>
+
+                            <td class="pk">
+                                ${pk}
+                            </td>
+
+                            <td>
+                                ${races}
+                            </td>
+
+                        </tr>
+                    `;
+
+                });
+
+
+                html += `
+                        </tbody>
+                    </table>
+                `;
+
+
+                rankingBox.innerHTML = html;
+
+            })
+
+            .catch(error => {
+
+                console.error(error);
+
+                document.getElementById("ranking").innerHTML =
+                    '<div class="error">❌ Nie udało się pobrać rankingu.</div>';
+
+                document.getElementById("update").textContent =
+                    "Sprawdź plik ranking.json";
+
+            });
+
+    </script>
+
+</body>
+</html>
