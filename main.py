@@ -22,7 +22,7 @@ PLAYERS = [
     "TastyLsD",
     "JankesKP",
     "BoloBagno",
-    "GrandNoobPI",
+    "GrandNoobPl",
     "adihanys85",
     "betterWanzzi",
     "ActiveShockPL",
@@ -34,6 +34,7 @@ PLAYERS = [
     "Wojtek_Kl",
     "zeusek22",
     "jupiter977gaudy",
+    "CUSTOM_PUNCH85",
     "demon23mor"
 ]
 
