@@ -31,13 +31,16 @@ jobs:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: python main.py
 
+      - name: Aktualizacja aktualnych czasów SRS
+        run: python aktualne_czasy.py
+
       - name: Zapisanie zmian
         run: |
           git config --global user.name "SRS Ranking Bot"
           git config --global user.email "ranking@srs.local"
 
-          git add message_ids.txt ranking.json
+          git add message_ids.txt ranking.json aktualne_czasy_message_ids.txt
 
-          git commit -m "Aktualizacja rankingu SRS" || exit 0
+          git commit -m "Aktualizacja rankingu i aktualnych czasów SRS" || exit 0
 
           git push
