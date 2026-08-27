@@ -231,6 +231,7 @@ def main():
 
     ranking = []
 
+
     # POBIERANIE DANYCH
     for psn, username in PLAYERS.items():
 
@@ -253,6 +254,7 @@ def main():
                 f"BŁĄD {username}: {error}"
             )
 
+
     # SORTOWANIE WEDŁUG PUNKTÓW
     ranking.sort(
         key=lambda x: x["score"],
@@ -273,6 +275,7 @@ def main():
     )
 
     messages = []
+
     message_number = 1
 
 
@@ -298,13 +301,16 @@ def main():
             medal = "🏎️"
 
 
+        # ==================================================
         # KARTA ZAWODNIKA
+        # ==================================================
+
         player_text = (
             f"{medal} **{i}. {player['username']}**\n\n"
-            f"🎖️ **PK:** {player['pk']}  •  "
-            f"**PFK:** {player['pfk']}\n"
-            f"🇵🇱 **Miejsce w Polsce:** {player['country']}\n"
-            f"📊 **PUNKTY:** {player['score']:.2f}\n\n"
+            f"🏅 PK: **{player['pk']}** • "
+            f"PFK: **{player['pfk']}**\n"
+            f"🇵🇱 **{player['country']}**\n"
+            f"📊 PUNKTY: **{player['score']:.2f}**\n\n"
         )
 
 
@@ -323,10 +329,14 @@ def main():
                 "━━━━━━━━━━━━━━━━━━━━\n\n"
             )
 
+
         current_message += player_text
 
 
+    # ==================================================
     # DODANIE OSTATNIEJ CZĘŚCI
+    # ==================================================
+
     if current_message:
         messages.append(
             current_message
@@ -360,7 +370,6 @@ def main():
 
     for number, message in enumerate(messages):
 
-        # AKTUALIZACJA ISTNIEJĄCEJ WIADOMOŚCI
         if number < len(old_message_ids):
 
             message_id = old_message_ids[number]
@@ -395,8 +404,6 @@ def main():
                     new_id
                 )
 
-
-        # WYSŁANIE NOWEJ WIADOMOŚCI
         else:
 
             new_id = send_discord_message(
