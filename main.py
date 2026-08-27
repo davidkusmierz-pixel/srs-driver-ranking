@@ -83,44 +83,26 @@ def get_player(psn, username):
         strip=True
     )
 
-
-    # ==================================================
-    # PK I PFK
-    # ==================================================
-
+    # PK i PFK
     pk_pfk_match = re.search(
         rf"{re.escape(psn)}.*?\b([A-E]\+?|S)\s+([A-E]\+?|S)\b",
         text,
         re.IGNORECASE
     )
 
-
-    # ==================================================
     # EDGE SCORE
-    # ==================================================
-
     score_match = re.search(
         r"(\d{1,3}\.\d{1,2})\s+Edge Score",
         text,
         re.IGNORECASE
     )
 
-
-    # ==================================================
     # MIEJSCE W KRAJU
-    # Country position
-    # ==================================================
-
     country_match = re.search(
         r"(\d[\d,\.]*)\s+Country\s+position",
         text,
         re.IGNORECASE
     )
-
-
-    # ==================================================
-    # ODCZYT DANYCH
-    # ==================================================
 
     pk = (
         pk_pfk_match.group(1)
@@ -146,7 +128,6 @@ def get_player(psn, username):
         else "?"
     )
 
-
     return {
         "username": username,
         "pk": pk,
@@ -163,11 +144,7 @@ def get_player(psn, username):
 def load_message_ids():
 
     if not os.path.exists(MESSAGE_IDS_FILE):
-
-        print(
-            "Brak pliku message_ids.txt"
-        )
-
+        print("Brak pliku message_ids.txt")
         return []
 
     with open(
@@ -196,10 +173,7 @@ def save_message_ids(message_ids):
     ) as file:
 
         for message_id in message_ids:
-
-            file.write(
-                f"{message_id}\n"
-            )
+            file.write(f"{message_id}\n")
 
 
 # ==================================================
@@ -252,44 +226,27 @@ def update_discord_message(
 
 def main():
 
-    print(
-        "========== START RANKINGU =========="
-    )
-
+    print("========== START RANKINGU ==========")
 
     if not WEBHOOK_URL:
-
-        print(
-            "BŁĄD: Brak DISCORD_WEBHOOK!"
-        )
-
+        print("BŁĄD: Brak DISCORD_WEBHOOK!")
         return
-
 
     ranking = []
 
-
-    # ==================================================
-    # POBIERANIE DANYCH Z PROFILI
-    # ==================================================
-
+    # Pobieranie danych z profili
     for psn, username in PLAYERS.items():
 
         try:
 
-            print(
-                f"Pobieram dane: {username}"
-            )
+            print(f"Pobieram dane: {username}")
 
             player = get_player(
                 psn,
                 username
             )
 
-            ranking.append(
-                player
-            )
-
+            ranking.append(player)
 
         except Exception as error:
 
@@ -298,10 +255,7 @@ def main():
             )
 
 
-    # ==================================================
-    # SORTOWANIE WEDŁUG EDGE SCORE
-    # ==================================================
-
+    # Sortowanie według EDGE SCORE
     ranking.sort(
         key=lambda x: x["score"],
         reverse=True
@@ -314,22 +268,13 @@ def main():
 
     current_message = (
         "\u200b\n"
-        "📈 **RANKING GŁÓWNY**\n\n"
-        "🏁 Klasyfikacja według **EDGE SCORE**\n\n"
-        "📊 **Punkty są liczone na podstawie:**\n"
-        "⏱️ **Czasówek Daily Race** – "
-        "uzyskanych czasów kwalifikacyjnych\n"
-        "🏁 **Wyzwań i czasówek** – "
-        "uzyskanych wyników i czasów\n\n"
-        "💬 **Im lepsze czasy i wyniki, "
-        "tym więcej punktów zdobywa kierowca.**\n\n"
-        "🔄 **Aktualizacja: raz dziennie**\n\n"
+        "🏁 **RANKING GŁÓWNY SRS** 🏁\n\n"
+        "📈 Klasyfikacja według **EDGE SCORE**\n\n"
+        "🔄 **Aktualizacja automatyczna raz dziennie**\n\n"
         "━━━━━━━━━━━━━━━━━━━━\n\n"
     )
 
-
     messages = []
-
     message_number = 1
 
 
@@ -343,59 +288,45 @@ def main():
     ):
 
         if i == 1:
-
             medal = "🥇"
 
         elif i == 2:
-
             medal = "🥈"
 
         elif i == 3:
-
             medal = "🥉"
 
         else:
-
-            medal = "🏁"
+            medal = "🏎️"
 
 
         player_text = (
-            f"{medal} **{i}. {player['username']}**\n"
-            f"🏅 PK **{player['pk']}** • "
-            f"PFK **{player['pfk']}**\n"
-            f"🇵🇱 COUNTRY **#{player['country']}**\n"
-            f"📊 Score: **{player['score']:.2f}**\n\n"
+            f"{medal} **{i}. {player['username']}**\n\n"
+            f"🎯 **PK:** {player['pk']}  •  "
+            f"**PFK:** {player['pfk']}\n"
+            f"🇵🇱 **Polska:** #{player['country']}\n"
+            f"📈 **EDGE SCORE:** {player['score']:.2f}\n\n"
         )
 
 
-        # Discord ma limit około 2000 znaków
-        if (
-            len(current_message)
-            + len(player_text)
-            > 1900
-        ):
+        # Limit Discorda
+        if len(current_message) + len(player_text) > 1900:
 
-            messages.append(
-                current_message
-            )
+            messages.append(current_message)
 
             message_number += 1
 
             current_message = (
-                f"📈 **RANKING GŁÓWNY — "
-                f"CZĘŚĆ {message_number}**\n\n"
+                f"🏁 **RANKING SRS — "
+                f"CZĘŚĆ {message_number}** 🏁\n\n"
                 "━━━━━━━━━━━━━━━━━━━━\n\n"
             )
-
 
         current_message += player_text
 
 
     if current_message:
-
-        messages.append(
-            current_message
-        )
+        messages.append(current_message)
 
 
     # ==================================================
@@ -410,13 +341,12 @@ def main():
 
 
     # ==================================================
-    # ODCZYT STARYCH WIADOMOŚCI
+    # AKTUALIZACJA DISCORDA
     # ==================================================
 
     old_message_ids = load_message_ids()
 
     new_message_ids = []
-
 
     print(
         f"Znaleziono ID wiadomości: "
@@ -424,13 +354,7 @@ def main():
     )
 
 
-    # ==================================================
-    # AKTUALIZACJA DISCORDA
-    # ==================================================
-
-    for number, message in enumerate(
-        messages
-    ):
+    for number, message in enumerate(messages):
 
         if number < len(old_message_ids):
 
@@ -443,32 +367,24 @@ def main():
                     message
                 )
 
-                new_message_ids.append(
-                    message_id
-                )
+                new_message_ids.append(message_id)
 
                 print(
                     f"Zaktualizowano część "
                     f"{number + 1}/{len(messages)}"
                 )
 
-
             except Exception as error:
 
                 print(
-                    f"Błąd aktualizacji: "
-                    f"{error}"
+                    f"Błąd aktualizacji: {error}"
                 )
-
 
                 new_id = send_discord_message(
                     message
                 )
 
-                new_message_ids.append(
-                    new_id
-                )
-
+                new_message_ids.append(new_id)
 
         else:
 
@@ -476,9 +392,7 @@ def main():
                 message
             )
 
-            new_message_ids.append(
-                new_id
-            )
+            new_message_ids.append(new_id)
 
             print(
                 f"Wysłano dodatkową część "
@@ -487,17 +401,12 @@ def main():
 
 
     # ==================================================
-    # ZAPIS NOWYCH ID
+    # ZAPIS ID
     # ==================================================
 
-    save_message_ids(
-        new_message_ids
-    )
+    save_message_ids(new_message_ids)
 
-
-    print(
-        "========== KONIEC =========="
-    )
+    print("========== KONIEC ==========")
 
 
 if __name__ == "__main__":
