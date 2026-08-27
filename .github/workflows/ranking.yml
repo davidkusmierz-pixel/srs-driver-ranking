@@ -1,4 +1,4 @@
-name: Aktualizacja Wyników SRS
+name: Aktualizacja Rankingu SRS
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  update-results:
+  update-ranking:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,24 +24,20 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Instalacja bibliotek Python
+      - name: Instalacja bibliotek
         run: |
-          pip install requests beautifulsoup4 playwright
+          pip install requests beautifulsoup4
 
-      - name: Instalacja Chromium
-        run: |
-          python -m playwright install --with-deps chromium
-
-      - name: Pobieranie wyników
+      - name: Aktualizacja rankingu
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
           python main.py
 
-      - name: Sprawdzenie danych
+      - name: Sprawdzenie zapisanych ID
         run: |
-          echo "ZAWARTOŚĆ known_events.json:"
-          cat known_events.json || true
+          echo "ZAWARTOŚĆ message_ids.txt:"
+          cat message_ids.txt || true
 
           echo ""
           echo "STATUS GIT:"
@@ -49,13 +45,13 @@ jobs:
 
       - name: Zapisanie zmian
         run: |
-          git config --global user.name "SRS Results Bot"
-          git config --global user.email "results@srs.local"
+          git config --global user.name "SRS Ranking Bot"
+          git config --global user.email "ranking@srs.local"
 
-          git add -f known_events.json
+          git add -f message_ids.txt
 
           git status
 
-          git commit -m "Aktualizacja wyników SRS" || echo "Brak nowych zmian"
+          git commit -m "Aktualizacja rankingu SRS" || echo "Brak nowych zmian"
 
           git push
