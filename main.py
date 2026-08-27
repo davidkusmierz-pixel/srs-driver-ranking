@@ -90,7 +90,7 @@ def get_player(psn, username):
         re.IGNORECASE
     )
 
-    # EDGE SCORE
+    # EDGE SCORE = PUNKTY
     score_match = re.search(
         r"(\d{1,3}\.\d{1,2})\s+Edge Score",
         text,
@@ -177,7 +177,7 @@ def save_message_ids(message_ids):
 
 
 # ==================================================
-# WYSŁANIE WIADOMOŚCI
+# WYSŁANIE NOWEJ WIADOMOŚCI
 # ==================================================
 
 def send_discord_message(message):
@@ -237,7 +237,9 @@ def main():
 
         try:
 
-            print(f"Pobieram dane: {username}")
+            print(
+                f"Pobieram dane: {username}"
+            )
 
             player = get_player(
                 psn,
@@ -253,7 +255,10 @@ def main():
             )
 
 
+    # ==================================================
     # SORTOWANIE WEDŁUG PUNKTÓW
+    # ==================================================
+
     ranking.sort(
         key=lambda x: x["score"],
         reverse=True
@@ -273,7 +278,6 @@ def main():
     )
 
     messages = []
-
     message_number = 1
 
 
@@ -299,16 +303,22 @@ def main():
             medal = "🏎️"
 
 
+        # ==================================================
         # FORMAT ZAWODNIKA
+        # ==================================================
+
         player_text = (
             f"{medal} **{i}. {player['username']}**\n\n"
-            f"🏅 PK: **{player['pk']}** • PFK: **{player['pfk']}**\n"
+            f"🏅 PK: **{player['pk']}**   PFK: **{player['pfk']}**\n"
             f"🇵🇱 PL  **{player['country']}**\n"
             f"📊 PUNKTY: **{player['score']:.2f}**\n\n"
         )
 
 
-        # LIMIT DISCORD 2000 ZNAKÓW
+        # ==================================================
+        # LIMIT WIADOMOŚCI DISCORD
+        # ==================================================
+
         if len(current_message) + len(player_text) > 1900:
 
             messages.append(
