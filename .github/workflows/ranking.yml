@@ -17,7 +17,8 @@ jobs:
       - name: Pobieranie plików
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true
+          fetch-depth: 0
 
       - name: Ustawienie Python
         uses: actions/setup-python@v5
@@ -34,25 +35,37 @@ jobs:
         run: |
           python main.py
 
-      - name: Sprawdzenie zapisanych ID
+      - name: Sprawdzenie pliku message_ids
         run: |
-          echo "ZAWARTOŚĆ message_ids.txt:"
-          cat message_ids.txt || true
+          echo "========== PLIK =========="
+          ls -la
 
           echo ""
-          echo "STATUS GIT:"
-          git status
+          echo "========== ZAWARTOŚĆ =========="
 
-      - name: Zapisanie zmian
+          if [ -f message_ids.txt ]; then
+            cat message_ids.txt
+          else
+            echo "BRAK message_ids.txt"
+          fi
+
+          echo ""
+          echo "========== STATUS GIT =========="
+          git status --short
+
+      - name: Zapisanie nowych ID do GitHub
         run: |
-          git config --global user.name "SRS Ranking Bot"
-          git config --global user.email "ranking@srs.local"
+          git config user.name "SRS Ranking Bot"
+          git config user.email "ranking@srs.local"
 
-          git add -f message_ids.txt
-          git add -f ranking.json
+          git add message_ids.txt
 
-          git status
+          echo "========== PO GIT ADD =========="
+          git status --short
 
-          git commit -m "Aktualizacja rankingu SRS" || echo "Brak nowych zmian"
-
-          git push
+          if git diff --cached --quiet; then
+            echo "Brak zmian do zapisania"
+          else
+            git commit -m "Aktualizacja ID rankingu SRS"
+            git push
+          fi
