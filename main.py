@@ -44,6 +44,10 @@ PLAYERS = {
 }
 
 
+# ==================================================
+# USTAWIENIA
+# ==================================================
+
 WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK")
 
 HEADERS = {
@@ -80,7 +84,10 @@ def get_player(psn, username):
     )
 
 
-    # PK i PFK
+    # ==================================================
+    # PK I PFK
+    # ==================================================
+
     pk_pfk_match = re.search(
         rf"{re.escape(psn)}.*?\b([A-E]\+?|S)\s+([A-E]\+?|S)\b",
         text,
@@ -88,7 +95,10 @@ def get_player(psn, username):
     )
 
 
+    # ==================================================
     # EDGE SCORE
+    # ==================================================
+
     score_match = re.search(
         r"(\d{1,3}\.\d{1,2})\s+Edge Score",
         text,
@@ -96,18 +106,21 @@ def get_player(psn, username):
     )
 
 
+    # ==================================================
     # MIEJSCE W KRAJU
-    #
-    # Szuka np:
-    # COUNTRY #37
-    # Country #37
-    #
+    # Country position
+    # ==================================================
+
     country_match = re.search(
-        r"COUNTRY\s*#\s*(\d+)",
+        r"(\d[\d,\.]*)\s+Country\s+position",
         text,
         re.IGNORECASE
     )
 
+
+    # ==================================================
+    # ODCZYT DANYCH
+    # ==================================================
 
     pk = (
         pk_pfk_match.group(1)
@@ -150,7 +163,11 @@ def get_player(psn, username):
 def load_message_ids():
 
     if not os.path.exists(MESSAGE_IDS_FILE):
-        print("Brak pliku message_ids.txt")
+
+        print(
+            "Brak pliku message_ids.txt"
+        )
+
         return []
 
     with open(
@@ -179,6 +196,7 @@ def save_message_ids(message_ids):
     ) as file:
 
         for message_id in message_ids:
+
             file.write(
                 f"{message_id}\n"
             )
@@ -238,6 +256,7 @@ def main():
         "========== START RANKINGU =========="
     )
 
+
     if not WEBHOOK_URL:
 
         print(
@@ -249,6 +268,10 @@ def main():
 
     ranking = []
 
+
+    # ==================================================
+    # POBIERANIE DANYCH Z PROFILI
+    # ==================================================
 
     for psn, username in PLAYERS.items():
 
@@ -263,7 +286,9 @@ def main():
                 username
             )
 
-            ranking.append(player)
+            ranking.append(
+                player
+            )
 
 
         except Exception as error:
@@ -273,7 +298,10 @@ def main():
             )
 
 
-    # Sortowanie według Score
+    # ==================================================
+    # SORTOWANIE WEDŁUG EDGE SCORE
+    # ==================================================
+
     ranking.sort(
         key=lambda x: x["score"],
         reverse=True
@@ -315,15 +343,19 @@ def main():
     ):
 
         if i == 1:
+
             medal = "🥇"
 
         elif i == 2:
+
             medal = "🥈"
 
         elif i == 3:
+
             medal = "🥉"
 
         else:
+
             medal = "🏁"
 
 
@@ -336,7 +368,7 @@ def main():
         )
 
 
-        # Discord ma limit 2000 znaków
+        # Discord ma limit około 2000 znaków
         if (
             len(current_message)
             + len(player_text)
@@ -378,7 +410,7 @@ def main():
 
 
     # ==================================================
-    # AKTUALIZACJA DISCORDA
+    # ODCZYT STARYCH WIADOMOŚCI
     # ==================================================
 
     old_message_ids = load_message_ids()
@@ -391,6 +423,10 @@ def main():
         f"{len(old_message_ids)}"
     )
 
+
+    # ==================================================
+    # AKTUALIZACJA DISCORDA
+    # ==================================================
 
     for number, message in enumerate(
         messages
@@ -420,8 +456,10 @@ def main():
             except Exception as error:
 
                 print(
-                    f"Błąd aktualizacji: {error}"
+                    f"Błąd aktualizacji: "
+                    f"{error}"
                 )
+
 
                 new_id = send_discord_message(
                     message
@@ -447,6 +485,10 @@ def main():
                 f"{number + 1}"
             )
 
+
+    # ==================================================
+    # ZAPIS NOWYCH ID
+    # ==================================================
 
     save_message_ids(
         new_message_ids
