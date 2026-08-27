@@ -1,156 +1,100 @@
 import os
+import re
 import requests
+from bs4 import BeautifulSoup
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 
-# ==========================================
-# USTAWIENIA
-# ==========================================
+# ==================================================
+# PSN ID : NAZWA WYŚWIETLANA NA DISCORDZIE
+# ==================================================
+
+PLAYERS = {
+    "SolidSnakePoland": "RickyK",
+    "ALF7": "SRS ALF7_VR2",
+    "lucekbks": "SRS-Popek",
+    "MTE_JaXoN_GT": "@JaXoN_GT_YT",
+    "Przemo7117": "SRS Borko",
+    "Dawid-y6q": "SRS Dawid-y6q",
+    "Oligo1234": "SRS_skawa_gt7",
+    "MaddMikke992": "SRS BearRacer",
+    "Chudinius": "TCS_Chudinius",
+    "sajgon89": "sajgon",
+    "DoMeme_21": "SRS DoMeme",
+    "Tomas225566": "SRS TomaszPL",
+    "szymson70": "Fymek",
+    "TastyLsD": "SRS TastyXD",
+    "JankesKP": "SRS_JankesKP",
+    "BoloBagno": "SRS Bolo",
+    "GrandNoobPl": "SRS NAJTI",
+    "adihanys85": "SRS Adi",
+    "betterWanzzi": "SRS Adi",
+    "ActiveShockPL": "SRS-ActiveShock",
+    "Hrupek98": "SRS-Hrupek98",
+    "Jaras_GD": "Jaras_GD",
+    "PRT_El_Chapo": "PRT_EL_CHAPO",
+    "Piko88-Z": "NRT_Piko",
+    "destro2207": "Desmond",
+    "Wojtek_Kl69": "Wojtek_Kl",
+    "zeusek22": "zeusek666",
+    "jupiter977gaudy": "SRS Mario",
+    "CUSTOM_PUNCH85": "SRS_CUSTOM PUNCH",
+    "demon23mor": "SRS Demon23mor"
+}
+
 
 WEBHOOK_URL = os.getenv("https://discord.com/api/webhooks/1540826456802992178/kCh8knUjF5cb1ZXGegpXEV4vNMHtjIFmEzTBx5iTrG_YgsEQ2ekMAhhcWPk40P895muo")
+
+HEADERS = {
+    "User-Agent": "Mozilla/5.0"
+}
 
 MESSAGE_IDS_FILE = "message_ids.txt"
 
 
-# ==========================================
-# START
-# ==========================================
+# ==================================================
+# POBIERANIE DANYCH KIEROWCY
+# ==================================================
 
-print("==========================================")
-print("START TESTU")
-print("URUCHOMIONO MAIN.PY")
-print("==========================================")
+def get_player(psn, username):
 
+    url = f"https://www.dg-edge.com/players/{psn}"
 
-# ==========================================
-# SPRAWDZENIE WEBHOOKA
-# ==========================================
-
-if WEBHOOK_URL:
-    print("WEBHOOK: OK")
-else:
-    print("WEBHOOK: BRAK!")
-
-
-# ==========================================
-# ZAPIS TESTOWEGO ID
-# ==========================================
-
-test_message_id = "123456789012345678"
-
-print("")
-print("ZAPISUJĘ TESTOWE ID...")
-print(f"ID: {test_message_id}")
-
-with open(
-    MESSAGE_IDS_FILE,
-    "w",
-    encoding="utf-8"
-) as file:
-
-    file.write(
-        test_message_id + "\n"
+    response = requests.get(
+        url,
+        headers=HEADERS,
+        timeout=30
     )
 
+    response.raise_for_status()
 
-# ==========================================
-# SPRAWDZENIE CZY PLIK ISTNIEJE
-# ==========================================
-
-print("")
-print("SPRAWDZAM PLIK...")
-
-if os.path.exists(
-    MESSAGE_IDS_FILE
-):
-
-    print("PLIK ISTNIEJE")
-
-    print(
-        f"ROZMIAR: "
-        f"{os.path.getsize(MESSAGE_IDS_FILE)} bajtów"
+    soup = BeautifulSoup(
+        response.text,
+        "html.parser"
     )
 
-    with open(
-        MESSAGE_IDS_FILE,
-        "r",
-        encoding="utf-8"
-    ) as file:
-
-        content = file.read()
-
-    print(
-        f"ZAWARTOŚĆ: {content}"
+    text = soup.get_text(
+        " ",
+        strip=True
     )
 
-else:
+    pk_pfk_match = re.search(
+        rf"{re.escape(psn)}.*?\b([A-E]\+?|S)\s+([A-E]|S)\b",
+        text,
+        re.IGNORECASE
+    )
 
-    print("BŁĄD: PLIK NIE ISTNIEJE!")
+    score_match = re.search(
+        r"(\d{1,3}\.\d{1,2})\s+Edge Score",
+        text,
+        re.IGNORECASE
+    )
 
+    pk = (
+        pk_pfk_match.group(1)
+        if pk_pfk_match
+        else "?"
+    )
 
-# ==========================================
-# TEST DISCORDA
-# ==========================================
-
-if WEBHOOK_URL:
-
-    try:
-
-        print("")
-        print(
-            "WYSYŁAM TESTOWĄ WIADOMOŚĆ..."
-        )
-
-        response = requests.post(
-            WEBHOOK_URL,
-            params={
-                "wait": "true"
-            },
-            json={
-                "content": (
-                    "🧪 **TEST SRS RANKING**\n"
-                    "Sprawdzanie zapisu ID wiadomości."
-                )
-            },
-            timeout=30
-        )
-
-        print(
-            f"STATUS DISCORD: "
-            f"{response.status_code}"
-        )
-
-        print(
-            f"ODPOWIEDŹ: "
-            f"{response.text}"
-        )
-
-        if response.status_code in (
-            200,
-            204
-        ):
-
-            print(
-                "WIADOMOŚĆ TESTOWA WYSŁANA!"
-            )
-
-        else:
-
-            print(
-                "BŁĄD WYSYŁANIA!"
-            )
-
-    except Exception as error:
-
-        print(
-            f"BŁĄD DISCORD: {error}"
-        )
-
-
-# ==========================================
-# KONIEC
-# ==========================================
-
-print("")
-print("==========================================")
-print("KONIEC TESTU")
-print("==========================================")
+    pf
