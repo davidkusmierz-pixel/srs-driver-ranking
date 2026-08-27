@@ -2,14 +2,15 @@ import os
 import json
 import time
 import hashlib
-import requests
-from bs4 import BeautifulSoup
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
+import requests
+from playwright.sync_api import sync_playwright
+
 
 # ==================================================
-# PSN ID : NAZWA NA DISCORDZIE
+# PSN ID : NAZWA WYŚWIETLANA NA DISCORDZIE
 # ==================================================
 
 PLAYERS = {
@@ -46,19 +47,21 @@ PLAYERS = {
 }
 
 
-WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK")
-KNOWN_EVENTS_FILE = "known_events.json"
+# ==================================================
+# USTAWIENIA
+# ==================================================
 
-HEADERS = {
-    "User-Agent": "Mozilla/5.0"
-}
+WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK")
+
+KNOWN_EVENTS_FILE = "known_events.json"
 
 
 # ==================================================
-# PLIK Z ZAPAMIĘTANYMI WYNIKAMI
+# WCZYTANIE ZAPAMIĘTANYCH WYNIKÓW
 # ==================================================
 
 def load_known_events():
+
     if not os.path.exists(KNOWN_EVENTS_FILE):
         return {}
 
@@ -68,18 +71,30 @@ def load_known_events():
             "r",
             encoding="utf-8"
         ) as file:
+
             return json.load(file)
 
-    except Exception:
+    except Exception as error:
+
+        print(
+            f"BŁĄD known_events.json: {error}"
+        )
+
         return {}
 
 
+# ==================================================
+# ZAPIS ZAPAMIĘTANYCH WYNIKÓW
+# ==================================================
+
 def save_known_events(data):
+
     with open(
         KNOWN_EVENTS_FILE,
         "w",
         encoding="utf-8"
     ) as file:
+
         json.dump(
             data,
             file,
@@ -89,95 +104,175 @@ def save_known_events(data):
 
 
 # ==================================================
-# POBIERANIE PROFILU
+# POBIERANIE EVENTS RESULTS
 # ==================================================
 
-def get_player_events(psn):
+def get_player_events(page, psn):
 
     url = (
         f"https://www.dg-edge.com/players/{psn}"
     )
 
-    response = requests.get(
+    response = page.goto(
         url,
-        headers=HEADERS,
-        timeout=30
+        wait_until="networkidle",
+        timeout=60000
     )
 
-    if response.status_code == 404:
-        print(f"⚠️ Nie znaleziono profilu: {psn}")
+    if not response:
         return []
 
-    response.raise_for_status()
+    if response.status == 404:
 
-    soup = BeautifulSoup(
-        response.text,
-        "html.parser"
-    )
-
-    events = []
-
-    # Szukamy wszystkich elementów strony
-    for element in soup.find_all(
-        ["div", "article", "li", "tr"]
-    ):
-
-        text = element.get_text(
-            " ",
-            strip=True
+        print(
+            f"⚠️ Nie znaleziono profilu: {psn}"
         )
 
-        # Interesują nas tylko elementy
-        # zawierające dane wyników
-        if (
-            "Score Impact" not in text
-            and "GLOBAL" not in text
-            and "COUNTRY" not in text
-        ):
-            continue
+        return []
 
-        if len(text) < 30:
-            continue
+    try:
 
-        # Usuwamy zbyt długie kontenery
-        if len(text) > 2000:
-            continue
+        page.wait_for_timeout(3000)
 
-        event_id = hashlib.sha256(
-            f"{psn}|{text}".encode(
-                "utf-8"
+    except Exception:
+        pass
+
+
+    # Pobieramy cały tekst już po załadowaniu JS
+    body_text = page.locator(
+        "body"
+    ).inner_text()
+
+    # Sprawdzamy czy sekcja istnieje
+    if "Events results" not in body_text:
+
+        print(
+            "⚠️ Nie znaleziono sekcji Events results"
+        )
+
+        return []
+
+
+    # Szukamy elementu z tekstem
+    events_heading = page.get_by_text(
+        "Events results",
+        exact=False
+    ).first
+
+
+    try:
+
+        # Przewijamy do sekcji
+        events_heading.scroll_into_view_if_needed()
+
+        page.wait_for_timeout(2000)
+
+    except Exception:
+        pass
+
+
+    # Pobieramy elementy zawierające wyniki
+    elements = page.locator(
+        "div, article, li"
+    )
+
+    count = elements.count()
+
+    events = []
+    seen = set()
+
+
+    for index in range(count):
+
+        try:
+
+            element = elements.nth(index)
+
+            text = element.inner_text(
+                timeout=3000
+            ).strip()
+
+
+            # Karta musi zawierać dane charakterystyczne
+            keywords = [
+                "GLOBAL",
+                "COUNTRY",
+                "Score Impact",
+                "Best Time"
+            ]
+
+
+            matches = sum(
+                1
+                for keyword in keywords
+                if keyword.lower()
+                in text.lower()
             )
-        ).hexdigest()
 
-        events.append({
-            "id": event_id,
-            "raw": text
-        })
 
-    # Usuwanie duplikatów
-    unique = {}
-    for event in events:
-        unique[event["id"]] = event
+            if matches < 2:
+                continue
 
-    return list(unique.values())
+
+            # Pomijamy ogromne kontenery strony
+            if len(text) < 20:
+                continue
+
+            if len(text) > 2500:
+                continue
+
+
+            event_id = hashlib.sha256(
+                f"{psn}|{text}".encode(
+                    "utf-8"
+                )
+            ).hexdigest()
+
+
+            if event_id in seen:
+                continue
+
+
+            seen.add(event_id)
+
+
+            events.append({
+                "id": event_id,
+                "raw": text
+            })
+
+
+        except Exception:
+
+            continue
+
+
+    return events
 
 
 # ==================================================
-# FORMATOWANIE WYNIKU
+# FORMAT WIADOMOŚCI
 # ==================================================
 
 def format_event(username, raw):
 
     now = datetime.now(
         ZoneInfo("Europe/Warsaw")
-    ).strftime("%d.%m.%Y %H:%M")
+    ).strftime(
+        "%d.%m.%Y %H:%M"
+    )
+
+
+    # Zabezpieczenie długości Discorda
+    raw = raw[:1500]
+
 
     return (
         "🏁 **NOWY WYNIK SRS**\n\n"
         f"👤 **{username}**\n\n"
-        f"📊 {raw[:1400]}\n\n"
+        f"{raw}\n\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
-        f"🕒 {now}"
+        f"🕒 **Wykryto:** {now}"
     )
 
 
@@ -208,72 +303,128 @@ def main():
         "========== START WYNIKÓW SRS =========="
     )
 
+
     if not WEBHOOK_URL:
+
         print(
             "BŁĄD: Brak DISCORD_WEBHOOK!"
         )
+
         return
+
 
     known = load_known_events()
 
     total_new = 0
 
 
-    for psn, username in PLAYERS.items():
+    with sync_playwright() as p:
 
-        print(
-            f"\nSprawdzam: {username}"
+
+        browser = p.chromium.launch(
+            headless=True
         )
 
-        try:
 
-            events = get_player_events(psn)
+        context = browser.new_context(
+            viewport={
+                "width": 1920,
+                "height": 1080
+            },
+            user_agent=(
+                "Mozilla/5.0 "
+                "(Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 "
+                "(KHTML, like Gecko) "
+                "Chrome/120.0.0.0 "
+                "Safari/537.36"
+            )
+        )
+
+
+        page = context.new_page()
+
+
+        for psn, username in PLAYERS.items():
 
             print(
-                f"Znaleziono wyników: "
-                f"{len(events)}"
+                f"\nSprawdzam: {username}"
             )
 
-            if psn not in known:
-                known[psn] = []
 
+            try:
 
-            for event in events:
-
-                if event["id"] in known[psn]:
-                    continue
-
-
-                message = format_event(
-                    username,
-                    event["raw"]
+                events = get_player_events(
+                    page,
+                    psn
                 )
 
-                send_discord(message)
-
-                known[psn].append(
-                    event["id"]
-                )
-
-                total_new += 1
 
                 print(
-                    "📤 Wysłano nowy wynik"
+                    f"Znaleziono wyników: "
+                    f"{len(events)}"
                 )
+
+
+                if psn not in known:
+
+                    known[psn] = []
+
+
+                for event in events:
+
+
+                    if (
+                        event["id"]
+                        in known[psn]
+                    ):
+
+                        continue
+
+
+                    print(
+                        "🆕 Wykryto nowy wynik"
+                    )
+
+
+                    message = format_event(
+                        username,
+                        event["raw"]
+                    )
+
+
+                    send_discord(
+                        message
+                    )
+
+
+                    known[psn].append(
+                        event["id"]
+                    )
+
+
+                    total_new += 1
+
+
+                    time.sleep(1)
+
+
+                save_known_events(
+                    known
+                )
+
 
                 time.sleep(1)
 
 
-            save_known_events(known)
+            except Exception as error:
 
-            time.sleep(1)
+                print(
+                    f"BŁĄD {username}: {error}"
+                )
 
 
-        except Exception as error:
-
-            print(
-                f"BŁĄD {username}: {error}"
-            )
+        browser.close()
 
 
     print(
