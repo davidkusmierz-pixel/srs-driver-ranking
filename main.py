@@ -45,7 +45,7 @@ PLAYERS = {
 }
 
 
-WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK")
+WEBHOOK_URL = os.getenv("https://discord.com/api/webhooks/1540826456802992178/kCh8knUjF5cb1ZXGegpXEV4vNMHtjIFmEzTBx5iTrG_YgsEQ2ekMAhhcWPk40P895muo")
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0"
@@ -115,6 +115,10 @@ def get_player(psn, username):
     }
 
 
+# ==================================================
+# PLIKI Z ID WIADOMOŚCI
+# ==================================================
+
 def load_message_ids():
     if not os.path.exists(MESSAGE_IDS_FILE):
         return []
@@ -141,6 +145,10 @@ def save_message_ids(message_ids):
             file.write(f"{message_id}\n")
 
 
+# ==================================================
+# DISCORD
+# ==================================================
+
 def send_discord_message(message):
     response = requests.post(
         f"{WEBHOOK_URL}?wait=true",
@@ -153,23 +161,39 @@ def send_discord_message(message):
     return response.json()["id"]
 
 
-def update_discord_message(message_id, message):
-    response = requests.patch(
+def delete_discord_message(message_id):
+    response = requests.delete(
         f"{WEBHOOK_URL}/messages/{message_id}",
-        json={"content": message},
         timeout=30
     )
+
+    # 404 oznacza, że wiadomości już nie ma
+    if response.status_code == 404:
+        print(
+            f"Wiadomość {message_id} "
+            f"już nie istnieje"
+        )
+        return
 
     response.raise_for_status()
 
 
+# ==================================================
+# GŁÓWNY PROGRAM
+# ==================================================
+
 def main():
+
     ranking = []
 
     # Pobieranie danych kierowców
     for psn, username in PLAYERS.items():
+
         try:
-            print(f"Pobieram dane kierowcy: {username}")
+            print(
+                f"Pobieram dane kierowcy: "
+                f"{username}"
+            )
 
             ranking.append(
                 get_player(
@@ -179,7 +203,11 @@ def main():
             )
 
         except Exception as error:
-            print(f"BŁĄD: {username}: {error}")
+
+            print(
+                f"BŁĄD: "
+                f"{username}: {error}"
+            )
 
     # Sortowanie według Edge Score
     ranking.sort(
@@ -187,15 +215,21 @@ def main():
         reverse=True
     )
 
-    # Nagłówek rankingu
+    # ==================================================
+    # TWORZENIE WIADOMOŚCI
+    # ==================================================
+
     current_message = (
         "\u200b\n"
         "📈 **RANKING GŁÓWNY**\n\n"
         "🏁 Klasyfikacja według **EDGE SCORE**\n\n"
 
         "📊 **Punkty są liczone na podstawie:**\n"
-        "⏱️ **Czasówek Daily Race** – uzyskanych czasów kwalifikacyjnych\n"
-        "🏁 **Wyzwań i czasówek** – uzyskanych wyników i czasów\n\n"
+        "⏱️ **Czasówek Daily Race** – "
+        "uzyskanych czasów kwalifikacyjnych\n"
+
+        "🏁 **Wyzwań i czasówek** – "
+        "uzyskanych wyników i czasów\n\n"
 
         "💬 **Im lepsze czasy i wyniki, "
         "tym więcej punktów zdobywa kierowca.**\n\n"
@@ -207,7 +241,10 @@ def main():
     message_number = 1
     messages = []
 
-    # Tworzenie rankingu
+    # ==================================================
+    # TWORZENIE RANKINGU
+    # ==================================================
+
     for i, player in enumerate(
         ranking,
         start=1
@@ -215,31 +252,41 @@ def main():
 
         if i == 1:
             medal = "🥇"
+
         elif i == 2:
             medal = "🥈"
+
         elif i == 3:
             medal = "🥉"
+
         else:
             medal = "🏁"
 
-        # TUTAJ WYŚWIETLANA JEST TYLKO NAZWA UŻYTKOWNIKA
         player_text = (
             f"{medal} **{i}. {player['username']}**\n"
             f"🏅 PK **{player['pk']}** • "
             f"PFK **{player['pfk']}**\n"
-            f"📊 Score: **{player['score']:.2f}**\n\n"
+            f"📊 Score: "
+            f"**{player['score']:.2f}**\n\n"
         )
 
         # Podział rankingu na kilka wiadomości
-        if len(current_message) + len(player_text) > 1900:
+        if len(
+            current_message
+        ) + len(
+            player_text
+        ) > 1900:
 
-            messages.append(current_message)
+            messages.append(
+                current_message
+            )
 
             message_number += 1
 
             current_message = (
                 f"📈 **RANKING GŁÓWNY — "
                 f"CZĘŚĆ {message_number}**\n\n"
+
                 "━━━━━━━━━━━━━━━━━━━━\n\n"
             )
 
@@ -247,64 +294,95 @@ def main():
 
     # Dodanie ostatniej części
     if current_message:
-        messages.append(current_message)
 
-    # Polska data i godzina
+        messages.append(
+            current_message
+        )
+
+    # Data i godzina
     messages[-1] += (
         "━━━━━━━━━━━━━━━━━━━━\n\n"
+
         f"🕒 **Ostatnia aktualizacja:** "
         f"{datetime.now(ZoneInfo('Europe/Warsaw')).strftime('%d.%m.%Y %H:%M')}"
     )
 
-    # Pobieranie ID starych wiadomości
+    # ==================================================
+    # USUWANIE STARYCH WIADOMOŚCI
+    # ==================================================
+
     old_message_ids = load_message_ids()
+
+    print(
+        f"Znaleziono starych wiadomości: "
+        f"{len(old_message_ids)}"
+    )
+
+    for message_id in old_message_ids:
+
+        try:
+
+            delete_discord_message(
+                message_id
+            )
+
+            print(
+                f"🗑️ Usunięto starą wiadomość: "
+                f"{message_id}"
+            )
+
+        except Exception as error:
+
+            print(
+                f"Nie udało się usunąć "
+                f"wiadomości {message_id}: "
+                f"{error}"
+            )
+
+    # ==================================================
+    # WYSYŁANIE NOWYCH WIADOMOŚCI
+    # ==================================================
 
     new_message_ids = []
 
-    # Aktualizacja lub wysyłanie wiadomości
-    for number, message in enumerate(messages):
+    for number, message in enumerate(
+        messages,
+        start=1
+    ):
 
-        if number < len(old_message_ids):
+        try:
 
-            try:
-                update_discord_message(
-                    old_message_ids[number],
-                    message
-                )
-
-                new_message_ids.append(
-                    old_message_ids[number]
-                )
-
-                print(
-                    f"Zaktualizowano część "
-                    f"{number + 1}/{len(messages)}"
-                )
-
-            except Exception as error:
-                print(
-                    f"Błąd aktualizacji części "
-                    f"{number + 1}: {error}"
-                )
-
-                message_id = send_discord_message(message)
-
-                new_message_ids.append(message_id)
-
-        else:
-            message_id = send_discord_message(message)
-
-            new_message_ids.append(message_id)
-
-            print(
-                f"Wysłano część "
-                f"{number + 1}/{len(messages)}"
+            message_id = send_discord_message(
+                message
             )
 
-    # Zapisanie ID wiadomości
-    save_message_ids(new_message_ids)
+            new_message_ids.append(
+                message_id
+            )
 
-    print("Ranking SRS został zaktualizowany!")
+            print(
+                f"📩 Wysłano nową część "
+                f"{number}/{len(messages)}"
+            )
+
+        except Exception as error:
+
+            print(
+                f"BŁĄD wysyłania części "
+                f"{number}: {error}"
+            )
+
+    # ==================================================
+    # ZAPIS NOWYCH ID
+    # ==================================================
+
+    save_message_ids(
+        new_message_ids
+    )
+
+    print(
+        "Ranking SRS został zaktualizowany!"
+    )
 
 
 if __name__ == "__main__":
