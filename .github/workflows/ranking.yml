@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
   schedule:
-    - cron: "0 20 * * *"
+    - cron: "0 13 * * 1"
 
 permissions:
   contents: write
@@ -17,8 +17,7 @@ jobs:
       - name: Pobieranie plików
         uses: actions/checkout@v4
         with:
-          persist-credentials: true
-          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Ustawienie Python
         uses: actions/setup-python@v5
@@ -35,37 +34,25 @@ jobs:
         run: |
           python main.py
 
-      - name: Sprawdzenie pliku message_ids
+      - name: Sprawdzenie zapisanych ID
         run: |
-          echo "========== PLIK =========="
-          ls -la
+          echo "ZAWARTOŚĆ message_ids.txt:"
+          cat message_ids.txt || true
 
           echo ""
-          echo "========== ZAWARTOŚĆ =========="
+          echo "STATUS GIT:"
+          git status
 
-          if [ -f message_ids.txt ]; then
-            cat message_ids.txt
-          else
-            echo "BRAK message_ids.txt"
-          fi
-
-          echo ""
-          echo "========== STATUS GIT =========="
-          git status --short
-
-      - name: Zapisanie nowych ID do GitHub
+      - name: Zapisanie zmian
         run: |
-          git config user.name "SRS Ranking Bot"
-          git config user.email "ranking@srs.local"
+          git config --global user.name "SRS Ranking Bot"
+          git config --global user.email "ranking@srs.local"
 
-          git add message_ids.txt
+          git add -f message_ids.txt
+          git add -f ranking.json
 
-          echo "========== PO GIT ADD =========="
-          git status --short
+          git status
 
-          if git diff --cached --quiet; then
-            echo "Brak zmian do zapisania"
-          else
-            git commit -m "Aktualizacja ID rankingu SRS"
-            git push
-          fi
+          git commit -m "Aktualizacja rankingu SRS" || echo "Brak nowych zmian"
+
+          git push
