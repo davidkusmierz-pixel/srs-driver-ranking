@@ -45,7 +45,7 @@ PLAYERS = {
 
 
 # ==================================================
-# DISCORD WEBHOOK Z GITHUB SECRETS
+# USTAWIENIA
 # ==================================================
 
 WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK")
@@ -122,13 +122,15 @@ def get_player(psn, username):
 
 
 # ==================================================
-# ODCZYT STARYCH ID WIADOMOŚCI
+# ODCZYT ID WIADOMOŚCI
 # ==================================================
 
 def load_message_ids():
 
     if not os.path.exists(MESSAGE_IDS_FILE):
-        print("Brak starego pliku message_ids.txt")
+
+        print("Brak pliku message_ids.txt")
+
         return []
 
     with open(
@@ -137,22 +139,15 @@ def load_message_ids():
         encoding="utf-8"
     ) as file:
 
-        message_ids = [
+        return [
             line.strip()
             for line in file
             if line.strip().isdigit()
         ]
 
-    print(
-        f"Znaleziono starych wiadomości: "
-        f"{len(message_ids)}"
-    )
-
-    return message_ids
-
 
 # ==================================================
-# ZAPIS NOWYCH ID
+# ZAPIS ID WIADOMOŚCI
 # ==================================================
 
 def save_message_ids(message_ids):
@@ -169,22 +164,12 @@ def save_message_ids(message_ids):
                 f"{message_id}\n"
             )
 
-    print(
-        f"Zapisano {len(message_ids)} "
-        f"nowych ID"
-    )
-
 
 # ==================================================
-# WYSYŁANIE WIADOMOŚCI
+# WYSŁANIE NOWEJ WIADOMOŚCI
 # ==================================================
 
 def send_discord_message(message):
-
-    if not WEBHOOK_URL:
-        raise Exception(
-            "Brak DISCORD_WEBHOOK w GitHub Secrets"
-        )
 
     response = requests.post(
         WEBHOOK_URL,
@@ -197,68 +182,28 @@ def send_discord_message(message):
         timeout=30
     )
 
-    print(
-        f"Discord status wysyłania: "
-        f"{response.status_code}"
-    )
-
     response.raise_for_status()
 
-    data = response.json()
-
-    message_id = str(
-        data["id"]
+    return str(
+        response.json()["id"]
     )
-
-    print(
-        f"NOWE ID: {message_id}"
-    )
-
-    return message_id
 
 
 # ==================================================
-# USUWANIE STAREJ WIADOMOŚCI
+# AKTUALIZACJA ISTNIEJĄCEJ WIADOMOŚCI
 # ==================================================
 
-def delete_discord_message(message_id):
+def update_discord_message(message_id, message):
 
-    if not WEBHOOK_URL:
-        raise Exception(
-            "Brak DISCORD_WEBHOOK w GitHub Secrets"
-        )
-
-    response = requests.delete(
+    response = requests.patch(
         f"{WEBHOOK_URL}/messages/{message_id}",
+        json={
+            "content": message
+        },
         timeout=30
     )
 
-    if response.status_code == 204:
-
-        print(
-            f"🗑️ Usunięto: "
-            f"{message_id}"
-        )
-
-        return
-
-    if response.status_code == 404:
-
-        print(
-            f"⚠️ Wiadomość już nie istnieje: "
-            f"{message_id}"
-        )
-
-        return
-
-    print(
-        f"Błąd usuwania {message_id}: "
-        f"{response.status_code}"
-    )
-
-    print(
-        response.text
-    )
+    response.raise_for_status()
 
 
 # ==================================================
@@ -267,53 +212,41 @@ def delete_discord_message(message_id):
 
 def main():
 
-    print(
-        "========== START RANKINGU =========="
-    )
+    print("========== START RANKINGU ==========")
 
     if not WEBHOOK_URL:
 
-        print(
-            "BŁĄD: Brak DISCORD_WEBHOOK!"
-        )
+        print("BŁĄD: Brak DISCORD_WEBHOOK!")
 
         return
 
     ranking = []
 
 
-    # ==================================================
-    # POBIERANIE DANYCH KIEROWCÓW
-    # ==================================================
-
+    # Pobieranie danych kierowców
     for psn, username in PLAYERS.items():
 
         try:
 
             print(
-                f"Pobieram dane: "
-                f"{username}"
+                f"Pobieram dane: {username}"
             )
 
-            player = get_player(
-                psn,
-                username
+            ranking.append(
+                get_player(
+                    psn,
+                    username
+                )
             )
-
-            ranking.append(player)
 
         except Exception as error:
 
             print(
-                f"BŁĄD {username}: "
-                f"{error}"
+                f"BŁĄD {username}: {error}"
             )
 
 
-    # ==================================================
-    # SORTOWANIE
-    # ==================================================
-
+    # Sortowanie według Score
     ranking.sort(
         key=lambda x: x["score"],
         reverse=True
@@ -327,8 +260,7 @@ def main():
     current_message = (
         "\u200b\n"
         "📈 **RANKING GŁÓWNY**\n\n"
-        "🏁 Klasyfikacja według "
-        "**EDGE SCORE**\n\n"
+        "🏁 Klasyfikacja według **EDGE SCORE**\n\n"
 
         "📊 **Punkty są liczone na podstawie:**\n"
         "⏱️ **Czasówek Daily Race** – "
@@ -368,18 +300,15 @@ def main():
 
 
         player_text = (
-            f"{medal} "
-            f"**{i}. {player['username']}**\n"
-
-            f"🏅 PK "
-            f"**{player['pk']}** • "
+            f"{medal} **{i}. {player['username']}**\n"
+            f"🏅 PK **{player['pk']}** • "
             f"PFK **{player['pfk']}**\n"
-
-            f"📊 Score: "
-            f"**{player['score']:.2f}**\n\n"
+            f"📊 Score: **{player['score']:.2f}**\n\n"
         )
 
 
+        # Jeśli wiadomość jest za długa,
+        # tworzymy kolejną część
         if (
             len(current_message)
             + len(player_text)
@@ -403,6 +332,7 @@ def main():
         current_message += player_text
 
 
+    # Dodanie ostatniej części
     if current_message:
 
         messages.append(
@@ -410,10 +340,7 @@ def main():
         )
 
 
-    # ==================================================
-    # DATA AKTUALIZACJI
-    # ==================================================
-
+    # Data aktualizacji na końcu
     messages[-1] += (
         "━━━━━━━━━━━━━━━━━━━━\n\n"
 
@@ -423,89 +350,89 @@ def main():
 
 
     # ==================================================
-    # USUWANIE STARYCH WIADOMOŚCI
+    # AKTUALIZACJA WIADOMOŚCI
     # ==================================================
-
-    print(
-        "========== USUWANIE STARYCH =========="
-    )
 
     old_message_ids = load_message_ids()
 
-    for message_id in old_message_ids:
-
-        try:
-
-            delete_discord_message(
-                message_id
-            )
-
-        except Exception as error:
-
-            print(
-                f"BŁĄD USUWANIA "
-                f"{message_id}: {error}"
-            )
-
-
-    # ==================================================
-    # WYSYŁANIE NOWYCH WIADOMOŚCI
-    # ==================================================
-
-    print(
-        "========== WYSYŁANIE NOWYCH =========="
-    )
-
     new_message_ids = []
 
-    for number, message in enumerate(
-        messages,
-        start=1
-    ):
+    print(
+        f"Znaleziono ID wiadomości: "
+        f"{len(old_message_ids)}"
+    )
 
-        try:
 
-            message_id = send_discord_message(
+    for number, message in enumerate(messages):
+
+        # Jeżeli mamy już ID wiadomości
+        # to aktualizujemy ją
+        if number < len(old_message_ids):
+
+            message_id = old_message_ids[number]
+
+            try:
+
+                update_discord_message(
+                    message_id,
+                    message
+                )
+
+                new_message_ids.append(
+                    message_id
+                )
+
+                print(
+                    f"Zaktualizowano część "
+                    f"{number + 1}/{len(messages)}"
+                )
+
+            except Exception as error:
+
+                print(
+                    f"Błąd aktualizacji: "
+                    f"{error}"
+                )
+
+                # Jeśli starej wiadomości nie ma,
+                # wysyłamy nową
+                new_id = send_discord_message(
+                    message
+                )
+
+                new_message_ids.append(
+                    new_id
+                )
+
+                print(
+                    f"Wysłano nową część "
+                    f"{number + 1}"
+                )
+
+
+        # Jeżeli pojawiła się dodatkowa część
+        else:
+
+            new_id = send_discord_message(
                 message
             )
 
             new_message_ids.append(
-                message_id
+                new_id
             )
 
             print(
-                f"📩 Wysłano część "
-                f"{number}/{len(messages)}"
-            )
-
-        except Exception as error:
-
-            print(
-                f"BŁĄD WYSYŁANIA "
-                f"CZĘŚCI {number}: {error}"
+                f"Wysłano dodatkową część "
+                f"{number + 1}"
             )
 
 
-    # ==================================================
-    # ZAPIS ID NOWYCH WIADOMOŚCI
-    # ==================================================
-
-    print(
-        "========== ZAPIS ID =========="
-    )
-
+    # Zapis ID
     save_message_ids(
         new_message_ids
     )
 
-    print(
-        f"ID zapisane do pliku: "
-        f"{new_message_ids}"
-    )
-
-    print(
-        "========== KONIEC =========="
-    )
+    print("========== KONIEC ==========")
 
 
 if __name__ == "__main__":
