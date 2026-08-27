@@ -58,7 +58,7 @@ MESSAGE_IDS_FILE = "message_ids.txt"
 
 
 # ==================================================
-# POBIERANIE DANYCH
+# POBIERANIE DANYCH Z PROFILU
 # ==================================================
 
 def get_player(psn, username):
@@ -90,7 +90,7 @@ def get_player(psn, username):
         re.IGNORECASE
     )
 
-    # PUNKTY / EDGE SCORE
+    # EDGE SCORE = PUNKTY
     score_match = re.search(
         r"(\d{1,3}\.\d{1,2})\s+Edge Score",
         text,
@@ -231,7 +231,8 @@ def main():
 
     ranking = []
 
-    # Pobieranie danych z profili
+
+    # POBIERANIE DANYCH Z KAŻDEGO PROFILU
     for psn, username in PLAYERS.items():
 
         try:
@@ -254,7 +255,7 @@ def main():
             )
 
 
-    # Sortowanie według punktów
+    # SORTOWANIE WEDŁUG PUNKTÓW
     ranking.sort(
         key=lambda x: x["score"],
         reverse=True
@@ -262,7 +263,7 @@ def main():
 
 
     # ==================================================
-    # PIERWSZA WIADOMOŚĆ
+    # NAGŁÓWEK RANKINGU
     # ==================================================
 
     current_message = (
@@ -274,7 +275,6 @@ def main():
     )
 
     messages = []
-
     message_number = 1
 
 
@@ -300,19 +300,22 @@ def main():
             medal = "🏎️"
 
 
+        # KARTA ZAWODNIKA
         player_text = (
             f"{medal} **{i}. {player['username']}**\n\n"
             f"🎖️ **PK:** {player['pk']}  •  "
-            f"**PFK:** {player['pfk']}\n"
-            f"🌍 **Polska:** #{player['country']}\n"
+            f"**PFK:** {player['pfk']}\n\n"
+            f"🌍 **Miejsce w Polsce:** {player['country']}\n\n"
             f"📊 **PUNKTY:** {player['score']:.2f}\n\n"
         )
 
 
-        # Limit Discorda
+        # LIMIT WIADOMOŚCI DISCORD
         if len(current_message) + len(player_text) > 1900:
 
-            messages.append(current_message)
+            messages.append(
+                current_message
+            )
 
             message_number += 1
 
@@ -322,15 +325,19 @@ def main():
                 "━━━━━━━━━━━━━━━━━━━━\n\n"
             )
 
+
         current_message += player_text
 
 
+    # DODANIE OSTATNIEJ CZĘŚCI
     if current_message:
-        messages.append(current_message)
+        messages.append(
+            current_message
+        )
 
 
     # ==================================================
-    # DATA AKTUALIZACJI
+    # DATA OSTATNIEJ AKTUALIZACJI
     # ==================================================
 
     messages[-1] += (
@@ -341,7 +348,7 @@ def main():
 
 
     # ==================================================
-    # AKTUALIZACJA DISCORDA
+    # AKTUALIZACJA WIADOMOŚCI NA DISCORDZIE
     # ==================================================
 
     old_message_ids = load_message_ids()
@@ -356,6 +363,7 @@ def main():
 
     for number, message in enumerate(messages):
 
+        # AKTUALIZACJA STAREJ WIADOMOŚCI
         if number < len(old_message_ids):
 
             message_id = old_message_ids[number]
@@ -390,6 +398,8 @@ def main():
                     new_id
                 )
 
+
+        # WYSŁANIE NOWEJ WIADOMOŚCI
         else:
 
             new_id = send_discord_message(
@@ -407,7 +417,7 @@ def main():
 
 
     # ==================================================
-    # ZAPIS ID WIADOMOŚCI
+    # ZAPIS NOWYCH ID WIADOMOŚCI
     # ==================================================
 
     save_message_ids(
