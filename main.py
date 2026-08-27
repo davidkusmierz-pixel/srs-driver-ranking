@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo
 
 
 # ==================================================
-# PSN ID : NAZWA WYŚWIETLANA NA DISCORDZIE
+# PSN ID : NAZWA NA DISCORDZIE
 # ==================================================
 
 PLAYERS = {
@@ -46,31 +46,19 @@ PLAYERS = {
 }
 
 
-# ==================================================
-# USTAWIENIA
-# ==================================================
-
 WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK")
-
 KNOWN_EVENTS_FILE = "known_events.json"
 
 HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 "
-        "(Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 "
-        "(KHTML, like Gecko) "
-        "Chrome/120 Safari/537.36"
-    )
+    "User-Agent": "Mozilla/5.0"
 }
 
 
 # ==================================================
-# WCZYTANIE STARYCH WYNIKÓW
+# PLIK Z ZAPAMIĘTANYMI WYNIKAMI
 # ==================================================
 
 def load_known_events():
-
     if not os.path.exists(KNOWN_EVENTS_FILE):
         return {}
 
@@ -82,28 +70,18 @@ def load_known_events():
         ) as file:
             return json.load(file)
 
-    except Exception as error:
-        print(
-            f"BŁĄD odczytu known_events.json: {error}"
-        )
-
+    except Exception:
         return {}
 
 
-# ==================================================
-# ZAPIS WYNIKÓW
-# ==================================================
-
-def save_known_events(events):
-
+def save_known_events(data):
     with open(
         KNOWN_EVENTS_FILE,
         "w",
         encoding="utf-8"
     ) as file:
-
         json.dump(
-            events,
+            data,
             file,
             ensure_ascii=False,
             indent=2
@@ -111,10 +89,10 @@ def save_known_events(events):
 
 
 # ==================================================
-# POBRANIE PROFILU
+# POBIERANIE PROFILU
 # ==================================================
 
-def get_player_page(psn):
+def get_player_events(psn):
 
     url = (
         f"https://www.dg-edge.com/players/{psn}"
@@ -126,225 +104,88 @@ def get_player_page(psn):
         timeout=30
     )
 
+    if response.status_code == 404:
+        print(f"⚠️ Nie znaleziono profilu: {psn}")
+        return []
+
     response.raise_for_status()
 
-    return response.text
-
-
-# ==================================================
-# WYSZUKANIE KART EVENTS RESULTS
-# ==================================================
-
-def extract_event_cards(html):
-
     soup = BeautifulSoup(
-        html,
+        response.text,
         "html.parser"
     )
 
-    cards = []
+    events = []
 
-    selectors = [
-        "[class*='event']",
-        "[class*='Event']",
-        "article",
-        "tr"
-    ]
+    # Szukamy wszystkich elementów strony
+    for element in soup.find_all(
+        ["div", "article", "li", "tr"]
+    ):
 
-    seen = set()
+        text = element.get_text(
+            " ",
+            strip=True
+        )
 
-    for selector in selectors:
+        # Interesują nas tylko elementy
+        # zawierające dane wyników
+        if (
+            "Score Impact" not in text
+            and "GLOBAL" not in text
+            and "COUNTRY" not in text
+        ):
+            continue
 
-        elements = soup.select(selector)
+        if len(text) < 30:
+            continue
 
-        for element in elements:
+        # Usuwamy zbyt długie kontenery
+        if len(text) > 2000:
+            continue
 
-            text = element.get_text(
-                " ",
-                strip=True
+        event_id = hashlib.sha256(
+            f"{psn}|{text}".encode(
+                "utf-8"
             )
+        ).hexdigest()
 
-            if len(text) < 20:
-                continue
+        events.append({
+            "id": event_id,
+            "raw": text
+        })
 
-            keywords = [
-                "GLOBAL",
-                "COUNTRY",
-                "Best Time",
-                "Score Impact",
-                "Daily Race",
-                "Time Trial"
-            ]
+    # Usuwanie duplikatów
+    unique = {}
+    for event in events:
+        unique[event["id"]] = event
 
-            matches = sum(
-                1
-                for keyword in keywords
-                if keyword.lower() in text.lower()
-            )
-
-            if matches < 2:
-                continue
-
-            event_id = hashlib.sha256(
-                text.encode("utf-8")
-            ).hexdigest()
-
-            if event_id in seen:
-                continue
-
-            seen.add(event_id)
-
-            cards.append({
-                "id": event_id,
-                "raw": text
-            })
-
-    return cards
+    return list(unique.values())
 
 
 # ==================================================
-# WYCIĄGANIE DANYCH Z KARTY
+# FORMATOWANIE WYNIKU
 # ==================================================
 
-def parse_event(raw_text):
-
-    lines = raw_text.replace(
-        "\n",
-        " "
-    )
-
-    lines = " ".join(
-        lines.split()
-    )
-
-    event_type = "Event"
-    track = "Nieznany tor"
-    car = "Brak danych"
-    best_time = "Brak danych"
-    global_rank = "Brak danych"
-    country_rank = "Brak danych"
-    score_impact = "Brak danych"
-
-    event_match = None
-
-    for pattern in [
-        r"(Daily Race [ABC])",
-        r"(Time Trial)",
-        r"(Weekly Challenge)",
-        r"(Race [ABC])"
-    ]:
-
-        event_match = __import__("re").search(
-            pattern,
-            lines,
-            __import__("re").IGNORECASE
-        )
-
-        if event_match:
-            event_type = event_match.group(1)
-            break
-
-    time_match = __import__("re").search(
-        r"\b(\d{1,2}:\d{2}\.\d{3})\b",
-        lines
-    )
-
-    if time_match:
-        best_time = time_match.group(1)
-
-    global_match = __import__("re").search(
-        r"GLOBAL[^0-9#]*(?:#)?(\d+)",
-        lines,
-        __import__("re").IGNORECASE
-    )
-
-    if global_match:
-        global_rank = (
-            f"#{global_match.group(1)}"
-        )
-
-    country_match = __import__("re").search(
-        r"COUNTRY[^0-9#]*(?:#)?(\d+)",
-        lines,
-        __import__("re").IGNORECASE
-    )
-
-    if country_match:
-        country_rank = (
-            f"#{country_match.group(1)}"
-        )
-
-    impact_match = __import__("re").search(
-        r"Score Impact[^+\-0-9]*"
-        r"([+\-]?\d+(?:\.\d+)?)",
-        lines,
-        __import__("re").IGNORECASE
-    )
-
-    if impact_match:
-        score_impact = impact_match.group(1)
-
-    # Próba pobrania nazwy toru
-    parts = lines.split()
-
-    for keyword in [
-        "Race",
-        "Trial",
-        "Challenge"
-    ]:
-
-        if keyword in lines:
-            track = lines[:120]
-            break
-
-    return {
-        "event_type": event_type,
-        "track": track,
-        "car": car,
-        "best_time": best_time,
-        "global_rank": global_rank,
-        "country_rank": country_rank,
-        "score_impact": score_impact
-    }
-
-
-# ==================================================
-# WYSŁANIE NA DISCORD
-# ==================================================
-
-def send_discord_event(
-    username,
-    event
-):
+def format_event(username, raw):
 
     now = datetime.now(
         ZoneInfo("Europe/Warsaw")
-    ).strftime(
-        "%d.%m.%Y %H:%M"
-    )
+    ).strftime("%d.%m.%Y %H:%M")
 
-    message = (
+    return (
         "🏁 **NOWY WYNIK SRS**\n\n"
-
         f"👤 **{username}**\n\n"
-
-        f"🎮 **{event['event_type']}**\n"
-        f"📍 **{event['track']}**\n"
-        f"⏱️ Najlepszy czas: "
-        f"**{event['best_time']}**\n\n"
-
-        f"🌍 GLOBAL: "
-        f"**{event['global_rank']}**\n"
-
-        f"🇵🇱 COUNTRY: "
-        f"**{event['country_rank']}**\n"
-
-        f"📈 SCORE IMPACT: "
-        f"**{event['score_impact']}**\n\n"
-
+        f"📊 {raw[:1400]}\n\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
         f"🕒 {now}"
     )
+
+
+# ==================================================
+# WYSYŁANIE NA DISCORD
+# ==================================================
+
+def send_discord(message):
 
     response = requests.post(
         WEBHOOK_URL,
@@ -368,87 +209,64 @@ def main():
     )
 
     if not WEBHOOK_URL:
-
         print(
-            "BŁĄD: Brak sekretu DISCORD_WEBHOOK!"
+            "BŁĄD: Brak DISCORD_WEBHOOK!"
         )
-
         return
 
+    known = load_known_events()
 
-    known_events = load_known_events()
-
-    new_events_count = 0
+    total_new = 0
 
 
     for psn, username in PLAYERS.items():
 
+        print(
+            f"\nSprawdzam: {username}"
+        )
+
         try:
 
-            print(
-                f"\nSprawdzam: {username}"
-            )
-
-            html = get_player_page(psn)
-
-            cards = extract_event_cards(html)
+            events = get_player_events(psn)
 
             print(
-                f"Znaleziono kart: {len(cards)}"
+                f"Znaleziono wyników: "
+                f"{len(events)}"
             )
 
-
-            if psn not in known_events:
-                known_events[psn] = []
-
-
-            for card in cards:
-
-                event_id = card["id"]
+            if psn not in known:
+                known[psn] = []
 
 
-                # Już wysłany wynik
-                if event_id in known_events[psn]:
+            for event in events:
 
+                if event["id"] in known[psn]:
                     continue
 
 
-                event = parse_event(
-                    card["raw"]
+                message = format_event(
+                    username,
+                    event["raw"]
                 )
 
+                send_discord(message)
+
+                known[psn].append(
+                    event["id"]
+                )
+
+                total_new += 1
 
                 print(
-                    f"NOWY WYNIK: "
-                    f"{username} | "
-                    f"{event['event_type']}"
+                    "📤 Wysłano nowy wynik"
                 )
 
-
-                send_discord_event(
-                    username,
-                    event
-                )
-
-
-                known_events[psn].append(
-                    event_id
-                )
-
-                new_events_count += 1
-
-
-                # Mała przerwa
                 time.sleep(1)
 
 
-            # Zapis po każdym zawodniku
-            save_known_events(
-                known_events
-            )
+            save_known_events(known)
 
-
-            time.sleep(2)
+            time.sleep(1)
 
 
         except Exception as error:
@@ -463,7 +281,7 @@ def main():
     )
 
     print(
-        f"NOWYCH WYNIKÓW: {new_events_count}"
+        f"NOWYCH WYNIKÓW: {total_new}"
     )
 
     print(
