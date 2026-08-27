@@ -177,7 +177,7 @@ def save_message_ids(message_ids):
 
 
 # ==================================================
-# WYSŁANIE WIADOMOŚCI
+# WYSŁANIE NOWEJ WIADOMOŚCI
 # ==================================================
 
 def send_discord_message(message):
@@ -232,7 +232,7 @@ def main():
     ranking = []
 
 
-    # POBIERANIE DANYCH Z KAŻDEGO PROFILU
+    # POBIERANIE DANYCH
     for psn, username in PLAYERS.items():
 
         try:
@@ -275,6 +275,7 @@ def main():
     )
 
     messages = []
+
     message_number = 1
 
 
@@ -304,8 +305,8 @@ def main():
         player_text = (
             f"{medal} **{i}. {player['username']}**\n\n"
             f"🎖️ **PK:** {player['pk']}  •  "
-            f"**PFK:** {player['pfk']}\n\n"
-            f"🌍 **Miejsce w Polsce:** {player['country']}\n\n"
+            f"**PFK:** {player['pfk']}\n"
+            f"🌍 **Miejsce w Polsce:** {player['country']}\n"
             f"📊 **PUNKTY:** {player['score']:.2f}\n\n"
         )
 
@@ -363,7 +364,7 @@ def main():
 
     for number, message in enumerate(messages):
 
-        # AKTUALIZACJA STAREJ WIADOMOŚCI
+        # AKTUALIZACJA ISTNIEJĄCEJ WIADOMOŚCI
         if number < len(old_message_ids):
 
             message_id = old_message_ids[number]
