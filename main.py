@@ -231,7 +231,6 @@ def main():
 
     ranking = []
 
-
     # POBIERANIE DANYCH
     for psn, username in PLAYERS.items():
 
@@ -254,7 +253,6 @@ def main():
                 f"BŁĄD {username}: {error}"
             )
 
-
     # SORTOWANIE WEDŁUG PUNKTÓW
     ranking.sort(
         key=lambda x: x["score"],
@@ -275,7 +273,6 @@ def main():
     )
 
     messages = []
-
     message_number = 1
 
 
@@ -306,7 +303,7 @@ def main():
             f"{medal} **{i}. {player['username']}**\n\n"
             f"🎖️ **PK:** {player['pk']}  •  "
             f"**PFK:** {player['pfk']}\n"
-            f"🌍 **Miejsce w Polsce:** {player['country']}\n"
+            f"🇵🇱 **Miejsce w Polsce:** {player['country']}\n"
             f"📊 **PUNKTY:** {player['score']:.2f}\n\n"
         )
 
@@ -325,7 +322,6 @@ def main():
                 f"CZĘŚĆ {message_number}** 🏁\n\n"
                 "━━━━━━━━━━━━━━━━━━━━\n\n"
             )
-
 
         current_message += player_text
 
