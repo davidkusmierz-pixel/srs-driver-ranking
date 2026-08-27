@@ -2,10 +2,11 @@ import os
 import json
 import time
 import hashlib
+import requests
+
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-import requests
 from playwright.sync_api import sync_playwright
 
 
@@ -57,7 +58,7 @@ KNOWN_EVENTS_FILE = "known_events.json"
 
 
 # ==================================================
-# WCZYTANIE ZAPAMIĘTANYCH WYNIKÓW
+# WCZYTANIE STARYCH WYNIKÓW
 # ==================================================
 
 def load_known_events():
@@ -66,6 +67,7 @@ def load_known_events():
         return {}
 
     try:
+
         with open(
             KNOWN_EVENTS_FILE,
             "r",
@@ -77,14 +79,14 @@ def load_known_events():
     except Exception as error:
 
         print(
-            f"BŁĄD known_events.json: {error}"
+            f"BŁĄD odczytu known_events.json: {error}"
         )
 
         return {}
 
 
 # ==================================================
-# ZAPIS ZAPAMIĘTANYCH WYNIKÓW
+# ZAPIS WYNIKÓW
 # ==================================================
 
 def save_known_events(data):
@@ -104,22 +106,21 @@ def save_known_events(data):
 
 
 # ==================================================
-# POBIERANIE EVENTS RESULTS
+# POBIERANIE WYNIKÓW
 # ==================================================
 
 def get_player_events(page, psn):
 
-    url = (
-        f"https://www.dg-edge.com/players/{psn}"
-    )
+    url = f"https://www.dg-edge.com/players/{psn}"
 
     response = page.goto(
         url,
-        wait_until="networkidle",
+        wait_until="domcontentloaded",
         timeout=60000
     )
 
-    if not response:
+    if response is None:
+        print("⚠️ Brak odpowiedzi strony")
         return []
 
     if response.status == 404:
@@ -130,128 +131,164 @@ def get_player_events(page, psn):
 
         return []
 
+
+    # Czekamy na JavaScript strony
+    page.wait_for_timeout(4000)
+
+
     try:
 
-        page.wait_for_timeout(3000)
-
-    except Exception:
-        pass
-
-
-    # Pobieramy cały tekst już po załadowaniu JS
-    body_text = page.locator(
-        "body"
-    ).inner_text()
-
-    # Sprawdzamy czy sekcja istnieje
-    if "Events results" not in body_text:
-
-        print(
-            "⚠️ Nie znaleziono sekcji Events results"
+        page.wait_for_load_state(
+            "networkidle",
+            timeout=15000
         )
 
-        return []
-
-
-    # Szukamy elementu z tekstem
-    events_heading = page.get_by_text(
-        "Events results",
-        exact=False
-    ).first
-
-
-    try:
-
-        # Przewijamy do sekcji
-        events_heading.scroll_into_view_if_needed()
-
-        page.wait_for_timeout(2000)
-
     except Exception:
         pass
 
 
-    # Pobieramy elementy zawierające wyniki
-    elements = page.locator(
-        "div, article, li"
+    # ==================================================
+    # SZUKANIE PRAWDZIWYCH KART WYNIKÓW
+    # ==================================================
+
+    event_texts = page.evaluate(
+        """
+        () => {
+
+            const allElements = Array.from(
+                document.querySelectorAll(
+                    "div, article, section, li"
+                )
+            );
+
+            const candidates = [];
+
+            for (const element of allElements) {
+
+                const text = (
+                    element.innerText || ""
+                ).trim();
+
+                const lower = text.toLowerCase();
+
+
+                // Karta wyniku musi mieć
+                // wszystkie najważniejsze dane
+                const hasGlobal =
+                    lower.includes("global");
+
+                const hasCountry =
+                    lower.includes("country");
+
+                const hasImpact =
+                    lower.includes("score impact");
+
+
+                if (
+                    !hasGlobal ||
+                    !hasCountry ||
+                    !hasImpact
+                ) {
+                    continue;
+                }
+
+
+                // Pomijamy zbyt krótkie
+                if (text.length < 50) {
+                    continue;
+                }
+
+
+                // Pomijamy ogromne kontenery strony
+                if (text.length > 1500) {
+                    continue;
+                }
+
+
+                candidates.push({
+                    element,
+                    text
+                });
+            }
+
+
+            const smallest = [];
+
+
+            for (const candidate of candidates) {
+
+                let containsSmallerCandidate = false;
+
+
+                for (
+                    const other of candidates
+                ) {
+
+                    if (
+                        candidate.element !== other.element &&
+                        candidate.element.contains(
+                            other.element
+                        )
+                    ) {
+
+                        containsSmallerCandidate = true;
+                        break;
+                    }
+                }
+
+
+                if (
+                    !containsSmallerCandidate
+                ) {
+
+                    smallest.push(
+                        candidate.text
+                    );
+                }
+            }
+
+
+            return [
+                ...new Set(smallest)
+            ];
+        }
+        """
     )
 
-    count = elements.count()
 
     events = []
-    seen = set()
 
 
-    for index in range(count):
+    for text in event_texts:
 
-        try:
-
-            element = elements.nth(index)
-
-            text = element.inner_text(
-                timeout=3000
-            ).strip()
+        cleaned_text = " ".join(
+            text.split()
+        )
 
 
-            # Karta musi zawierać dane charakterystyczne
-            keywords = [
-                "GLOBAL",
-                "COUNTRY",
-                "Score Impact",
-                "Best Time"
-            ]
-
-
-            matches = sum(
-                1
-                for keyword in keywords
-                if keyword.lower()
-                in text.lower()
-            )
-
-
-            if matches < 2:
-                continue
-
-
-            # Pomijamy ogromne kontenery strony
-            if len(text) < 20:
-                continue
-
-            if len(text) > 2500:
-                continue
-
-
-            event_id = hashlib.sha256(
-                f"{psn}|{text}".encode(
-                    "utf-8"
-                )
-            ).hexdigest()
-
-
-            if event_id in seen:
-                continue
-
-
-            seen.add(event_id)
-
-
-            events.append({
-                "id": event_id,
-                "raw": text
-            })
-
-
-        except Exception:
-
+        # Dodatkowe zabezpieczenie
+        if len(cleaned_text) > 1500:
             continue
+
+
+        event_id = hashlib.sha256(
+            f"{psn}|{cleaned_text}".encode(
+                "utf-8"
+            )
+        ).hexdigest()
+
+
+        events.append({
+            "id": event_id,
+            "raw": cleaned_text
+        })
 
 
     return events
 
 
 # ==================================================
-# FORMAT WIADOMOŚCI
+# FORMATOWANIE WIADOMOŚCI
 # ==================================================
 
 def format_event(username, raw):
@@ -263,8 +300,8 @@ def format_event(username, raw):
     )
 
 
-    # Zabezpieczenie długości Discorda
-    raw = raw[:1500]
+    # Maksymalna długość
+    raw = raw[:1600]
 
 
     return (
@@ -404,6 +441,11 @@ def main():
 
 
                     total_new += 1
+
+
+                    print(
+                        "📤 Wysłano na Discord"
+                    )
 
 
                     time.sleep(1)
