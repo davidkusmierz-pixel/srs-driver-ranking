@@ -1,5 +1,7 @@
 import os
-import re
+import json
+import time
+import hashlib
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -44,21 +46,79 @@ PLAYERS = {
 }
 
 
+# ==================================================
+# USTAWIENIA
+# ==================================================
+
 WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK")
 
+KNOWN_EVENTS_FILE = "known_events.json"
+
 HEADERS = {
-    "User-Agent": "Mozilla/5.0"
+    "User-Agent": (
+        "Mozilla/5.0 "
+        "(Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 "
+        "(KHTML, like Gecko) "
+        "Chrome/120 Safari/537.36"
+    )
 }
 
-MESSAGE_IDS_FILE = "message_ids.txt"
+
+# ==================================================
+# WCZYTANIE STARYCH WYNIKÓW
+# ==================================================
+
+def load_known_events():
+
+    if not os.path.exists(KNOWN_EVENTS_FILE):
+        return {}
+
+    try:
+        with open(
+            KNOWN_EVENTS_FILE,
+            "r",
+            encoding="utf-8"
+        ) as file:
+            return json.load(file)
+
+    except Exception as error:
+        print(
+            f"BŁĄD odczytu known_events.json: {error}"
+        )
+
+        return {}
 
 
 # ==================================================
-# POBIERANIE DANYCH
+# ZAPIS WYNIKÓW
 # ==================================================
 
-def get_player(psn, username):
-    url = f"https://www.dg-edge.com/players/{psn}"
+def save_known_events(events):
+
+    with open(
+        KNOWN_EVENTS_FILE,
+        "w",
+        encoding="utf-8"
+    ) as file:
+
+        json.dump(
+            events,
+            file,
+            ensure_ascii=False,
+            indent=2
+        )
+
+
+# ==================================================
+# POBRANIE PROFILU
+# ==================================================
+
+def get_player_page(psn):
+
+    url = (
+        f"https://www.dg-edge.com/players/{psn}"
+    )
 
     response = requests.get(
         url,
@@ -68,116 +128,229 @@ def get_player(psn, username):
 
     response.raise_for_status()
 
+    return response.text
+
+
+# ==================================================
+# WYSZUKANIE KART EVENTS RESULTS
+# ==================================================
+
+def extract_event_cards(html):
+
     soup = BeautifulSoup(
-        response.text,
+        html,
         "html.parser"
     )
 
-    text = soup.get_text(
-        " ",
-        strip=True
+    cards = []
+
+    selectors = [
+        "[class*='event']",
+        "[class*='Event']",
+        "article",
+        "tr"
+    ]
+
+    seen = set()
+
+    for selector in selectors:
+
+        elements = soup.select(selector)
+
+        for element in elements:
+
+            text = element.get_text(
+                " ",
+                strip=True
+            )
+
+            if len(text) < 20:
+                continue
+
+            keywords = [
+                "GLOBAL",
+                "COUNTRY",
+                "Best Time",
+                "Score Impact",
+                "Daily Race",
+                "Time Trial"
+            ]
+
+            matches = sum(
+                1
+                for keyword in keywords
+                if keyword.lower() in text.lower()
+            )
+
+            if matches < 2:
+                continue
+
+            event_id = hashlib.sha256(
+                text.encode("utf-8")
+            ).hexdigest()
+
+            if event_id in seen:
+                continue
+
+            seen.add(event_id)
+
+            cards.append({
+                "id": event_id,
+                "raw": text
+            })
+
+    return cards
+
+
+# ==================================================
+# WYCIĄGANIE DANYCH Z KARTY
+# ==================================================
+
+def parse_event(raw_text):
+
+    lines = raw_text.replace(
+        "\n",
+        " "
     )
 
-    pk_pfk_match = re.search(
-        rf"{re.escape(psn)}.*?\b([A-E]\+?|S)\s+([A-E]|S)\b",
-        text,
-        re.IGNORECASE
+    lines = " ".join(
+        lines.split()
     )
 
-    score_match = re.search(
-        r"(\d{1,3}\.\d{1,2})\s+Edge Score",
-        text,
-        re.IGNORECASE
+    event_type = "Event"
+    track = "Nieznany tor"
+    car = "Brak danych"
+    best_time = "Brak danych"
+    global_rank = "Brak danych"
+    country_rank = "Brak danych"
+    score_impact = "Brak danych"
+
+    event_match = None
+
+    for pattern in [
+        r"(Daily Race [ABC])",
+        r"(Time Trial)",
+        r"(Weekly Challenge)",
+        r"(Race [ABC])"
+    ]:
+
+        event_match = __import__("re").search(
+            pattern,
+            lines,
+            __import__("re").IGNORECASE
+        )
+
+        if event_match:
+            event_type = event_match.group(1)
+            break
+
+    time_match = __import__("re").search(
+        r"\b(\d{1,2}:\d{2}\.\d{3})\b",
+        lines
     )
 
-    pk = (
-        pk_pfk_match.group(1)
-        if pk_pfk_match
-        else "?"
+    if time_match:
+        best_time = time_match.group(1)
+
+    global_match = __import__("re").search(
+        r"GLOBAL[^0-9#]*(?:#)?(\d+)",
+        lines,
+        __import__("re").IGNORECASE
     )
 
-    pfk = (
-        pk_pfk_match.group(2)
-        if pk_pfk_match
-        else "?"
+    if global_match:
+        global_rank = (
+            f"#{global_match.group(1)}"
+        )
+
+    country_match = __import__("re").search(
+        r"COUNTRY[^0-9#]*(?:#)?(\d+)",
+        lines,
+        __import__("re").IGNORECASE
     )
 
-    score = (
-        float(score_match.group(1))
-        if score_match
-        else 0.0
+    if country_match:
+        country_rank = (
+            f"#{country_match.group(1)}"
+        )
+
+    impact_match = __import__("re").search(
+        r"Score Impact[^+\-0-9]*"
+        r"([+\-]?\d+(?:\.\d+)?)",
+        lines,
+        __import__("re").IGNORECASE
     )
+
+    if impact_match:
+        score_impact = impact_match.group(1)
+
+    # Próba pobrania nazwy toru
+    parts = lines.split()
+
+    for keyword in [
+        "Race",
+        "Trial",
+        "Challenge"
+    ]:
+
+        if keyword in lines:
+            track = lines[:120]
+            break
 
     return {
-        "username": username,
-        "pk": pk,
-        "pfk": pfk,
-        "score": score
+        "event_type": event_type,
+        "track": track,
+        "car": car,
+        "best_time": best_time,
+        "global_rank": global_rank,
+        "country_rank": country_rank,
+        "score_impact": score_impact
     }
 
 
 # ==================================================
-# ODCZYT ID WIADOMOŚCI
+# WYSŁANIE NA DISCORD
 # ==================================================
 
-def load_message_ids():
-    if not os.path.exists(MESSAGE_IDS_FILE):
-        print("Brak pliku message_ids.txt")
-        return []
+def send_discord_event(
+    username,
+    event
+):
 
-    with open(
-        MESSAGE_IDS_FILE,
-        "r",
-        encoding="utf-8"
-    ) as file:
-        return [
-            line.strip()
-            for line in file
-            if line.strip().isdigit()
-        ]
+    now = datetime.now(
+        ZoneInfo("Europe/Warsaw")
+    ).strftime(
+        "%d.%m.%Y %H:%M"
+    )
 
+    message = (
+        "🏁 **NOWY WYNIK SRS**\n\n"
 
-# ==================================================
-# ZAPIS ID WIADOMOŚCI
-# ==================================================
+        f"👤 **{username}**\n\n"
 
-def save_message_ids(message_ids):
-    with open(
-        MESSAGE_IDS_FILE,
-        "w",
-        encoding="utf-8"
-    ) as file:
-        for message_id in message_ids:
-            file.write(f"{message_id}\n")
+        f"🎮 **{event['event_type']}**\n"
+        f"📍 **{event['track']}**\n"
+        f"⏱️ Najlepszy czas: "
+        f"**{event['best_time']}**\n\n"
 
+        f"🌍 GLOBAL: "
+        f"**{event['global_rank']}**\n"
 
-# ==================================================
-# WYSŁANIE WIADOMOŚCI
-# ==================================================
+        f"🇵🇱 COUNTRY: "
+        f"**{event['country_rank']}**\n"
 
-def send_discord_message(message):
+        f"📈 SCORE IMPACT: "
+        f"**{event['score_impact']}**\n\n"
+
+        "━━━━━━━━━━━━━━━━━━━━\n"
+        f"🕒 {now}"
+    )
+
     response = requests.post(
         WEBHOOK_URL,
-        params={"wait": "true"},
-        json={"content": message},
-        timeout=30
-    )
-
-    response.raise_for_status()
-
-    return str(
-        response.json()["id"]
-    )
-
-
-# ==================================================
-# AKTUALIZACJA WIADOMOŚCI
-# ==================================================
-
-def update_discord_message(message_id, message):
-    response = requests.patch(
-        f"{WEBHOOK_URL}/messages/{message_id}",
-        json={"content": message},
+        json={
+            "content": message
+        },
         timeout=30
     )
 
@@ -189,152 +362,113 @@ def update_discord_message(message_id, message):
 # ==================================================
 
 def main():
-    print("========== START RANKINGU ==========")
+
+    print(
+        "========== START WYNIKÓW SRS =========="
+    )
 
     if not WEBHOOK_URL:
-        print("BŁĄD: Brak DISCORD_WEBHOOK!")
+
+        print(
+            "BŁĄD: Brak sekretu DISCORD_WEBHOOK!"
+        )
+
         return
 
-    ranking = []
+
+    known_events = load_known_events()
+
+    new_events_count = 0
+
 
     for psn, username in PLAYERS.items():
-        try:
-            print(f"Pobieram dane: {username}")
 
-            player = get_player(
-                psn,
-                username
+        try:
+
+            print(
+                f"\nSprawdzam: {username}"
             )
 
-            ranking.append(player)
+            html = get_player_page(psn)
+
+            cards = extract_event_cards(html)
+
+            print(
+                f"Znaleziono kart: {len(cards)}"
+            )
+
+
+            if psn not in known_events:
+                known_events[psn] = []
+
+
+            for card in cards:
+
+                event_id = card["id"]
+
+
+                # Już wysłany wynik
+                if event_id in known_events[psn]:
+
+                    continue
+
+
+                event = parse_event(
+                    card["raw"]
+                )
+
+
+                print(
+                    f"NOWY WYNIK: "
+                    f"{username} | "
+                    f"{event['event_type']}"
+                )
+
+
+                send_discord_event(
+                    username,
+                    event
+                )
+
+
+                known_events[psn].append(
+                    event_id
+                )
+
+                new_events_count += 1
+
+
+                # Mała przerwa
+                time.sleep(1)
+
+
+            # Zapis po każdym zawodniku
+            save_known_events(
+                known_events
+            )
+
+
+            time.sleep(2)
+
 
         except Exception as error:
+
             print(
                 f"BŁĄD {username}: {error}"
             )
 
-    ranking.sort(
-        key=lambda x: x["score"],
-        reverse=True
-    )
-
-    current_message = (
-        "\u200b\n"
-        "📈 **RANKING GŁÓWNY**\n\n"
-        "🏁 Klasyfikacja według **EDGE SCORE**\n\n"
-        "📊 **Punkty są liczone na podstawie:**\n"
-        "⏱️ **Czasówek Daily Race** – "
-        "uzyskanych czasów kwalifikacyjnych\n"
-        "🏁 **Wyzwań i czasówek** – "
-        "uzyskanych wyników i czasów\n\n"
-        "💬 **Im lepsze czasy i wyniki, "
-        "tym więcej punktów zdobywa kierowca.**\n\n"
-        "🔄 **Aktualizacja: raz dziennie**\n\n"
-        "━━━━━━━━━━━━━━━━━━━━\n\n"
-    )
-
-    messages = []
-    message_number = 1
-
-    for i, player in enumerate(
-        ranking,
-        start=1
-    ):
-        if i == 1:
-            medal = "🥇"
-        elif i == 2:
-            medal = "🥈"
-        elif i == 3:
-            medal = "🥉"
-        else:
-            medal = "🏁"
-
-        player_text = (
-            f"{medal} **{i}. {player['username']}**\n"
-            f"🏅 PK **{player['pk']}** • "
-            f"PFK **{player['pfk']}**\n"
-            f"📊 Score: **{player['score']:.2f}**\n\n"
-        )
-
-        if len(current_message) + len(player_text) > 1900:
-            messages.append(current_message)
-
-            message_number += 1
-
-            current_message = (
-                f"📈 **RANKING GŁÓWNY — "
-                f"CZĘŚĆ {message_number}**\n\n"
-                "━━━━━━━━━━━━━━━━━━━━\n\n"
-            )
-
-        current_message += player_text
-
-    if current_message:
-        messages.append(current_message)
-
-    messages[-1] += (
-        "━━━━━━━━━━━━━━━━━━━━\n\n"
-        f"🕒 **Ostatnia aktualizacja:** "
-        f"{datetime.now(ZoneInfo('Europe/Warsaw')).strftime('%d.%m.%Y %H:%M')}"
-    )
-
-    old_message_ids = load_message_ids()
-    new_message_ids = []
 
     print(
-        f"Znaleziono ID wiadomości: "
-        f"{len(old_message_ids)}"
+        "\n======================================"
     )
 
-    for number, message in enumerate(messages):
-        if number < len(old_message_ids):
-            message_id = old_message_ids[number]
+    print(
+        f"NOWYCH WYNIKÓW: {new_events_count}"
+    )
 
-            try:
-                update_discord_message(
-                    message_id,
-                    message
-                )
-
-                new_message_ids.append(
-                    message_id
-                )
-
-                print(
-                    f"Zaktualizowano część "
-                    f"{number + 1}/{len(messages)}"
-                )
-
-            except Exception as error:
-                print(
-                    f"Błąd aktualizacji: {error}"
-                )
-
-                new_id = send_discord_message(
-                    message
-                )
-
-                new_message_ids.append(
-                    new_id
-                )
-
-        else:
-            new_id = send_discord_message(
-                message
-            )
-
-            new_message_ids.append(
-                new_id
-            )
-
-            print(
-                f"Wysłano dodatkową część "
-                f"{number + 1}"
-            )
-
-    save_message_ids(new_message_ids)
-
-    print("========== KONIEC ==========")
+    print(
+        "========== KONIEC =========="
+    )
 
 
 if __name__ == "__main__":
