@@ -58,7 +58,7 @@ MESSAGE_IDS_FILE = "message_ids.txt"
 
 
 # ==================================================
-# POBIERANIE DANYCH Z PROFILU
+# POBIERANIE DANYCH
 # ==================================================
 
 def get_player(psn, username):
@@ -90,7 +90,7 @@ def get_player(psn, username):
         re.IGNORECASE
     )
 
-    # EDGE SCORE = PUNKTY
+    # EDGE SCORE
     score_match = re.search(
         r"(\d{1,3}\.\d{1,2})\s+Edge Score",
         text,
@@ -177,7 +177,7 @@ def save_message_ids(message_ids):
 
 
 # ==================================================
-# WYSŁANIE NOWEJ WIADOMOŚCI
+# WYSŁANIE WIADOMOŚCI
 # ==================================================
 
 def send_discord_message(message):
@@ -237,9 +237,7 @@ def main():
 
         try:
 
-            print(
-                f"Pobieram dane: {username}"
-            )
+            print(f"Pobieram dane: {username}")
 
             player = get_player(
                 psn,
@@ -263,14 +261,14 @@ def main():
 
 
     # ==================================================
-    # NAGŁÓWEK RANKINGU
+    # NAGŁÓWEK
     # ==================================================
 
     current_message = (
         "\u200b\n"
         "🏁 **RANKING GŁÓWNY SRS** 🏁\n\n"
         "📈 Klasyfikacja według **PUNKTÓW**\n\n"
-        "🔄 **Aktualizacja automatyczna raz dziennie**\n\n"
+        "🔄 Aktualizacja automatyczna raz dziennie\n\n"
         "━━━━━━━━━━━━━━━━━━━━\n\n"
     )
 
@@ -301,20 +299,16 @@ def main():
             medal = "🏎️"
 
 
-        # ==================================================
-        # KARTA ZAWODNIKA
-        # ==================================================
-
+        # FORMAT ZAWODNIKA
         player_text = (
             f"{medal} **{i}. {player['username']}**\n\n"
-            f"🏅 PK: **{player['pk']}** • "
-            f"PFK: **{player['pfk']}**\n"
-            f"🇵🇱 **{player['country']}**\n"
+            f"🏅 PK: **{player['pk']}** • PFK: **{player['pfk']}**\n"
+            f"🇵🇱 PL  **{player['country']}**\n"
             f"📊 PUNKTY: **{player['score']:.2f}**\n\n"
         )
 
 
-        # LIMIT WIADOMOŚCI DISCORD
+        # LIMIT DISCORD 2000 ZNAKÓW
         if len(current_message) + len(player_text) > 1900:
 
             messages.append(
@@ -344,18 +338,18 @@ def main():
 
 
     # ==================================================
-    # DATA OSTATNIEJ AKTUALIZACJI
+    # DATA AKTUALIZACJI
     # ==================================================
 
     messages[-1] += (
         "━━━━━━━━━━━━━━━━━━━━\n\n"
-        f"🕒 **Ostatnia aktualizacja:** "
+        f"🕒 Ostatnia aktualizacja: "
         f"{datetime.now(ZoneInfo('Europe/Warsaw')).strftime('%d.%m.%Y %H:%M')}"
     )
 
 
     # ==================================================
-    # AKTUALIZACJA WIADOMOŚCI NA DISCORDZIE
+    # AKTUALIZACJA DISCORDA
     # ==================================================
 
     old_message_ids = load_message_ids()
@@ -415,13 +409,13 @@ def main():
             )
 
             print(
-                f"Wysłano dodatkową część "
+                f"Wysłano część "
                 f"{number + 1}"
             )
 
 
     # ==================================================
-    # ZAPIS NOWYCH ID WIADOMOŚCI
+    # ZAPIS ID
     # ==================================================
 
     save_message_ids(
