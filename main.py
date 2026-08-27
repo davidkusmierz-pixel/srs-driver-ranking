@@ -229,7 +229,7 @@ def main():
         "uzyskanych wyników i czasów\n\n"
         "💬 **Im lepsze czasy i wyniki, "
         "tym więcej punktów zdobywa kierowca.**\n\n"
-        "🔄 **Aktualizacja: raz w tygodniu**\n\n"
+        "🔄 **Aktualizacja: raz dziennie**\n\n"
         "━━━━━━━━━━━━━━━━━━━━\n\n"
     )
 
