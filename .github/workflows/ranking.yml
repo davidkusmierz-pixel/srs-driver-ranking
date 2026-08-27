@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Pobieranie plików
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Ustawienie Python
         uses: actions/setup-python@v5
@@ -29,15 +31,28 @@ jobs:
       - name: Aktualizacja rankingu
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        run: python main.py
+        run: |
+          python main.py
+
+      - name: Sprawdzenie zapisanych ID
+        run: |
+          echo "ZAWARTOŚĆ message_ids.txt:"
+          cat message_ids.txt || true
+
+          echo ""
+          echo "STATUS GIT:"
+          git status
 
       - name: Zapisanie zmian
         run: |
           git config --global user.name "SRS Ranking Bot"
           git config --global user.email "ranking@srs.local"
 
-          git add message_ids.txt ranking.json
+          git add -f message_ids.txt
+          git add -f ranking.json
 
-          git commit -m "Aktualizacja rankingu SRS" || exit 0
+          git status
+
+          git commit -m "Aktualizacja rankingu SRS" || echo "Brak nowych zmian"
 
           git push
