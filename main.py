@@ -232,14 +232,15 @@ def main():
     ranking = []
 
 
+    # ==================================================
     # POBIERANIE DANYCH
+    # ==================================================
+
     for psn, username in PLAYERS.items():
 
         try:
 
-            print(
-                f"Pobieram dane: {username}"
-            )
+            print(f"Pobieram dane: {username}")
 
             player = get_player(
                 psn,
@@ -256,13 +257,34 @@ def main():
 
 
     # ==================================================
-    # SORTOWANIE WEDŁUG PUNKTÓW
+    # SORTOWANIE OD NAJLEPSZEGO
     # ==================================================
 
     ranking.sort(
         key=lambda x: x["score"],
         reverse=True
     )
+
+
+    # ==================================================
+    # NADANIE PRAWDZIWYCH MIEJSC
+    # ==================================================
+
+    for position, player in enumerate(
+        ranking,
+        start=1
+    ):
+        player["position"] = position
+
+
+    # ==================================================
+    # ODWRÓCENIE WYŚWIETLANIA
+    # ==================================================
+    # NA GÓRZE NAJNIŻSZE MIEJSCA
+    # NA DOLE 1. MIEJSCE
+    # ==================================================
+
+    ranking.reverse()
 
 
     # ==================================================
@@ -285,18 +307,22 @@ def main():
     # TWORZENIE RANKINGU
     # ==================================================
 
-    for i, player in enumerate(
-        ranking,
-        start=1
-    ):
+    for player in ranking:
 
-        if i == 1:
+        position = player["position"]
+
+
+        # ==================================================
+        # EMOTIKONA MIEJSCA
+        # ==================================================
+
+        if position == 1:
             medal = "🥇"
 
-        elif i == 2:
+        elif position == 2:
             medal = "🥈"
 
-        elif i == 3:
+        elif position == 3:
             medal = "🥉"
 
         else:
@@ -308,7 +334,7 @@ def main():
         # ==================================================
 
         player_text = (
-            f"{medal} **{i}. {player['username']}**\n\n"
+            f"{medal} **{position}. {player['username']}**\n\n"
             f"🏅 PK: **{player['pk']}**   PFK: **{player['pfk']}**\n"
             f"🇵🇱 PL  **{player['country']}**\n"
             f"📊 PUNKTY: **{player['score']:.2f}**\n\n"
@@ -343,9 +369,7 @@ def main():
     # ==================================================
 
     if current_message:
-        messages.append(
-            current_message
-        )
+        messages.append(current_message)
 
 
     # ==================================================
