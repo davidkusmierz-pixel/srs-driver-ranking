@@ -90,14 +90,14 @@ def get_player(psn, username):
         re.IGNORECASE
     )
 
-    # EDGE SCORE
+    # PUNKTY / EDGE SCORE
     score_match = re.search(
         r"(\d{1,3}\.\d{1,2})\s+Edge Score",
         text,
         re.IGNORECASE
     )
 
-    # MIEJSCE W KRAJU
+    # MIEJSCE W POLSCE
     country_match = re.search(
         r"(\d[\d,\.]*)\s+Country\s+position",
         text,
@@ -204,10 +204,7 @@ def send_discord_message(message):
 # AKTUALIZACJA WIADOMOŚCI
 # ==================================================
 
-def update_discord_message(
-    message_id,
-    message
-):
+def update_discord_message(message_id, message):
 
     response = requests.patch(
         f"{WEBHOOK_URL}/messages/{message_id}",
@@ -239,7 +236,9 @@ def main():
 
         try:
 
-            print(f"Pobieram dane: {username}")
+            print(
+                f"Pobieram dane: {username}"
+            )
 
             player = get_player(
                 psn,
@@ -255,7 +254,7 @@ def main():
             )
 
 
-    # Sortowanie według EDGE SCORE
+    # Sortowanie według punktów
     ranking.sort(
         key=lambda x: x["score"],
         reverse=True
@@ -269,12 +268,13 @@ def main():
     current_message = (
         "\u200b\n"
         "🏁 **RANKING GŁÓWNY SRS** 🏁\n\n"
-        "📈 Klasyfikacja według **EDGE SCORE**\n\n"
+        "📈 Klasyfikacja według **PUNKTÓW**\n\n"
         "🔄 **Aktualizacja automatyczna raz dziennie**\n\n"
         "━━━━━━━━━━━━━━━━━━━━\n\n"
     )
 
     messages = []
+
     message_number = 1
 
 
@@ -302,10 +302,10 @@ def main():
 
         player_text = (
             f"{medal} **{i}. {player['username']}**\n\n"
-            f"🎯 **PK:** {player['pk']}  •  "
+            f"🎖️ **PK:** {player['pk']}  •  "
             f"**PFK:** {player['pfk']}\n"
-            f"🇵🇱 **Polska:** #{player['country']}\n"
-            f"📈 **EDGE SCORE:** {player['score']:.2f}\n\n"
+            f"🌍 **Polska:** #{player['country']}\n"
+            f"📊 **PUNKTY:** {player['score']:.2f}\n\n"
         )
 
 
@@ -367,7 +367,9 @@ def main():
                     message
                 )
 
-                new_message_ids.append(message_id)
+                new_message_ids.append(
+                    message_id
+                )
 
                 print(
                     f"Zaktualizowano część "
@@ -384,7 +386,9 @@ def main():
                     message
                 )
 
-                new_message_ids.append(new_id)
+                new_message_ids.append(
+                    new_id
+                )
 
         else:
 
@@ -392,7 +396,9 @@ def main():
                 message
             )
 
-            new_message_ids.append(new_id)
+            new_message_ids.append(
+                new_id
+            )
 
             print(
                 f"Wysłano dodatkową część "
@@ -401,10 +407,12 @@ def main():
 
 
     # ==================================================
-    # ZAPIS ID
+    # ZAPIS ID WIADOMOŚCI
     # ==================================================
 
-    save_message_ids(new_message_ids)
+    save_message_ids(
+        new_message_ids
+    )
 
     print("========== KONIEC ==========")
 
