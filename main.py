@@ -300,7 +300,7 @@ def main():
             medal = "🥉"
 
         else:
-            medal = "🏎️"
+            medal = "🏁"
 
 
         # ==================================================
@@ -312,6 +312,7 @@ def main():
             f"🏅 PK: **{player['pk']}**   PFK: **{player['pfk']}**\n"
             f"🇵🇱 PL  **{player['country']}**\n"
             f"📊 PUNKTY: **{player['score']:.2f}**\n\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n\n"
         )
 
 
@@ -352,7 +353,6 @@ def main():
     # ==================================================
 
     messages[-1] += (
-        "━━━━━━━━━━━━━━━━━━━━\n\n"
         f"🕒 Ostatnia aktualizacja: "
         f"{datetime.now(ZoneInfo('Europe/Warsaw')).strftime('%d.%m.%Y %H:%M')}"
     )
