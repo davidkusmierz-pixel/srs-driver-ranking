@@ -373,17 +373,17 @@ def main():
 
 
     # ==================================================
-    # NAGŁÓWEK ZAWSZE NA SAMYM DOLE
+    # INFORMACJE I NAGŁÓWEK NA SAMYM DOLE
     # ==================================================
 
     footer = (
-        "\n"
-        "🏁 **RANKING GŁÓWNY SRS** 🏁\n\n"
-        "📈 Klasyfikacja według **PUNKTÓW**\n\n"
-        "🔄 Aktualizacja automatyczna raz dziennie\n\n"
-        "━━━━━━━━━━━━━━━━━━━━\n\n"
+        "📊 **Punkty w rankingu SRS są oparte na danych z DG EDGE**\n\n"
+        "🏎️ Ranking uwzględnia aktualny **EDGE SCORE** każdego kierowcy.\n\n"
+        "🔄 Wyniki są automatycznie aktualizowane na podstawie danych dostępnych w **DG EDGE**.\n\n"
+        "━━━━━━━━━━━━━━━━━━━━\n"
         f"🕒 Ostatnia aktualizacja: "
-        f"{datetime.now(ZoneInfo('Europe/Warsaw')).strftime('%d.%m.%Y %H:%M')}"
+        f"{datetime.now(ZoneInfo('Europe/Warsaw')).strftime('%d.%m.%Y %H:%M')}\n"
+        "🏁 **RANKING GŁÓWNY SRS** 🏁"
     )
 
     messages[-1] += footer
