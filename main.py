@@ -50,6 +50,7 @@ PLAYERS = {
     "Ashish_PL": "Woocash_POL",
     "LOLOBERCIK": "LOLOBERCIK",
     "DIL_DORSZ": "DIL_DORSZ",
+    "SRS-Tony-Montana": "SRS Tony Montana",
     "demon23mor": "SRS Demon23mor",
 }
 
