@@ -42,6 +42,8 @@ PLAYERS = {
     "CUSTOM_PUNCH85": "SRS_CUSTOM PUNCH",
     "RRA_Tony": "Dawid_Tony11",
     "RM_Shifter": "D.Pawełka",
+    "GSR_Poke": "Poke",
+    "NormanPowerGT": "YT-NormanPowerGT",
     "demon23mor": "SRS Demon23mor"
 }
 
