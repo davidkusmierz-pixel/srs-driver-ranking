@@ -378,8 +378,8 @@ def main():
     # ==================================================
 
     footer = (
-        "📊 Ranking SRS tworzony jest na podstawie danych z DG EDGE\n\n"
         "🏎️ Każdy kierowca otrzymuje miejsce w rankingu zgodnie ze swoim aktualnym EDGE SCORE..\n\n"
+        "📊 **Ranking SRS tworzony jest na podstawie danych z DG EDGE**\n\n"
         "🔄Dane są automatycznie odświeżane, dzięki czemu ranking zawsze uwzględnia najnowsze wyniki z **DG EDGE**.\n\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
         f"🕒 Ostatnia aktualizacja: "
