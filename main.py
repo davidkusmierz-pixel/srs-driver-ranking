@@ -35,14 +35,12 @@ PLAYERS = {
     "Jaras_GD": "Jaras_GD",
     "PRT_El_Chapo": "PRT_EL_CHAPO",
     "Piko88-Z": "NRT_Piko",
-    "destro2207": "Desmond",
     "Wojtek_Kl69": "Wojtek_Kl",
     "zeusek22": "zeusek666",
     "jupiter977gaudy": "SRS Mario",
     "CUSTOM_PUNCH85": "SRS_CUSTOM PUNCH",
     "RRA_Tony": "Dawid_Tony11",
     "RM_Shifter": "D.Pawełka",
-    "GSR_Poke": "Poke",
     "NormanPowerGT": "YT-NormanPowerGT",
     "demon23mor": "SRS Demon23mor"
 }
