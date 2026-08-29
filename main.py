@@ -17,7 +17,7 @@ PLAYERS = {
     "MTE_JaXoN_GT": "@JaXoN_GT_YT",
     "Przemo7117": "SRS Borko",
     "Dawid-y6q": "SRS Dawid-y6q",
-    "Oligo1234": "SRS_skawa_gt7",
+    "OliIgo1234": "SRS_skawa_gt7",
     "MaddMikke992": "SRS BearRacer",
     "Chudinius": "TCS_Chudinius",
     "sajgon89": "sajgon",
