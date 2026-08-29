@@ -43,7 +43,7 @@ PLAYERS = {
     "RM_Shifter": "D.Pawełka",
     "NormanPowerGT": "YT-NormanPowerGT",
     "destro2207": "Desmond",
-    "GSR_Poke": "Poke",
+    "apr_poke": "Poke",
     "HoseeMoralezz": "HoseeMoralezz",
     "Bogdan_Zastrzyk": "Zastrzyk",
     "Hour_BilonPro": "GreG_WrO70",
