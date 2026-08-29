@@ -44,7 +44,7 @@ PLAYERS = {
     "NormanPowerGT": "YT-NormanPowerGT",
     "destro2207": "Desmond",
     "GSR_Poke": "Poke",
-    "demon23mor": "SRS Demon23mor"
+    "demon23mor": "SRS Demon23mor",
 }
 
 
