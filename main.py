@@ -378,9 +378,9 @@ def main():
     # ==================================================
 
     footer = (
-        "📊 **Punkty w rankingu SRS są oparte na danych z DG EDGE**\n\n"
-        "🏎️ Ranking uwzględnia aktualny **EDGE SCORE** każdego kierowcy.\n\n"
-        "🔄 Wyniki są automatycznie aktualizowane na podstawie danych dostępnych w **DG EDGE**.\n\n"
+        "📊 Ranking SRS tworzony jest na podstawie danych z DG EDGE\n\n"
+        "🏎️ Każdy kierowca otrzymuje miejsce w rankingu zgodnie ze swoim aktualnym EDGE SCORE..\n\n"
+        "🔄Dane są automatycznie odświeżane, dzięki czemu ranking zawsze uwzględnia najnowsze wyniki z **DG EDGE**.\n\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
         f"🕒 Ostatnia aktualizacja: "
         f"{datetime.now(ZoneInfo('Europe/Warsaw')).strftime('%d.%m.%Y %H:%M')}\n"
