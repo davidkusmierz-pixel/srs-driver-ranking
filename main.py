@@ -42,6 +42,8 @@ PLAYERS = {
     "RRA_Tony": "Dawid_Tony11",
     "RM_Shifter": "D.Pawełka",
     "NormanPowerGT": "YT-NormanPowerGT",
+    "destro2207": "Desmond",
+    "GSR_Poke": "Poke",
     "demon23mor": "SRS Demon23mor"
 }
 
