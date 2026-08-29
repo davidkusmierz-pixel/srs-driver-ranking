@@ -289,7 +289,6 @@ def main():
 
     # ==================================================
     # ODWRÓCENIE WYŚWIETLANIA
-    # ==================================================
     # NA GÓRZE NAJNIŻSZE MIEJSCA
     # NA DOLE 1. MIEJSCE
     # ==================================================
@@ -298,24 +297,15 @@ def main():
 
 
     # ==================================================
-    # NAGŁÓWEK
-    # ==================================================
-
-    current_message = (
-        "\u200b\n"
-        "🏁 **RANKING GŁÓWNY SRS** 🏁\n\n"
-        "📈 Klasyfikacja według **PUNKTÓW**\n\n"
-        "🔄 Aktualizacja automatyczna raz dziennie\n\n"
-        "━━━━━━━━━━━━━━━━━━━━\n\n"
-    )
-
-    messages = []
-    message_number = 1
-
-
-    # ==================================================
     # TWORZENIE RANKINGU
     # ==================================================
+
+    messages = []
+
+    current_message = "\u200b\n"
+
+    message_number = 1
+
 
     for player in ranking:
 
@@ -383,13 +373,20 @@ def main():
 
 
     # ==================================================
-    # DATA AKTUALIZACJI
+    # NAGŁÓWEK ZAWSZE NA SAMYM DOLE
     # ==================================================
 
-    messages[-1] += (
+    footer = (
+        "\n"
+        "🏁 **RANKING GŁÓWNY SRS** 🏁\n\n"
+        "📈 Klasyfikacja według **PUNKTÓW**\n\n"
+        "🔄 Aktualizacja automatyczna raz dziennie\n\n"
+        "━━━━━━━━━━━━━━━━━━━━\n\n"
         f"🕒 Ostatnia aktualizacja: "
         f"{datetime.now(ZoneInfo('Europe/Warsaw')).strftime('%d.%m.%Y %H:%M')}"
     )
+
+    messages[-1] += footer
 
 
     # ==================================================
