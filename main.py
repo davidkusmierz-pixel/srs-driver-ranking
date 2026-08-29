@@ -29,7 +29,7 @@ PLAYERS = {
     "BoloBagno": "SRS Bolo",
     "GrandNoobPl": "SRS NAJTI",
     "adihanys85": "SRS Adi",
-    "betterWanzzi": "SRS Adi",
+    "betterWanzzi": "SRS wnaz",
     "ActiveShockPL": "SRS-ActiveShock",
     "Hrupek98": "SRS-Hrupek98",
     "Jaras_GD": "Jaras_GD",
@@ -40,6 +40,8 @@ PLAYERS = {
     "zeusek22": "zeusek666",
     "jupiter977gaudy": "SRS Mario",
     "CUSTOM_PUNCH85": "SRS_CUSTOM PUNCH",
+    "RRA_Tony": "Dawid_Tony11",
+    "RM_Shifter": "D.Pawełka",
     "demon23mor": "SRS Demon23mor"
 }
 
