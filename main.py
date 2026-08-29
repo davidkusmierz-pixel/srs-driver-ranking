@@ -44,6 +44,12 @@ PLAYERS = {
     "NormanPowerGT": "YT-NormanPowerGT",
     "destro2207": "Desmond",
     "GSR_Poke": "Poke",
+    "HoseeMoralezz": "HoseeMoralezz",
+    "Bogdan_Zastrzyk": "Zastrzyk",
+    "Hour_BilonPro": "GreG_WrO70",
+    "Ashish_PL": "Woocash_POL",
+    "LOLOBERCIK": "LOLOBERCIK",
+    "DIL_DORSZ": "DIL_DORSZ",
     "demon23mor": "SRS Demon23mor",
 }
 
