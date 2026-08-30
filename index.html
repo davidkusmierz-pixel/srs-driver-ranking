@@ -189,7 +189,42 @@
   </div>
 
 
-  <script>
+  <script type="module">
+
+    /* =========================================
+       🔥 FIREBASE
+    ========================================== */
+
+    import {
+      initializeApp
+    } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+
+    import {
+      getDatabase,
+      ref,
+      onValue,
+      runTransaction
+    } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDRDAiSlJBPOG8N_c4ctBRLYrwx3ER5rKw",
+      authDomain: "srs-losowanie.firebaseapp.com",
+      databaseURL: "https://srs-losowanie-default-rtdb.firebaseio.com",
+      projectId: "srs-losowanie",
+      storageBucket: "srs-losowanie.firebasestorage.app",
+      messagingSenderId: "212959687651",
+      appId: "1:212959687651:web:0a9a5e647450767bc026d6",
+      measurementId: "G-HGT81Y72HF"
+    };
+
+
+    const app =
+      initializeApp(firebaseConfig);
+
+    const database =
+      getDatabase(app);
+
 
     /* =========================================
        🏁 GRAN TURISMO 7 – LISTA TORÓW
@@ -197,26 +232,15 @@
 
     const tracks = [
 
-      /* 24 HEURES DU MANS */
-
       "24 Heures du Mans Racing Circuit",
       "24 Heures du Mans Racing Circuit – No Chicane",
-
-
-      /* ALSACE */
 
       "Alsace – Village",
       "Alsace – Village Reverse",
       "Alsace – Test Course",
       "Alsace – Test Course Reverse",
 
-
-      /* AUTODROME INTERLAGOS */
-
       "Autódromo de Interlagos",
-
-
-      /* LAGO MAGGIORE */
 
       "Autodrome Lago Maggiore – Full Course",
       "Autodrome Lago Maggiore – Full Course Reverse",
@@ -231,14 +255,8 @@
       "Autodrome Lago Maggiore – West End",
       "Autodrome Lago Maggiore – West End Reverse",
 
-
-      /* AUTOPOLIS */
-
       "Autopolis – Full Course",
       "Autopolis – Shortcut Course",
-
-
-      /* BLUE MOON BAY */
 
       "Blue Moon Bay Speedway",
       "Blue Moon Bay Speedway Reverse",
@@ -247,28 +265,16 @@
       "Blue Moon Bay – Infield B",
       "Blue Moon Bay – Infield B Reverse",
 
-
-      /* BRANDS HATCH */
-
       "Brands Hatch – GP Circuit",
       "Brands Hatch – Indy Circuit",
 
-
-      /* BROAD BEAN */
-
       "Broad Bean Raceway",
       "Broad Bean Raceway Reverse",
-
-
-      /* BARCELONA */
 
       "Circuit de Barcelona-Catalunya – GP",
       "Circuit de Barcelona-Catalunya – GP No Chicane",
       "Circuit de Barcelona-Catalunya – National",
       "Circuit de Barcelona-Catalunya – Rallycross",
-
-
-      /* SAINTE-CROIX */
 
       "Circuit de Sainte-Croix – A",
       "Circuit de Sainte-Croix – A Reverse",
@@ -277,91 +283,47 @@
       "Circuit de Sainte-Croix – C",
       "Circuit de Sainte-Croix – C Reverse",
 
-
-      /* SPA */
-
       "Circuit de Spa-Francorchamps",
-      "Circuit de Spa-Francorchamps – 24h Layout",
-
-
-      /* GILLES-VILLENEUVE */
-
       "Circuit Gilles-Villeneuve",
-
-
-      /* COLORADO SPRINGS */
 
       "Colorado Springs – Lake",
       "Colorado Springs – Lake Reverse",
 
-
-      /* DAYTONA */
-
       "Daytona International Speedway – Tri-Oval",
       "Daytona International Speedway – Road Course",
 
-
-      /* DEEP FOREST */
-
       "Deep Forest Raceway",
       "Deep Forest Raceway Reverse",
-
-
-      /* DRAGON TRAIL */
 
       "Dragon Trail – Seaside",
       "Dragon Trail – Seaside Reverse",
       "Dragon Trail – Gardens",
       "Dragon Trail – Gardens Reverse",
 
-
-      /* EIGER NORDWAND */
-
       "Eiger Nordwand",
       "Eiger Nordwand Reverse",
-
-
-      /* FISHERMAN'S RANCH */
 
       "Fisherman's Ranch",
       "Fisherman's Ranch Reverse",
 
-
-      /* FUJI */
-
       "Fuji International Speedway",
       "Fuji International Speedway – Short Course",
 
-
-      /* GOODWOOD */
-
       "Goodwood Motor Circuit",
-
-
-      /* GRAND VALLEY */
 
       "Grand Valley – Highway 1",
       "Grand Valley – Highway 1 Reverse",
       "Grand Valley – South",
       "Grand Valley – South Reverse",
 
-
-      /* HIGH SPEED RING */
-
       "High Speed Ring",
       "High Speed Ring Reverse",
-
-
-      /* KYOTO */
 
       "Kyoto Driving Park – Miyabi",
       "Kyoto Driving Park – Yamagiwa",
       "Kyoto Driving Park – Yamagiwa Reverse",
       "Kyoto Driving Park – Yamagiwa + Miyabi",
       "Kyoto Driving Park – Yamagiwa + Miyabi Reverse",
-
-
-      /* LAKE LOUISE */
 
       "Lake Louise – Long Track",
       "Lake Louise – Long Track Reverse",
@@ -370,24 +332,12 @@
       "Lake Louise – Tri-Oval",
       "Lake Louise – Tri-Oval Reverse",
 
-
-      /* ROAD ATLANTA */
-
       "Michelin Raceway Road Atlanta",
-
-
-      /* MONZA */
 
       "Autodromo Nazionale Monza",
       "Autodromo Nazionale Monza – No Chicane",
 
-
-      /* MOUNT PANORAMA */
-
       "Mount Panorama Motor Racing Circuit",
-
-
-      /* NÜRBURGRING */
 
       "Nürburgring – GP",
       "Nürburgring – GP Reverse",
@@ -397,19 +347,10 @@
       "Nürburgring – Endurance II",
       "Nürburgring – Sprint",
 
-
-      /* NORTHERN ISLE */
-
       "Northern Isle Speedway",
-
-
-      /* RED BULL RING */
 
       "Red Bull Ring",
       "Red Bull Ring Reverse",
-
-
-      /* SARDEGNA ROAD */
 
       "Sardegna – Road Track A",
       "Sardegna – Road Track A Reverse",
@@ -418,26 +359,14 @@
       "Sardegna – Road Track C",
       "Sardegna – Road Track C Reverse",
 
-
-      /* SARDEGNA WINDMILLS */
-
       "Sardegna – Windmills",
       "Sardegna – Windmills Reverse",
 
-
-      /* SPECIAL STAGE ROUTE X */
-
       "Special Stage Route X",
-
-
-      /* SUZUKA */
 
       "Suzuka Circuit",
       "Suzuka Circuit – East",
       "Suzuka Circuit – East Reverse",
-
-
-      /* TOKYO EXPRESSWAY */
 
       "Tokyo Expressway – Central Clockwise",
       "Tokyo Expressway – Central Counterclockwise",
@@ -446,39 +375,21 @@
       "Tokyo Expressway – South Clockwise",
       "Tokyo Expressway – South Counterclockwise",
 
-
-      /* TRIAL MOUNTAIN */
-
       "Trial Mountain Circuit",
       "Trial Mountain Circuit Reverse",
 
-
-      /* TSUKUBA */
-
       "Tsukuba Circuit",
-
-
-      /* WATKINS GLEN */
 
       "Watkins Glen – Long Course",
       "Watkins Glen – Short Course",
 
-
-      /* LAGUNA SECA */
-
       "WeatherTech Raceway Laguna Seca",
-
-
-      /* WILLOW SPRINGS */
 
       "Willow Springs – Big Willow",
       "Willow Springs – Horse Thief Mile",
       "Willow Springs – Horse Thief Mile Reverse",
       "Willow Springs – Streets of Willow Springs",
       "Willow Springs – Streets of Willow Springs Reverse",
-
-
-      /* YAS MARINA */
 
       "Yas Marina Circuit – Full Circuit",
       "Yas Marina Circuit – Short Circuit"
@@ -504,111 +415,30 @@
 
 
     /* =========================================
-       📊 POBIERANIE RANKINGU
-    ========================================== */
-
-    function getRanking() {
-
-      try {
-
-        const savedRanking =
-          JSON.parse(
-            localStorage.getItem(
-              "srsTrackRanking"
-            )
-          ) || {};
-
-
-        tracks.forEach(function(track) {
-
-          if (
-            savedRanking[track] === undefined
-          ) {
-
-            savedRanking[track] = 0;
-
-          }
-
-        });
-
-
-        return savedRanking;
-
-      }
-
-      catch (error) {
-
-        const newRanking = {};
-
-        tracks.forEach(function(track) {
-
-          newRanking[track] = 0;
-
-        });
-
-        return newRanking;
-
-      }
-
-    }
-
-
-    /* =========================================
-       💾 ZAPIS RANKINGU
-    ========================================== */
-
-    function saveRanking(ranking) {
-
-      localStorage.setItem(
-        "srsTrackRanking",
-        JSON.stringify(ranking)
-      );
-
-    }
-
-
-    /* =========================================
        🏆 WYŚWIETLANIE RANKINGU
     ========================================== */
 
-    function renderRanking() {
-
-      const ranking =
-        getRanking();
-
+    function renderRanking(ranking) {
 
       const sortedTracks =
         tracks
           .map(function(track) {
 
             return {
-
               name: track,
-
-              count:
-                ranking[track] || 0
-
+              count: ranking[track] || 0
             };
 
           })
 
           .sort(function(a, b) {
 
-            if (
-              b.count !== a.count
-            ) {
-
-              return (
-                b.count - a.count
-              );
-
+            if (b.count !== a.count) {
+              return b.count - a.count;
             }
 
-
-            return (
-              tracks.indexOf(a.name) -
-              tracks.indexOf(b.name)
-            );
+            return tracks.indexOf(a.name) -
+                   tracks.indexOf(b.name);
 
           });
 
@@ -622,7 +452,6 @@
           const row =
             document.createElement("div");
 
-
           row.className =
             "ranking-item";
 
@@ -632,46 +461,29 @@
 
 
           if (index === 0) {
-
             position = "🥇";
-
           }
 
           else if (index === 1) {
-
             position = "🥈";
-
           }
 
           else if (index === 2) {
-
             position = "🥉";
-
           }
 
 
           row.innerHTML =
-
             '<div class="track-info">' +
-
               '<span class="position">' +
-
                 position +
-
               '</span>' +
-
               '<span>🏁 ' +
-
                 track.name +
-
               '</span>' +
-
             '</div>' +
-
             '<strong class="count">' +
-
               track.count +
-
               '×</strong>';
 
 
@@ -684,7 +496,28 @@
 
 
     /* =========================================
-       🎲 LOSOWANIE
+       🔥 ODBIERANIE RANKINGU Z FIREBASE
+    ========================================== */
+
+    const rankingRef =
+      ref(database, "srsTrackRanking");
+
+
+    onValue(
+      rankingRef,
+      function(snapshot) {
+
+        const ranking =
+          snapshot.val() || {};
+
+        renderRanking(ranking);
+
+      }
+    );
+
+
+    /* =========================================
+       🎲 LOSOWANIE TORU
     ========================================== */
 
     function drawTrack() {
@@ -703,7 +536,6 @@
         setInterval(function() {
 
           const randomTrack =
-
             tracks[
               Math.floor(
                 Math.random() *
@@ -713,8 +545,7 @@
 
 
           trackName.textContent =
-            "🎲 " +
-            randomTrack;
+            "🎲 " + randomTrack;
 
 
           animationCount++;
@@ -724,13 +555,10 @@
 
       setTimeout(function() {
 
-        clearInterval(
-          animation
-        );
+        clearInterval(animation);
 
 
         const selectedTrack =
-
           tracks[
             Math.floor(
               Math.random() *
@@ -740,30 +568,52 @@
 
 
         trackName.textContent =
-          "🏆 " +
-          selectedTrack;
+          "🏆 " + selectedTrack;
 
 
         message.textContent =
           "🎉 TOR ZOSTAŁ WYLOSOWANY!";
 
 
-        const ranking =
-          getRanking();
+        const trackRef =
+          ref(
+            database,
+            "srsTrackRanking/" +
+            encodeURIComponent(selectedTrack)
+          );
 
 
-        ranking[selectedTrack]++;
+        runTransaction(
+          trackRef,
+          function(currentValue) {
+
+            return (
+              currentValue || 0
+            ) + 1;
+
+          }
+        )
 
 
-        saveRanking(
-          ranking
-        );
+        .then(function() {
+
+          button.disabled = false;
+
+        })
 
 
-        renderRanking();
+        .catch(function(error) {
+
+          console.error(error);
 
 
-        button.disabled = false;
+          message.textContent =
+            "❌ BŁĄD ZAPISU LOSOWANIA!";
+
+
+          button.disabled = false;
+
+        });
 
       }, 2500);
 
@@ -778,13 +628,6 @@
       "click",
       drawTrack
     );
-
-
-    /* =========================================
-       START
-    ========================================== */
-
-    renderRanking();
 
   </script>
 
