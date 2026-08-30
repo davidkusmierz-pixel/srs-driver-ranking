@@ -199,11 +199,13 @@
       initializeApp
     } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
 
+
     import {
       getDatabase,
       ref,
       onValue,
-      runTransaction
+      runTransaction,
+      set
     } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
 
 
@@ -221,6 +223,7 @@
 
     const app =
       initializeApp(firebaseConfig);
+
 
     const database =
       getDatabase(app);
@@ -496,7 +499,7 @@
 
 
     /* =========================================
-       🔥 ODBIERANIE RANKINGU Z FIREBASE
+       🔥 RANKING FIREBASE
     ========================================== */
 
     const rankingRef =
@@ -529,9 +532,6 @@
         "🎲 LOSOWANIE TORU...";
 
 
-      let animationCount = 0;
-
-
       const animation =
         setInterval(function() {
 
@@ -546,9 +546,6 @@
 
           trackName.textContent =
             "🎲 " + randomTrack;
-
-
-          animationCount++;
 
         }, 100);
 
@@ -572,7 +569,7 @@
 
 
         message.textContent =
-          "🎉 TOR ZOSTAŁ WYLOSOWANY!";
+          "🎉 ZAPISYWANIE WYNIKU...";
 
 
         const trackRef =
@@ -594,13 +591,34 @@
           }
         )
 
+        .then(function() {
+
+          const lastTrackRef =
+            ref(
+              database,
+              "srsLastTrack"
+            );
+
+
+          return set(
+            lastTrackRef,
+            {
+              track: selectedTrack,
+              send: true,
+              timestamp: Date.now()
+            }
+          );
+
+        })
 
         .then(function() {
+
+          message.textContent =
+            "🎉 TOR ZOSTAŁ WYLOSOWANY! WYNIK ZOSTANIE WYSŁANY NA DISCORD.";
 
           button.disabled = false;
 
         })
-
 
         .catch(function(error) {
 
