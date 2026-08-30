@@ -1,438 +1,377 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>SRS – Losowanie Torów</title>
+  <title>SRS – Losowanie Toru</title>
 
-<style>
-* {
-    box-sizing: border-box;
-}
-
-body {
-    margin: 0;
-    min-height: 100vh;
-    font-family: Arial, sans-serif;
-    background: #111;
-    color: white;
-    display: flex;
-    justify-content: center;
-}
-
-.container {
-    width: 92%;
-    max-width: 700px;
-    text-align: center;
-    padding: 30px 15px 50px;
-}
-
-h1 {
-    margin-bottom: 5px;
-}
-
-.subtitle {
-    color: #aaa;
-    margin-bottom: 30px;
-}
-
-.slot {
-    background: #1b1b1b;
-    border: 2px solid #333;
-    border-radius: 18px;
-    padding: 35px 20px;
-    min-height: 150px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 20px;
-}
-
-#trackName {
-    font-size: 30px;
-    font-weight: bold;
-}
-
-button {
-    width: 100%;
-    border: none;
-    border-radius: 12px;
-    padding: 18px;
-    font-size: 19px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.result {
-    min-height: 45px;
-    margin-top: 20px;
-    font-size: 19px;
-    font-weight: bold;
-}
-
-.stats {
-    margin-top: 30px;
-    background: #1b1b1b;
-    border: 1px solid #333;
-    border-radius: 18px;
-    padding: 20px;
-    text-align: left;
-}
-
-.stats h2 {
-    text-align: center;
-    margin-top: 0;
-}
-
-.trackStat {
-    display: flex;
-    justify-content: space-between;
-    gap: 15px;
-    padding: 11px 5px;
-    border-bottom: 1px solid #333;
-}
-
-.trackStat:last-child {
-    border-bottom: none;
-}
-
-@media (max-width: 500px) {
-    #trackName {
-        font-size: 23px;
+  <style>
+    * {
+      box-sizing: border-box;
     }
-}
-</style>
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #090909, #1b1b1b);
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 650px;
+      margin: auto;
+    }
+
+    h1 {
+      margin-bottom: 8px;
+      font-size: 32px;
+    }
+
+    .subtitle {
+      color: #bdbdbd;
+      margin-bottom: 30px;
+    }
+
+    .draw-card {
+      background: #171717;
+      border: 1px solid #333;
+      border-radius: 20px;
+      padding: 30px 20px;
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.35);
+    }
+
+    .track-title {
+      font-size: 16px;
+      color: #aaa;
+      margin-bottom: 15px;
+    }
+
+    #trackName {
+      font-size: 32px;
+      font-weight: bold;
+      min-height: 85px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 15px;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 18px;
+      border: none;
+      border-radius: 14px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      background: #ffffff;
+      color: #111;
+      transition: 0.2s;
+    }
+
+    button:hover:not(:disabled) {
+      transform: scale(1.02);
+    }
+
+    button:disabled {
+      background: #444;
+      color: #aaa;
+      cursor: not-allowed;
+    }
+
+    #message {
+      margin-top: 20px;
+      font-size: 17px;
+      min-height: 25px;
+      color: #4ade80;
+    }
+
+    .timer-box {
+      margin-top: 15px;
+      color: #facc15;
+      font-size: 15px;
+    }
+
+    .ranking {
+      margin-top: 30px;
+      background: #171717;
+      border: 1px solid #333;
+      border-radius: 20px;
+      padding: 25px;
+      text-align: left;
+    }
+
+    .ranking h2 {
+      text-align: center;
+      margin-top: 0;
+    }
+
+    .ranking-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 5px;
+      border-bottom: 1px solid #333;
+    }
+
+    .ranking-item:last-child {
+      border-bottom: none;
+    }
+  </style>
 </head>
 
 <body>
 
-<div class="container">
+  <div class="container">
 
     <h1>🏁 SRS LOSOWANIE TORU</h1>
 
     <div class="subtitle">
-        SIM RACING SQUAD 🎲
+      Każdy użytkownik może losować tor raz na 5 dni.
     </div>
 
-    <div class="slot">
-        <div id="trackName">
-            🎲 GOTOWY DO LOSOWANIA?
-        </div>
-    </div>
+    <div class="draw-card">
 
-    <button id="drawButton">
+      <div class="track-title">
+        WYLOSOWANY TOR
+      </div>
+
+      <div id="trackName">
+        🎲 Kliknij „LOSUJ TOR”
+      </div>
+
+      <button id="drawButton">
         🎲 LOSUJ TOR
-    </button>
+      </button>
 
-    <div class="result" id="result"></div>
+      <div id="message"></div>
 
-    <div class="stats">
-        <h2>🏆 NAJCZĘŚCIEJ LOSOWANE TORY</h2>
-        <div id="ranking">
-            ⏳ Ładowanie wyników...
-        </div>
+      <div id="timer" class="timer-box"></div>
+
     </div>
 
-</div>
+    <div class="ranking">
+
+      <h2>🏆 NAJCZĘŚCIEJ LOSOWANE TORY</h2>
+
+      <div id="rankingList">
+        Ładowanie rankingu...
+      </div>
+
+    </div>
+
+  </div>
 
 
-<script type="module">
+  <script>
 
-import {
-    initializeApp
-} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+    const tracks = [
+      "Trial Mountain Circuit",
+      "Deep Forest Raceway",
+      "Dragon Trail – Wybrzeże",
+      "Red Bull Ring",
+      "Suzuka Circuit",
+      "Mount Panorama",
+      "Laguna Seca",
+      "Monza",
+      "Spa-Francorchamps",
+      "Watkins Glen"
+    ];
 
-import {
-    getDatabase,
-    ref,
-    onValue,
-    runTransaction
-} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
-
-
-/* =====================
-   FIREBASE
-===================== */
-
-const firebaseConfig = {
-    apiKey: "AIzaSyDRDAiSlJBPOG8N_c4ctBRLYrwx3ER5rKw",
-    authDomain: "srs-losowanie.firebaseapp.com",
-    databaseURL: "https://srs-losowanie-default-rtdb.firebaseio.com",
-    projectId: "srs-losowanie",
-    storageBucket: "srs-losowanie.firebasestorage.app",
-    messagingSenderId: "212959687651",
-    appId: "1:212959687651:web:0a9a5e647450767bc026d6"
-};
-
-const app = initializeApp(firebaseConfig);
-
-const database = getDatabase(app);
+    const button = document.getElementById("drawButton");
+    const trackName = document.getElementById("trackName");
+    const message = document.getElementById("message");
+    const timer = document.getElementById("timer");
+    const rankingList = document.getElementById("rankingList");
 
 
-/* =====================
-   LISTA TORÓW
-===================== */
+    // =========================
+    // CZAS BLOKADY – 5 DNI
+    // =========================
 
-const tracks = [
-    "Trial Mountain Circuit",
-    "Deep Forest Raceway",
-    "Dragon Trail – Seaside",
-    "Red Bull Ring",
-    "Suzuka Circuit",
-    "Spa-Francorchamps",
-    "Autodromo Nazionale Monza",
-    "Mount Panorama",
-    "Watkins Glen",
-    "Nürburgring GP"
-];
+    const FIVE_DAYS = 5 * 24 * 60 * 60 * 1000;
 
 
-/* =====================
-   ELEMENTY
-===================== */
+    // =========================
+    // SPRAWDZANIE CZASU
+    // =========================
 
-const button =
-    document.getElementById("drawButton");
+    function checkDrawStatus() {
 
-const trackName =
-    document.getElementById("trackName");
+      const lastDraw = localStorage.getItem("srsLastDraw");
 
-const result =
-    document.getElementById("result");
+      if (!lastDraw) {
+        button.disabled = false;
+        button.textContent = "🎲 LOSUJ TOR";
+        timer.textContent = "";
+        return;
+      }
 
-const ranking =
-    document.getElementById("ranking");
+      const now = Date.now();
+      const lastDrawTime = Number(lastDraw);
+      const nextDrawTime = lastDrawTime + FIVE_DAYS;
+      const remaining = nextDrawTime - now;
 
+      if (remaining <= 0) {
 
-/* =====================
-   JEDEN UDZIAŁ
-===================== */
+        button.disabled = false;
+        button.textContent = "🎲 LOSUJ TOR";
 
-const alreadyVoted =
-    localStorage.getItem("srsAlreadyVoted") === "true";
+        timer.textContent = "🎉 Możesz ponownie wylosować tor!";
+        message.textContent = "";
 
+        localStorage.removeItem("srsLastDraw");
 
-function checkVoteStatus() {
-
-    if (alreadyVoted) {
+      } else {
 
         button.disabled = true;
+        button.textContent = "🔒 JUŻ WZIĄŁEŚ UDZIAŁ";
 
-        button.innerHTML =
-            "✅ JUŻ WZIĄŁEŚ UDZIAŁ";
+        const days = Math.floor(remaining / (1000 * 60 * 60 * 24));
 
-        result.innerHTML =
-            "🏁 Możesz losować tylko raz.";
+        const hours = Math.floor(
+          (remaining % (1000 * 60 * 60 * 24)) /
+          (1000 * 60 * 60)
+        );
+
+        const minutes = Math.floor(
+          (remaining % (1000 * 60 * 60)) /
+          (1000 * 60)
+        );
+
+        const seconds = Math.floor(
+          (remaining % (1000 * 60)) /
+          1000
+        );
+
+        timer.textContent =
+          `⏳ Następne losowanie za: ${days}d ${hours}g ${minutes}m ${seconds}s`;
+
+      }
 
     }
 
-}
+
+    // =========================
+    // LOSOWANIE
+    // =========================
+
+    button.addEventListener("click", function () {
+
+      const randomTrack =
+        tracks[Math.floor(Math.random() * tracks.length)];
+
+      trackName.textContent = randomTrack;
+
+      message.textContent =
+        "🎉 Tor został wylosowany! Wróć za 5 dni.";
+
+      localStorage.setItem(
+        "srsLastDraw",
+        Date.now()
+      );
+
+      updateRanking(randomTrack);
+
+      checkDrawStatus();
+
+    });
 
 
-/* =====================
-   WSPÓLNY RANKING
-===================== */
+    // =========================
+    // RANKING TORÓW
+    // =========================
 
-const statsRef =
-    ref(database, "trackStats");
+    function getRanking() {
 
+      const savedRanking =
+        JSON.parse(
+          localStorage.getItem("srsTrackRanking")
+        ) || {};
 
-onValue(statsRef, (snapshot) => {
+      return savedRanking;
 
-    const stats =
-        snapshot.val() || {};
-
-    const sortedTracks =
-        [...tracks].sort((a, b) => {
-
-            return (stats[b] || 0)
-                - (stats[a] || 0);
-
-        });
+    }
 
 
-    ranking.innerHTML = "";
+    function updateRanking(track) {
+
+      const ranking = getRanking();
+
+      if (!ranking[track]) {
+        ranking[track] = 0;
+      }
+
+      ranking[track]++;
+
+      localStorage.setItem(
+        "srsTrackRanking",
+        JSON.stringify(ranking)
+      );
+
+      renderRanking();
+
+    }
 
 
-    sortedTracks.forEach(
-        (track, index) => {
+    function renderRanking() {
 
-            let medal = "";
+      const ranking = getRanking();
 
-            if (index === 0) {
-                medal = "🥇";
-            }
+      const sortedRanking =
+        Object.entries(ranking)
+          .sort((a, b) => b[1] - a[1]);
 
-            else if (index === 1) {
-                medal = "🥈";
-            }
+      if (sortedRanking.length === 0) {
 
-            else if (index === 2) {
-                medal = "🥉";
-            }
+        rankingList.innerHTML =
+          "<div class='ranking-item'>Brak losowań</div>";
 
-
-            ranking.innerHTML += `
-
-                <div class="trackStat">
-
-                    <span>
-                        ${medal} 🏁 ${track}
-                    </span>
-
-                    <strong>
-                        ${stats[track] || 0}×
-                    </strong>
-
-                </div>
-
-            `;
-
-        }
-    );
-
-});
-
-
-/* =====================
-   LOSOWANIE
-===================== */
-
-function drawTrack() {
-
-    if (
-        localStorage.getItem(
-            "srsAlreadyVoted"
-        ) === "true"
-    ) {
         return;
-    }
+      }
 
+      rankingList.innerHTML = "";
 
-    button.disabled = true;
+      sortedRanking.forEach((item, index) => {
 
+        const track = item[0];
+        const count = item[1];
 
-    result.innerHTML =
-        "🎰 TRWA LOSOWANIE...";
+        const div = document.createElement("div");
 
+        div.className = "ranking-item";
 
-    let counter = 0;
+        div.innerHTML = `
+          <span>
+            ${index + 1}. ${track}
+          </span>
 
-    let speed = 60;
+          <strong>
+            ${count}×
+          </strong>
+        `;
 
+        rankingList.appendChild(div);
 
-    function spin() {
-
-        const randomTrack =
-            tracks[
-                Math.floor(
-                    Math.random()
-                    * tracks.length
-                )
-            ];
-
-
-        trackName.innerHTML =
-            "🏁 " + randomTrack;
-
-
-        counter++;
-
-
-        if (counter < 35) {
-
-            speed += 10;
-
-            setTimeout(
-                spin,
-                speed
-            );
-
-        }
-
-        else {
-
-            const winner =
-                tracks[
-                    Math.floor(
-                        Math.random()
-                        * tracks.length
-                    )
-                ];
-
-
-            trackName.innerHTML =
-                "🏆 " + winner;
-
-
-            result.innerHTML =
-                "🎉 TWÓJ WYLOSOWANY TOR!";
-
-
-            /* ZAPIS DO WSPÓLNEJ BAZY */
-
-            const winnerRef =
-                ref(
-                    database,
-                    "trackStats/" + winner
-                );
-
-
-            runTransaction(
-                winnerRef,
-                (currentValue) => {
-
-                    return (
-                        currentValue || 0
-                    ) + 1;
-
-                }
-            );
-
-
-            /* BLOKADA UŻYTKOWNIKA */
-
-            localStorage.setItem(
-                "srsAlreadyVoted",
-                "true"
-            );
-
-
-            button.innerHTML =
-                "✅ JUŻ WZIĄŁEŚ UDZIAŁ";
-
-
-            button.disabled = true;
-
-        }
+      });
 
     }
 
 
-    spin();
+    // =========================
+    // URUCHOMIENIE
+    // =========================
 
-}
+    checkDrawStatus();
+    renderRanking();
 
+    setInterval(checkDrawStatus, 1000);
 
-/* =====================
-   START
-===================== */
-
-button.addEventListener(
-    "click",
-    drawTrack
-);
-
-
-checkVoteStatus();
-
-</script>
+  </script>
 
 </body>
 </html>
