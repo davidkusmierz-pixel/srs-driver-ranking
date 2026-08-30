@@ -7,80 +7,109 @@
 <title>SRS – Losowanie Torów</title>
 
 <style>
-    * {
-        box-sizing: border-box;
-    }
+* {
+    box-sizing: border-box;
+}
 
-    body {
-        margin: 0;
-        min-height: 100vh;
-        font-family: Arial, sans-serif;
-        background: #111;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+    background: #111;
+    color: white;
+    display: flex;
+    justify-content: center;
+}
 
-    .container {
-        width: 90%;
-        max-width: 650px;
-        text-align: center;
-        padding: 30px 20px;
+.container {
+    width: 92%;
+    max-width: 700px;
+    text-align: center;
+    padding: 30px 15px 50px;
+}
+
+h1 {
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    color: #aaa;
+    margin-bottom: 30px;
+}
+
+.slot {
+    background: #1b1b1b;
+    border: 2px solid #333;
+    border-radius: 18px;
+    padding: 35px 20px;
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+#trackName {
+    font-size: 30px;
+    font-weight: bold;
+}
+
+button {
+    width: 100%;
+    padding: 18px;
+    border: none;
+    border-radius: 12px;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.result {
+    min-height: 40px;
+    margin: 20px 0;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.stats {
+    margin-top: 35px;
+    background: #1b1b1b;
+    border: 1px solid #333;
+    border-radius: 18px;
+    padding: 20px;
+    text-align: left;
+}
+
+.stats h2 {
+    text-align: center;
+    margin-top: 0;
+}
+
+.trackStat {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 5px;
+    border-bottom: 1px solid #333;
+}
+
+.trackStat:last-child {
+    border-bottom: none;
+}
+
+@media (max-width: 500px) {
+    #trackName {
+        font-size: 23px;
     }
 
     h1 {
-        margin-bottom: 10px;
+        font-size: 25px;
     }
-
-    .subtitle {
-        color: #aaa;
-        margin-bottom: 30px;
-    }
-
-    .slot {
-        background: #1b1b1b;
-        border: 2px solid #333;
-        border-radius: 15px;
-        padding: 30px 20px;
-        margin-bottom: 25px;
-        min-height: 140px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    #trackName {
-        font-size: 32px;
-        font-weight: bold;
-    }
-
-    .result {
-        margin-top: 20px;
-        font-size: 18px;
-        min-height: 30px;
-    }
-
-    button {
-        width: 100%;
-        border: none;
-        border-radius: 12px;
-        padding: 18px;
-        font-size: 20px;
-        font-weight: bold;
-        cursor: pointer;
-    }
-
-    button:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    @media (max-width: 500px) {
-        #trackName {
-            font-size: 24px;
-        }
-    }
+}
 </style>
 </head>
 
@@ -90,36 +119,89 @@
 
     <h1>🏁 SRS LOSOWANIE TORU</h1>
 
-    <p class="subtitle">
+    <div class="subtitle">
         Sim Racing Squad 🎲
-    </p>
-
-    <div class="slot">
-        <div id="trackName">🎲 GOTOWY?</div>
     </div>
 
-    <button id="drawButton" onclick="drawTrack()">
+    <div class="slot">
+        <div id="trackName">🎲 GOTOWY DO LOSOWANIA?</div>
+    </div>
+
+    <button id="drawButton">
         🎲 LOSUJ TOR
     </button>
 
     <div class="result" id="result"></div>
+
+    <div class="stats">
+        <h2>🏆 NAJCZĘŚCIEJ LOSOWANE TORY</h2>
+        <div id="ranking"></div>
+    </div>
 
 </div>
 
 <script>
 
 const tracks = [
-    "🏁 Trial Mountain Circuit",
-    "🏁 Deep Forest Raceway",
-    "🏁 Dragon Trail – Seaside",
-    "🏁 Red Bull Ring",
-    "🏁 Suzuka Circuit",
-    "🏁 Spa-Francorchamps",
-    "🏁 Autodromo Nazionale Monza",
-    "🏁 Mount Panorama",
-    "🏁 Watkins Glen",
-    "🏁 Nürburgring GP"
+    "Trial Mountain Circuit",
+    "Deep Forest Raceway",
+    "Dragon Trail – Seaside",
+    "Red Bull Ring",
+    "Suzuka Circuit",
+    "Spa-Francorchamps",
+    "Autodromo Nazionale Monza",
+    "Mount Panorama",
+    "Watkins Glen",
+    "Nürburgring GP"
 ];
+
+/* Pobieranie zapisanych wyników */
+
+let stats = JSON.parse(
+    localStorage.getItem("srsTrackStats")
+) || {};
+
+/* Dodanie brakujących torów */
+
+tracks.forEach(track => {
+    if (stats[track] === undefined) {
+        stats[track] = 0;
+    }
+});
+
+function saveStats() {
+    localStorage.setItem(
+        "srsTrackStats",
+        JSON.stringify(stats)
+    );
+}
+
+function showRanking() {
+
+    const ranking = document.getElementById("ranking");
+
+    const sortedTracks = [...tracks].sort(
+        (a, b) => stats[b] - stats[a]
+    );
+
+    ranking.innerHTML = "";
+
+    sortedTracks.forEach((track, index) => {
+
+        let medal = "";
+
+        if (index === 0) medal = "🥇";
+        else if (index === 1) medal = "🥈";
+        else if (index === 2) medal = "🥉";
+
+        ranking.innerHTML += `
+            <div class="trackStat">
+                <span>${medal} 🏁 ${track}</span>
+                <strong>${stats[track]}</strong>
+            </div>
+        `;
+    });
+}
 
 function drawTrack() {
 
@@ -128,37 +210,76 @@ function drawTrack() {
     const result = document.getElementById("result");
 
     button.disabled = true;
-    result.innerHTML = "🎰 Trwa losowanie...";
 
-    let count = 0;
+    result.innerHTML =
+        "🎰 TRWA LOSOWANIE...";
 
-    const interval = setInterval(() => {
+    let counter = 0;
+    let speed = 70;
+
+    function spin() {
 
         const randomTrack =
-            tracks[Math.floor(Math.random() * tracks.length)];
+            tracks[Math.floor(
+                Math.random() * tracks.length
+            )];
 
-        trackName.innerHTML = randomTrack;
+        trackName.innerHTML =
+            "🏁 " + randomTrack;
 
-        count++;
+        counter++;
 
-        if (count >= 20) {
+        /* Losowanie zwalnia */
 
-            clearInterval(interval);
+        if (counter < 35) {
+
+            speed += 12;
+
+            setTimeout(
+                spin,
+                speed
+            );
+
+        } else {
+
+            /* Ostateczny wynik */
 
             const winner =
-                tracks[Math.floor(Math.random() * tracks.length)];
+                tracks[Math.floor(
+                    Math.random() * tracks.length
+                )];
 
-            trackName.innerHTML = winner;
+            trackName.innerHTML =
+                "🏆 " + winner;
 
             result.innerHTML =
-                "🏆 WYLOSOWANY TOR! 🏆";
+                "🎉 WYLOSOWANY TOR! 🎉";
+
+            /* Dodanie wyniku */
+
+            stats[winner]++;
+
+            saveStats();
+
+            showRanking();
 
             button.disabled = false;
         }
+    }
 
-    }, 100);
-
+    spin();
 }
+
+/* Wyświetlenie rankingu po otwarciu strony */
+
+showRanking();
+
+document
+    .getElementById("drawButton")
+    .addEventListener(
+        "click",
+        drawTrack
+    );
 
 </script>
 
