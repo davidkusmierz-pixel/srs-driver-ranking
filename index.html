@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -55,7 +54,8 @@
       transform: scale(1.03);
     }
 
-    .wynik {
+    .wynik,
+    .ranking {
       margin-top: 30px;
       padding: 25px;
       background: #222;
@@ -66,13 +66,10 @@
       font-size: 28px;
       font-weight: bold;
       margin-top: 15px;
+      color: #ff3b30;
     }
 
     .ranking {
-      margin-top: 30px;
-      background: #222;
-      padding: 20px;
-      border-radius: 15px;
       text-align: left;
     }
 
@@ -83,6 +80,7 @@
     .tor {
       display: flex;
       justify-content: space-between;
+      gap: 15px;
       padding: 12px;
       margin: 7px 0;
       background: #333;
@@ -93,42 +91,48 @@
       margin-top: 20px;
       color: #aaa;
     }
+
+    .status {
+      margin-top: 15px;
+      font-weight: bold;
+    }
   </style>
 </head>
 
 <body>
 
-  <div class="container">
+<div class="container">
 
-    <h1>🏁 SRS LOSOWANIE TORU</h1>
+  <h1>🏁 SRS LOSOWANIE TORU</h1>
 
-    <div class="subtitle">
-      Każdy użytkownik może wylosować tor tylko jeden raz.
-    </div>
-
-    <button id="losujBtn">
-      🎲 LOSUJ TOR
-    </button>
-
-    <div class="wynik">
-      <div>WYLOSOWANY TOR:</div>
-      <div id="wylosowanyTor">
-        Jeszcze nie wylosowano
-      </div>
-    </div>
-
-    <div class="ranking">
-      <h2>📊 WYNIKI LOSOWANIA</h2>
-      <div id="ranking">
-        Ładowanie wyników...
-      </div>
-    </div>
-
-    <div class="info">
-      👑 Administrator może losować dalej po wpisaniu PIN-u.
-    </div>
-
+  <div class="subtitle">
+    Każdy użytkownik może wylosować tor tylko jeden raz.
   </div>
+
+  <button id="losujBtn">🎲 LOSUJ TOR</button>
+
+  <div id="status" class="status"></div>
+
+  <div class="wynik">
+    <div>WYLOSOWANY TOR:</div>
+    <div id="wylosowanyTor">
+      Jeszcze nie wylosowano
+    </div>
+  </div>
+
+  <div class="ranking">
+    <h2>📊 WYNIKI LOSOWANIA</h2>
+
+    <div id="ranking">
+      Ładowanie wyników...
+    </div>
+  </div>
+
+  <div class="info">
+    👑 Administrator po wpisaniu PIN-u może losować dalej.
+  </div>
+
+</div>
 
 
 <script type="module">
@@ -139,11 +143,9 @@
 
   const ADMIN_PIN = "840416";
 
-  let adminMode = false;
-
 
   /* =========================
-     🔥 FIREBASE IMPORT
+     🔥 IMPORT FIREBASE
   ========================= */
 
   import {
@@ -159,7 +161,8 @@
 
 
   /* =========================
-     🔥 TWOJA KONFIGURACJA FIREBASE
+     🔥 FIREBASE
+     WKLEJ SWOJE PRAWDZIWE DANE
   ========================= */
 
   const firebaseConfig = {
@@ -182,12 +185,16 @@
 
 
   /* =========================
-     🔥 URUCHOM FIREBASE
+     ZMIENNE
   ========================= */
 
-  const app = initializeApp(firebaseConfig);
+  let db = null;
+  let adminMode = false;
 
-  const db = getDatabase(app);
+  const losujBtn = document.getElementById("losujBtn");
+  const wylosowanyTor = document.getElementById("wylosowanyTor");
+  const ranking = document.getElementById("ranking");
+  const status = document.getElementById("status");
 
 
   /* =========================
@@ -228,23 +235,93 @@
     "Trial Mountain Circuit",
     "Tsukuba Circuit",
     "Watkins Glen",
-    "Willow Springs",
-    "WeatherTech Raceway Laguna Seca"
+    "Willow Springs"
   ];
 
 
   /* =========================
-     🔒 SPRAWDZENIE BLOKADY
+     🔥 URUCHOM FIREBASE
+  ========================= */
+
+  try {
+
+    const app = initializeApp(firebaseConfig);
+
+    db = getDatabase(app);
+
+    status.textContent = "🔥 Połączono z systemem losowania";
+
+    onValue(
+      ref(db, "losowanieTorow"),
+      (snapshot) => {
+
+        const dane = snapshot.val() || {};
+
+        const posortowane = Object.entries(dane)
+          .sort((a, b) => b[1] - a[1]);
+
+        if (posortowane.length === 0) {
+          ranking.innerHTML = "Brak wyników.";
+          return;
+        }
+
+        ranking.innerHTML = posortowane
+          .map(([tor, liczba], index) => {
+
+            return `
+              <div class="tor">
+                <span>
+                  ${index + 1}. ${tor}
+                </span>
+
+                <strong>
+                  ${liczba} losowań
+                </strong>
+              </div>
+            `;
+
+          })
+          .join("");
+
+      },
+      (error) => {
+
+        console.error(error);
+
+        ranking.innerHTML =
+          "⚠️ Nie udało się pobrać wyników.";
+
+      }
+    );
+
+  } catch (error) {
+
+    console.error(error);
+
+    status.textContent =
+      "⚠️ Problem z połączeniem Firebase.";
+
+    ranking.innerHTML =
+      "⚠️ Wklej prawidłową konfigurację Firebase.";
+
+  }
+
+
+  /* =========================
+     🔒 SPRAWDZENIE LOSOWANIA
   ========================= */
 
   function czyMoznaLosowac() {
 
-    // 👑 Administrator
+    /* 👑 Admin już aktywny */
+
     if (adminMode) {
       return true;
     }
 
-    // 👤 Jeszcze nie losował
+
+    /* 👤 Użytkownik jeszcze nie losował */
+
     if (
       localStorage.getItem("srs_juz_losowal")
       !== "tak"
@@ -252,20 +329,15 @@
       return true;
     }
 
-    // 🔒 Już losował
+
+    /* 🔒 Użytkownik już losował */
+
     const pin = prompt(
       "🔒 Już wykorzystałeś swoje losowanie!\n\n" +
-      "👑 Jeśli jesteś administratorem, wpisz PIN:"
+      "👑 Administrator może wpisać PIN:"
     );
 
 
-    // Anulowanie
-    if (pin === null) {
-      return false;
-    }
-
-
-    // 👑 Poprawny PIN
     if (pin === ADMIN_PIN) {
 
       adminMode = true;
@@ -275,13 +347,16 @@
         "Możesz teraz losować bez ograniczeń."
       );
 
+      status.textContent =
+        "👑 TRYB ADMINISTRATORA AKTYWNY";
+
       return true;
+
     }
 
 
-    // ❌ Zły PIN
     alert(
-      "❌ Nie możesz losować drugi raz!"
+      "❌ Już wykorzystałeś swoje losowanie!"
     );
 
     return false;
@@ -290,46 +365,23 @@
 
 
   /* =========================
-     🔒 ZAPIS BLOKADY
+     🎲 PRZYCISK LOSOWANIA
   ========================= */
-
-  function zablokujKolejneLosowanie() {
-
-    if (!adminMode) {
-
-      localStorage.setItem(
-        "srs_juz_losowal",
-        "tak"
-      );
-
-    }
-
-  }
-
-
-  /* =========================
-     🎲 LOSOWANIE
-  ========================= */
-
-  const losujBtn =
-    document.getElementById("losujBtn");
-
-  const wylosowanyTor =
-    document.getElementById("wylosowanyTor");
-
 
   losujBtn.addEventListener(
     "click",
     async () => {
 
 
-      /* 🔒 SPRAWDZENIE */
+      /* 🔒 BLOKADA */
+
       if (!czyMoznaLosowac()) {
         return;
       }
 
 
       /* 🎲 LOSOWANIE */
+
       const tor =
         tory[
           Math.floor(
@@ -338,20 +390,39 @@
         ];
 
 
-      /* 🖥️ POKAZANIE WYNIKU */
+      /* 🖥️ POKAŻ WYNIK */
+
       wylosowanyTor.textContent = tor;
 
 
-      /* 🔥 ZAPIS DO FIREBASE */
-      const torRef =
-        ref(
-          db,
-          "losowanieTorow/" +
-          tor.replace(/[.#$[\]/]/g, "_")
+      /* 🔥 JEŚLI FIREBASE NIE DZIAŁA */
+
+      if (!db) {
+
+        alert(
+          "⚠️ Tor został wylosowany, ale wynik nie został zapisany do Firebase."
         );
+
+        return;
+
+      }
 
 
       try {
+
+        losujBtn.disabled = true;
+
+        const bezpiecznaNazwa =
+          tor.replace(/[.#$[\]/]/g, "_");
+
+
+        const torRef =
+          ref(
+            db,
+            "losowanieTorow/" +
+            bezpiecznaNazwa
+          );
+
 
         await runTransaction(
           torRef,
@@ -365,8 +436,19 @@
         );
 
 
-        /* 🔒 BLOKADA */
-        zablokujKolejneLosowanie();
+        /* 🔒 ZAPIS BLOKADY */
+
+        if (!adminMode) {
+
+          localStorage.setItem(
+            "srs_juz_losowal",
+            "tak"
+          );
+
+          status.textContent =
+            "🔒 Twoje losowanie zostało wykorzystane.";
+
+        }
 
 
       } catch (error) {
@@ -374,79 +456,19 @@
         console.error(error);
 
         alert(
-          "❌ Błąd zapisu do Firebase."
+          "❌ Błąd zapisu wyniku."
         );
+
+      } finally {
+
+        losujBtn.disabled = false;
 
       }
 
     }
   );
-
-
-  /* =========================
-     📊 POBIERANIE RANKINGU
-  ========================= */
-
-  const ranking =
-    document.getElementById("ranking");
-
-
-  onValue(
-    ref(db, "losowanieTorow"),
-    (snapshot) => {
-
-      const dane =
-        snapshot.val() || {};
-
-
-      const posortowane =
-        Object.entries(dane)
-        .sort(
-          (a, b) =>
-            b[1] - a[1]
-        );
-
-
-      if (
-        posortowane.length === 0
-      ) {
-
-        ranking.innerHTML =
-          "Brak wyników.";
-
-        return;
-
-      }
-
-
-      ranking.innerHTML =
-        posortowane
-        .map(
-          ([tor, liczba], index) => `
-
-            <div class="tor">
-
-              <span>
-                ${index + 1}.
-                ${tor}
-              </span>
-
-              <strong>
-                ${liczba} losowań
-              </strong>
-
-            </div>
-
-          `
-        )
-        .join("");
-
-    }
-  );
-
 
 </script>
 
 </body>
 </html>
-```
