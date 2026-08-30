@@ -14,461 +14,848 @@
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: white;
+      background: #111315;
+      color: #f4f4f4;
+      font-family: Arial, Helvetica, sans-serif;
       text-align: center;
-      padding: 30px 15px;
     }
 
     .container {
-      max-width: 850px;
+      width: 100%;
+      max-width: 900px;
       margin: auto;
+      padding: 25px 20px 50px;
     }
 
+    /* ADMIN */
+
+    .admin-box {
+      margin-bottom: 25px;
+      padding: 15px;
+      background: #24272a;
+      border-radius: 14px;
+    }
+
+    .admin-title {
+      font-size: 14px;
+      color: #bdbdbd;
+      margin-bottom: 10px;
+    }
+
+    .admin-row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    #adminPin {
+      width: 160px;
+      padding: 12px;
+      border: 1px solid #555;
+      border-radius: 8px;
+      background: #151515;
+      color: white;
+      font-size: 16px;
+      text-align: center;
+      outline: none;
+    }
+
+    #adminLoginBtn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      background: #333;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #adminLoginBtn:hover {
+      background: #444;
+    }
+
+    #adminStatus {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #aaa;
+    }
+
+    /* HEADER */
+
     h1 {
-      margin-bottom: 8px;
+      margin: 10px 0 5px;
+      font-size: 32px;
+      letter-spacing: 1px;
     }
 
     .subtitle {
-      color: #aaa;
       margin-bottom: 30px;
+      color: #aaa;
+      font-size: 16px;
     }
 
-    button {
+    /* BUTTON */
+
+    #drawBtn {
       border: none;
-      border-radius: 12px;
-      padding: 18px 35px;
-      font-size: 20px;
-      font-weight: bold;
-      cursor: pointer;
-      margin: 10px;
-    }
-
-    #losujBtn {
-      background: #e10600;
+      border-radius: 14px;
+      background: #e60000;
       color: white;
-    }
-
-    #losujBtn:hover {
-      transform: scale(1.03);
-    }
-
-    .wynik,
-    .ranking {
-      margin-top: 30px;
-      padding: 25px;
-      background: #222;
-      border-radius: 15px;
-    }
-
-    #wylosowanyTor {
-      font-size: 28px;
+      font-size: 21px;
       font-weight: bold;
-      margin-top: 15px;
-      color: #ff3b30;
+      padding: 18px 38px;
+      cursor: pointer;
+      transition: 0.2s;
+      box-shadow: 0 5px 20px rgba(255, 0, 0, 0.2);
     }
 
-    .ranking {
+    #drawBtn:hover {
+      transform: scale(1.03);
+      background: #ff1010;
+    }
+
+    #drawBtn:disabled {
+      background: #555;
+      cursor: not-allowed;
+      transform: none;
+      opacity: 0.8;
+    }
+
+    #connectionStatus {
+      min-height: 25px;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+
+    /* CARDS */
+
+    .card {
+      margin-top: 30px;
+      background: #27292b;
+      border-radius: 16px;
+      padding: 25px 20px;
       text-align: left;
     }
 
-    .ranking h2 {
+    .card h2 {
       text-align: center;
+      margin: 0 0 20px;
+      font-size: 25px;
     }
 
-    .tor {
+    .draw-label {
+      text-align: center;
+      font-size: 16px;
+      color: #ddd;
+      margin-bottom: 12px;
+    }
+
+    #drawnTrack {
+      text-align: center;
+      font-size: 30px;
+      font-weight: bold;
+      color: #ff1a1a;
+      min-height: 45px;
+    }
+
+    #results {
       display: flex;
-      justify-content: space-between;
-      gap: 15px;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .result-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #191b1d;
       padding: 12px;
-      margin: 7px 0;
-      background: #333;
-      border-radius: 8px;
+      border-radius: 10px;
+    }
+
+    .result-position {
+      width: 35px;
+      font-weight: bold;
+      text-align: center;
+      color: #ffc400;
+    }
+
+    .result-track {
+      flex: 1;
+      font-weight: bold;
+    }
+
+    .result-count {
+      font-weight: bold;
+      color: #ff3333;
+    }
+
+    .empty-results {
+      text-align: center;
+      color: #aaa;
+      padding: 20px;
     }
 
     .info {
       margin-top: 20px;
       color: #aaa;
+      line-height: 1.5;
     }
 
-    .status {
-      margin-top: 15px;
-      font-weight: bold;
+    .winner {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 10px;
+      background: #171717;
+      text-align: center;
+      font-size: 17px;
+    }
+
+    .winner strong {
+      color: #ff3333;
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 25px;
+      }
+
+      #drawnTrack {
+        font-size: 24px;
+      }
+
+      .card h2 {
+        font-size: 21px;
+      }
     }
   </style>
 </head>
 
 <body>
 
-<div class="container">
+  <div class="container">
 
-  <h1>🏁 SRS LOSOWANIE TORU</h1>
+    <!-- ADMIN PIN NA GÓRZE -->
 
-  <div class="subtitle">
-    Każdy użytkownik może wylosować tor tylko jeden raz.
-  </div>
+    <div class="admin-box">
+      <div class="admin-title">👑 PANEL ADMINISTRATORA</div>
 
-  <button id="losujBtn">🎲 LOSUJ TOR</button>
+      <div class="admin-row">
+        <input
+          type="password"
+          id="adminPin"
+          placeholder="PIN administratora"
+        >
 
-  <div id="status" class="status"></div>
+        <button id="adminLoginBtn">
+          ZALOGUJ ADMINA
+        </button>
+      </div>
 
-  <div class="wynik">
-    <div>WYLOSOWANY TOR:</div>
-    <div id="wylosowanyTor">
-      Jeszcze nie wylosowano
+      <div id="adminStatus">
+        Administrator nie jest zalogowany
+      </div>
     </div>
-  </div>
 
-  <div class="ranking">
-    <h2>📊 WYNIKI LOSOWANIA</h2>
 
-    <div id="ranking">
-      Ładowanie wyników...
+    <h1>🏁 SRS LOSOWANIE TORU</h1>
+
+    <div class="subtitle">
+      Każdy użytkownik może wylosować tor tylko jeden raz.
     </div>
+
+
+    <button id="drawBtn">
+      🎲 LOSUJ TOR
+    </button>
+
+
+    <div id="connectionStatus">
+      🔄 Łączenie z Firebase...
+    </div>
+
+
+    <div class="card">
+
+      <div class="draw-label">
+        WYLOSOWANY TOR:
+      </div>
+
+      <div id="drawnTrack">
+        Jeszcze nie wylosowano
+      </div>
+
+    </div>
+
+
+    <div class="card">
+
+      <h2>📊 WYNIKI LOSOWANIA</h2>
+
+      <div id="results">
+        <div class="empty-results">
+          🔄 Ładowanie wyników...
+        </div>
+      </div>
+
+      <div class="winner" id="winner">
+        🏆 Najczęściej losowany tor:
+        <strong>brak danych</strong>
+      </div>
+
+    </div>
+
+
+    <div class="info">
+      👑 Administrator może losować wielokrotnie po wpisaniu PIN-u.
+    </div>
+
   </div>
 
-  <div class="info">
-    👑 Administrator po wpisaniu PIN-u może losować dalej.
-  </div>
 
-</div>
+  <script type="module">
 
+    /* =========================
+       FIREBASE IMPORT
+    ========================= */
 
-<script type="module">
-
-  /* =========================
-     🔒 PIN ADMINISTRATORA
-  ========================= */
-
-  const ADMIN_PIN = "840416";
+    import {
+      initializeApp
+    } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
 
 
-  /* =========================
-     🔥 IMPORT FIREBASE
-  ========================= */
-
-  import {
-    initializeApp
-  } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-
-  import {
-    getDatabase,
-    ref,
-    onValue,
-    runTransaction
-  } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+    import {
+      getDatabase,
+      ref,
+      push,
+      onValue
+    } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
 
 
-  /* =========================
-     🔥 FIREBASE
-     WKLEJ SWOJE PRAWDZIWE DANE
-  ========================= */
+    /* =========================
+       TWOJA KONFIGURACJA FIREBASE
+    ========================= */
 
-  const firebaseConfig = {
-
-    apiKey: "WKLEJ_TUTAJ_SWOJ_API_KEY",
-
-    authDomain: "WKLEJ_TUTAJ.firebaseapp.com",
-
-    databaseURL: "WKLEJ_TUTAJ_FIREBASE_DATABASE_URL",
-
-    projectId: "WKLEJ_TUTAJ_PROJECT_ID",
-
-    storageBucket: "WKLEJ_TUTAJ.appspot.com",
-
-    messagingSenderId: "WKLEJ_TUTAJ_SENDER_ID",
-
-    appId: "WKLEJ_TUTAJ_APP_ID"
-
-  };
+    const firebaseConfig = {
+      apiKey: "AIzaSyDRDAiSlJBPOG8N_c4ctBRLYrwx3ER5rKw",
+      authDomain: "srs-losowanie.firebaseapp.com",
+      databaseURL: "https://srs-losowanie-default-rtdb.firebaseio.com",
+      projectId: "srs-losowanie",
+      storageBucket: "srs-losowanie.firebasestorage.app",
+      messagingSenderId: "212959687651",
+      appId: "1:212959687651:web:0a9a5e647450767bc026d6",
+      measurementId: "G-HGT81Y72HF"
+    };
 
 
-  /* =========================
-     ZMIENNE
-  ========================= */
-
-  let db = null;
-  let adminMode = false;
-
-  const losujBtn = document.getElementById("losujBtn");
-  const wylosowanyTor = document.getElementById("wylosowanyTor");
-  const ranking = document.getElementById("ranking");
-  const status = document.getElementById("status");
-
-
-  /* =========================
-     🏁 LISTA TORÓW
-  ========================= */
-
-  const tory = [
-
-    "Alsace Village",
-    "Autodrome Lago Maggiore",
-    "Autodromo Nazionale Monza",
-    "Blue Moon Bay Speedway",
-    "Brands Hatch",
-    "Circuit de Barcelona-Catalunya",
-    "Circuit de la Sarthe",
-    "Circuit de Spa-Francorchamps",
-    "Colorado Springs",
-    "Daytona International Speedway",
-    "Deep Forest Raceway",
-    "Dragon Trail – Gardens",
-    "Dragon Trail – Seaside",
-    "Fishermans Ranch",
-    "Fuji International Speedway",
-    "Goodwood Motor Circuit",
-    "High Speed Ring",
-    "Interlagos",
-    "Kyoto Driving Park",
-    "Lake Louise",
-    "Laguna Seca",
-    "Mount Panorama",
-    "Nürburgring",
-    "Northern Isle Speedway",
-    "Red Bull Ring",
-    "Sardegna",
-    "Special Stage Route X",
-    "Suzuka Circuit",
-    "Tokyo Expressway",
-    "Trial Mountain Circuit",
-    "Tsukuba Circuit",
-    "Watkins Glen",
-    "Willow Springs"
-  ];
-
-
-  /* =========================
-     🔥 URUCHOM FIREBASE
-  ========================= */
-
-  try {
+    /* =========================
+       URUCHOM FIREBASE
+    ========================= */
 
     const app = initializeApp(firebaseConfig);
 
-    db = getDatabase(app);
+    const database = getDatabase(app);
 
-    status.textContent = "🔥 Połączono z systemem losowania";
 
-    onValue(
-      ref(db, "losowanieTorow"),
-      (snapshot) => {
+    /* =========================
+       PIN ADMINISTRATORA
+       ZMIEŃ TUTAJ
+    ========================= */
 
-        const dane = snapshot.val() || {};
+    const ADMIN_PIN = "1234";
 
-        const posortowane = Object.entries(dane)
-          .sort((a, b) => b[1] - a[1]);
 
-        if (posortowane.length === 0) {
-          ranking.innerHTML = "Brak wyników.";
-          return;
-        }
+    /* =========================
+       LISTA TORÓW
+    ========================= */
 
-        ranking.innerHTML = posortowane
-          .map(([tor, liczba], index) => {
+    const tracks = [
 
-            return `
-              <div class="tor">
-                <span>
-                  ${index + 1}. ${tor}
-                </span>
+      "Autodrome Lago Maggiore - Full Course",
+      "Autodrome Lago Maggiore - East End",
+      "Autodrome Lago Maggiore - West End",
+      "Autodrome Lago Maggiore - Center",
 
-                <strong>
-                  ${liczba} losowań
-                </strong>
-              </div>
-            `;
+      "Autopolis - Full Course",
+      "Autopolis - Short Course",
 
-          })
-          .join("");
+      "Blue Moon Bay Speedway - Infield A",
+      "Blue Moon Bay Speedway - Infield B",
 
-      },
-      (error) => {
+      "Brands Hatch Grand Prix Circuit",
+      "Brands Hatch Indy Circuit",
 
-        console.error(error);
+      "Broad Bean Raceway",
 
-        ranking.innerHTML =
-          "⚠️ Nie udało się pobrać wyników.";
+      "Circuit de Barcelona-Catalunya - GP Layout",
+      "Circuit de Barcelona-Catalunya - No Chicane",
+
+      "Circuit de la Sarthe",
+
+      "Circuit de Spa-Francorchamps",
+
+      "Colorado Springs - Lake",
+
+      "Daytona International Speedway - Road Course",
+      "Daytona International Speedway - Tri-Oval",
+
+      "Deep Forest Raceway",
+
+      "Dragon Trail - Gardens",
+      "Dragon Trail - Seaside",
+
+      "Fishermans Ranch",
+
+      "Fuji International Speedway",
+      "Fuji International Speedway - Short",
+
+      "Goodwood Motor Circuit",
+
+      "Grand Valley - Highway 1",
+      "Grand Valley - South",
+
+      "High Speed Ring",
+      "High Speed Ring Reverse",
+
+      "Interlagos",
+
+      "Kyoto Driving Park - Yamagiwa",
+      "Kyoto Driving Park - Miyabi",
+
+      "Lake Louise Long Track",
+      "Lake Louise Short Track",
+
+      "Le Mans Circuit de la Sarthe",
+
+      "Monza Circuit",
+      "Monza No Chicane",
+
+      "Mount Panorama Motor Racing Circuit",
+
+      "Nürburgring GP",
+      "Nürburgring Nordschleife",
+      "Nürburgring 24h",
+
+      "Red Bull Ring",
+
+      "Road Atlanta",
+
+      "Sardegna - Road Track A",
+      "Sardegna - Road Track B",
+      "Sardegna - Road Track C",
+
+      "Sardegna - Windmills",
+
+      "Special Stage Route X",
+
+      "Suzuka Circuit",
+      "Suzuka Circuit East",
+
+      "Tokyo Expressway - Central",
+      "Tokyo Expressway - East",
+      "Tokyo Expressway - South",
+
+      "Trial Mountain Circuit",
+
+      "Tsukuba Circuit",
+
+      "Watkins Glen Long Course",
+      "Watkins Glen Short Course",
+
+      "WeatherTech Raceway Laguna Seca",
+
+      "Willow Springs - Big Willow",
+      "Willow Springs - Horse Thief Mile"
+
+    ];
+
+
+    /* =========================
+       ELEMENTY STRONY
+    ========================= */
+
+    const drawBtn =
+      document.getElementById("drawBtn");
+
+    const drawnTrack =
+      document.getElementById("drawnTrack");
+
+    const results =
+      document.getElementById("results");
+
+    const winner =
+      document.getElementById("winner");
+
+    const connectionStatus =
+      document.getElementById("connectionStatus");
+
+    const adminPin =
+      document.getElementById("adminPin");
+
+    const adminLoginBtn =
+      document.getElementById("adminLoginBtn");
+
+    const adminStatus =
+      document.getElementById("adminStatus");
+
+
+    /* =========================
+       STATUS ADMINA
+    ========================= */
+
+    let isAdmin = false;
+
+
+    adminLoginBtn.addEventListener("click", () => {
+
+      const enteredPin = adminPin.value.trim();
+
+
+      if (enteredPin === ADMIN_PIN) {
+
+        isAdmin = true;
+
+        adminStatus.innerHTML =
+          "👑 <strong>Administrator zalogowany</strong> — możesz losować bez limitu.";
+
+        adminStatus.style.color =
+          "#22c55e";
+
+        adminPin.value = "";
+
+        updateButton();
+
+      } else {
+
+        isAdmin = false;
+
+        adminStatus.innerHTML =
+          "❌ Nieprawidłowy PIN administratora.";
+
+        adminStatus.style.color =
+          "#ff4444";
 
       }
-    );
 
-  } catch (error) {
-
-    console.error(error);
-
-    status.textContent =
-      "⚠️ Problem z połączeniem Firebase.";
-
-    ranking.innerHTML =
-      "⚠️ Wklej prawidłową konfigurację Firebase.";
-
-  }
+    });
 
 
-  /* =========================
-     🔒 SPRAWDZENIE LOSOWANIA
-  ========================= */
+    /* =========================
+       SPRAWDZENIE LOSOWANIA
+    ========================= */
 
-  function czyMoznaLosowac() {
-
-    /* 👑 Admin już aktywny */
-
-    if (adminMode) {
-      return true;
-    }
+    const USER_KEY =
+      "srs_user_has_drawn";
 
 
-    /* 👤 Użytkownik jeszcze nie losował */
+    function userAlreadyDrawn() {
 
-    if (
-      localStorage.getItem("srs_juz_losowal")
-      !== "tak"
-    ) {
-      return true;
-    }
-
-
-    /* 🔒 Użytkownik już losował */
-
-    const pin = prompt(
-      "🔒 Już wykorzystałeś swoje losowanie!\n\n" +
-      "👑 Administrator może wpisać PIN:"
-    );
-
-
-    if (pin === ADMIN_PIN) {
-
-      adminMode = true;
-
-      alert(
-        "👑 TRYB ADMINISTRATORA AKTYWNY!\n\n" +
-        "Możesz teraz losować bez ograniczeń."
-      );
-
-      status.textContent =
-        "👑 TRYB ADMINISTRATORA AKTYWNY";
-
-      return true;
+      return localStorage.getItem(USER_KEY) === "true";
 
     }
 
 
-    alert(
-      "❌ Już wykorzystałeś swoje losowanie!"
-    );
+    function updateButton() {
 
-    return false;
+      if (isAdmin) {
 
-  }
+        drawBtn.disabled = false;
 
+        drawBtn.textContent =
+          "👑 LOSUJ TOR JAKO ADMIN";
 
-  /* =========================
-     🎲 PRZYCISK LOSOWANIA
-  ========================= */
-
-  losujBtn.addEventListener(
-    "click",
-    async () => {
-
-
-      /* 🔒 BLOKADA */
-
-      if (!czyMoznaLosowac()) {
         return;
+
       }
 
 
-      /* 🎲 LOSOWANIE */
+      if (userAlreadyDrawn()) {
 
-      const tor =
-        tory[
-          Math.floor(
-            Math.random() * tory.length
-          )
-        ];
+        drawBtn.disabled = true;
 
-
-      /* 🖥️ POKAŻ WYNIK */
-
-      wylosowanyTor.textContent = tor;
-
-
-      /* 🔥 JEŚLI FIREBASE NIE DZIAŁA */
-
-      if (!db) {
-
-        alert(
-          "⚠️ Tor został wylosowany, ale wynik nie został zapisany do Firebase."
-        );
+        drawBtn.textContent =
+          "❌ JUŻ WYLOSOWAŁEŚ TOR";
 
         return;
 
       }
 
 
-      try {
+      drawBtn.disabled = false;
 
-        losujBtn.disabled = true;
+      drawBtn.textContent =
+        "🎲 LOSUJ TOR";
 
-        const bezpiecznaNazwa =
-          tor.replace(/[.#$[\]/]/g, "_");
+    }
 
 
-        const torRef =
-          ref(
-            db,
-            "losowanieTorow/" +
-            bezpiecznaNazwa
+    /* =========================
+       LOSOWANIE TORU
+    ========================= */
+
+    drawBtn.addEventListener("click", async () => {
+
+      if (!isAdmin && userAlreadyDrawn()) {
+
+        alert("❌ Możesz wylosować tor tylko jeden raz.");
+
+        updateButton();
+
+        return;
+
+      }
+
+
+      drawBtn.disabled = true;
+
+      drawBtn.textContent =
+        "🎲 LOSOWANIE...";
+
+
+      let animationCount = 0;
+
+
+      const animation =
+        setInterval(() => {
+
+          const randomTrack =
+            tracks[
+              Math.floor(
+                Math.random() * tracks.length
+              )
+            ];
+
+          drawnTrack.textContent =
+            randomTrack;
+
+          animationCount++;
+
+        }, 80);
+
+
+      setTimeout(async () => {
+
+        clearInterval(animation);
+
+
+        const selectedTrack =
+          tracks[
+            Math.floor(
+              Math.random() * tracks.length
+            )
+          ];
+
+
+        drawnTrack.textContent =
+          "🏁 " + selectedTrack;
+
+
+        try {
+
+          await push(
+            ref(database, "losowania"),
+            {
+              track: selectedTrack,
+              time: Date.now(),
+              admin: isAdmin
+            }
           );
 
 
-        await runTransaction(
-          torRef,
-          (currentValue) => {
+          connectionStatus.innerHTML =
+            "✅ Wynik zapisany w Firebase.";
 
-            return (
-              currentValue || 0
-            ) + 1;
+          connectionStatus.style.color =
+            "#22c55e";
+
+
+          if (!isAdmin) {
+
+            localStorage.setItem(
+              USER_KEY,
+              "true"
+            );
+
+          }
+
+
+        } catch (error) {
+
+          console.error(error);
+
+          connectionStatus.innerHTML =
+            "❌ Błąd zapisu do Firebase: " +
+            error.message;
+
+          connectionStatus.style.color =
+            "#ff4444";
+
+        }
+
+
+        updateButton();
+
+      }, 2500);
+
+    });
+
+
+    /* =========================
+       WYNIKI Z FIREBASE
+    ========================= */
+
+    const drawsRef =
+      ref(database, "losowania");
+
+
+    onValue(
+      drawsRef,
+      (snapshot) => {
+
+        connectionStatus.innerHTML =
+          "✅ Połączono z Firebase.";
+
+        connectionStatus.style.color =
+          "#22c55e";
+
+
+        const data =
+          snapshot.val();
+
+
+        if (!data) {
+
+          results.innerHTML =
+            `
+            <div class="empty-results">
+              Jeszcze nie ma żadnych wyników.
+            </div>
+            `;
+
+
+          winner.innerHTML =
+            `
+            🏆 Najczęściej losowany tor:
+            <strong>brak danych</strong>
+            `;
+
+          return;
+
+        }
+
+
+        const trackCounts = {};
+
+
+        Object.values(data).forEach(
+          draw => {
+
+            if (!draw.track) return;
+
+
+            if (!trackCounts[draw.track]) {
+
+              trackCounts[draw.track] = 0;
+
+            }
+
+
+            trackCounts[draw.track]++;
 
           }
         );
 
 
-        /* 🔒 ZAPIS BLOKADY */
-
-        if (!adminMode) {
-
-          localStorage.setItem(
-            "srs_juz_losowal",
-            "tak"
+        const sortedTracks =
+          Object.entries(trackCounts)
+          .sort(
+            (a, b) =>
+              b[1] - a[1]
           );
 
-          status.textContent =
-            "🔒 Twoje losowanie zostało wykorzystane.";
+
+        results.innerHTML = "";
+
+
+        sortedTracks.forEach(
+          ([track, count], index) => {
+
+            const row =
+              document.createElement("div");
+
+            row.className =
+              "result-row";
+
+
+            row.innerHTML =
+              `
+              <div class="result-position">
+                ${index + 1}.
+              </div>
+
+              <div class="result-track">
+                ${track}
+              </div>
+
+              <div class="result-count">
+                ${count}×
+              </div>
+              `;
+
+
+            results.appendChild(row);
+
+          }
+        );
+
+
+        if (sortedTracks.length > 0) {
+
+          winner.innerHTML =
+            `
+            🏆 Najczęściej losowany tor:
+            <strong>
+              ${sortedTracks[0][0]}
+            </strong>
+            — ${sortedTracks[0][1]} losowań
+            `;
 
         }
 
+      },
 
-      } catch (error) {
+
+      (error) => {
 
         console.error(error);
 
-        alert(
-          "❌ Błąd zapisu wyniku."
-        );
 
-      } finally {
+        connectionStatus.innerHTML =
+          "⚠️ Problem z połączeniem Firebase.";
 
-        losujBtn.disabled = false;
+        connectionStatus.style.color =
+          "#ffcc00";
+
+
+        results.innerHTML =
+          `
+          <div class="empty-results">
+            ⚠️ Sprawdź reguły Firebase.
+          </div>
+          `;
 
       }
+    );
 
-    }
-  );
 
-</script>
+    /* =========================
+       START
+    ========================= */
+
+    updateButton();
+
+  </script>
 
 </body>
 </html>
