@@ -259,23 +259,19 @@
 
     </div>
 
-
     <h1>🏁 SRS LOSOWANIE TORU</h1>
 
     <div class="subtitle">
-      Każdy użytkownik może wylosować tor tylko jeden raz.
+      Każdy użytkownik może wylosować tor raz na 2 dni.
     </div>
-
 
     <button id="drawBtn">
       🎲 LOSUJ TOR
     </button>
 
-
     <div id="connectionStatus">
       🔄 Łączenie z Firebase...
     </div>
-
 
     <div class="card">
 
@@ -289,7 +285,6 @@
 
     </div>
 
-
     <div class="card">
 
       <h2>📊 WYNIKI LOSOWANIA</h2>
@@ -300,7 +295,6 @@
         </div>
       </div>
 
-
       <div class="winner" id="winner">
         🏆 Najczęściej losowany tor:
         <strong>brak danych</strong>
@@ -308,13 +302,11 @@
 
     </div>
 
-
     <div class="info">
       👑 Po wpisaniu poprawnego PIN-u wszystkie poprzednie losowania są usuwane.
     </div>
 
   </div>
-
 
   <script type="module">
 
@@ -359,7 +351,6 @@
 
     /* =========================
        PIN ADMINA
-       ZMIEŃ TUTAJ PIN
     ========================= */
 
     const ADMIN_PIN = "840416";
@@ -541,25 +532,17 @@
           "#ffcc00";
 
 
-        /* USUWA WSZYSTKIE LOSOWANIA */
-
         await remove(
           ref(database, "losowania")
         );
 
 
-        /* ADMIN ZALOGOWANY */
-
         isAdmin = true;
 
-
-        /* CZYŚCI OSTATNI TOR */
 
         drawnTrack.textContent =
           "Jeszcze nie wylosowano";
 
-
-        /* CZYŚCI WYNIKI */
 
         results.innerHTML =
           `
@@ -569,16 +552,12 @@
           `;
 
 
-        /* CZYŚCI NAJPOPULARNIEJSZY TOR */
-
         winner.innerHTML =
           `
           🏆 Najczęściej losowany tor:
           <strong>brak danych</strong>
           `;
 
-
-        /* STATUS */
 
         adminStatus.innerHTML =
           "👑 Administrator zalogowany — wszystkie stare tory zostały usunięte.";
@@ -635,19 +614,50 @@
 
 
     /* =========================
-       BLOKADA UŻYTKOWNIKA
+       BLOKADA UŻYTKOWNIKA - 2 DNI
     ========================= */
 
     const USER_KEY =
-      "srs_user_has_drawn";
+      "srs_user_last_draw_time";
+
+    const BLOCK_TIME =
+      2 * 24 * 60 * 60 * 1000;
 
 
     function userAlreadyDrawn() {
 
-      return localStorage.getItem(USER_KEY) === "true";
+      const lastDrawTime =
+        Number(localStorage.getItem(USER_KEY));
+
+
+      if (!lastDrawTime) {
+
+        return false;
+
+      }
+
+
+      const timePassed =
+        Date.now() - lastDrawTime;
+
+
+      if (timePassed >= BLOCK_TIME) {
+
+        localStorage.removeItem(USER_KEY);
+
+        return false;
+
+      }
+
+
+      return true;
 
     }
 
+
+    /* =========================
+       PRZYCISK LOSOWANIA
+    ========================= */
 
     function updateButton() {
 
@@ -680,7 +690,7 @@
         drawBtn.disabled = true;
 
         drawBtn.textContent =
-          "❌ JUŻ WYLOSOWAŁEŚ TOR";
+          "⏳ LOSOWANIE DOSTĘPNE ZA 2 DNI";
 
         return;
 
@@ -711,7 +721,7 @@
       if (!isAdmin && userAlreadyDrawn()) {
 
         alert(
-          "❌ Możesz wylosować tor tylko jeden raz."
+          "❌ Możesz ponownie wylosować tor po 2 dniach."
         );
 
         updateButton();
@@ -738,9 +748,6 @@
         "🎲 LOSOWANIE...";
 
 
-      let animationCount = 0;
-
-
       const animation =
         setInterval(() => {
 
@@ -754,9 +761,6 @@
 
           drawnTrack.textContent =
             "🏁 " + randomTrack;
-
-
-          animationCount++;
 
         }, 80);
 
@@ -797,11 +801,13 @@
             "#22c55e";
 
 
+          /* BLOKADA NA 2 DNI */
+
           if (!isAdmin) {
 
             localStorage.setItem(
               USER_KEY,
-              "true"
+              Date.now().toString()
             );
 
           }
@@ -987,6 +993,14 @@
 
       }
 
+    );
+
+
+    /* SPRAWDZA CO MINUTĘ, CZY MINĘŁY 2 DNI */
+
+    setInterval(
+      updateButton,
+      60000
     );
 
 
