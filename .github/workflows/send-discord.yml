@@ -1,8 +1,8 @@
 name: SRS Discord Track Bot
 
 on:
-  repository_dispatch:
-    types: [send_track]
+  schedule:
+    - cron: "* * * * *"
 
   workflow_dispatch:
 
@@ -11,10 +11,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Pobierz ostatnie losowanie
+        id: track
+        run: |
+          DATA=$(curl -s "https://srs-losowanie-default-rtdb.firebaseio.com/srsLastTrack.json")
+
+          TRACK=$(echo "$DATA" | jq -r '.track // empty')
+          SEND=$(echo "$DATA" | jq -r '.send // false')
+
+          echo "track=$TRACK" >> $GITHUB_OUTPUT
+          echo "send=$SEND" >> $GITHUB_OUTPUT
+
       - name: Wyślij wynik na Discord
+        if: steps.track.outputs.send == 'true'
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-          TRACK: ${{ github.event.client_payload.track }}
+          TRACK: ${{ steps.track.outputs.track }}
         run: |
           jq -n \
             --arg track "$TRACK" \
@@ -28,3 +40,11 @@ jobs:
               -H "Content-Type: application/json" \
               -d @- \
               "$DISCORD_WEBHOOK"
+
+      - name: Oznacz jako wysłane
+        if: steps.track.outputs.send == 'true'
+        run: |
+          curl -X PATCH \
+            -H "Content-Type: application/json" \
+            -d '{"send":false}' \
+            "https://srs-losowanie-default-rtdb.firebaseio.com/srsLastTrack.json"
