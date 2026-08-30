@@ -1,7 +1,9 @@
-
 name: SRS Discord Track Bot
 
 on:
+  schedule:
+    - cron: "*/5 * * * *"
+
   workflow_dispatch:
 
 jobs:
@@ -9,8 +11,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Wyślij wiadomość testową
+      - name: Pobierz ostatnie losowanie
+        id: track
+        run: |
+          DATA=$(curl -s "https://srs-losowanie-default-rtdb.firebaseio.com/srsLastTrack.json")
+
+          TRACK=$(echo "$DATA" | jq -r '.track // empty')
+          SEND=$(echo "$DATA" | jq -r '.send // false')
+
+          echo "track=$TRACK" >> $GITHUB_OUTPUT
+          echo "send=$SEND" >> $GITHUB_OUTPUT
+
+      - name: Wyślij wynik na Discord
+        if: steps.track.outputs.send == 'true'
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          TRACK: ${{ steps.track.outputs.track }}
         run: |
           curl -H "Content-Type: application/json" \
-          -d '{"content":"🏁 TEST SRS LOSOWANIE TORU"}' \
-          "${{ secrets.DISCORD_WEBHOOK }}"
+          -d "{\"content\":\"🏁 **SRS LOSOWANIE TORU**\n\n🎲 Wylosowany tor: 🏆 **$TRACK**\n\n🔥 Powodzenia na torze!\"}" \
+          "$DISCORD_WEBHOOK"
+
+      - name: Oznacz jako wysłane
+        if: steps.track.outputs.send == 'true'
+        run: |
+          curl -X PATCH \
+          -H "Content-Type: application/json" \
+          -d '{"send":false}' \
+          "https://srs-losowanie-default-rtdb.firebaseio.com/srsLastTrack.json"
