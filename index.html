@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="pl">
 <head>
   <meta charset="UTF-8">
@@ -86,9 +87,53 @@
     }
 
     .subtitle {
-      margin-bottom: 30px;
+      margin-bottom: 25px;
       color: #aaa;
       font-size: 16px;
+    }
+
+    .car-group-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin: 25px 0 15px;
+    }
+
+    .car-groups {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 25px;
+    }
+
+    .group-btn {
+      min-width: 120px;
+      padding: 15px 20px;
+      border: 2px solid #555;
+      border-radius: 12px;
+      background: #24272a;
+      color: white;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .group-btn:hover {
+      transform: scale(1.04);
+      border-color: #e60000;
+    }
+
+    .group-btn.selected {
+      background: #e60000;
+      border-color: #ff5555;
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.4);
+    }
+
+    .group-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
     }
 
     #drawBtn {
@@ -140,6 +185,15 @@
       text-align: center;
       font-size: 16px;
       color: #ddd;
+      margin-bottom: 12px;
+    }
+
+    #drawnGroup {
+      text-align: center;
+      font-size: 22px;
+      font-weight: bold;
+      color: #ffc400;
+      min-height: 35px;
       margin-bottom: 12px;
     }
 
@@ -224,100 +278,136 @@
       .result-track {
         font-size: 14px;
       }
+
+      .group-btn {
+        min-width: 45%;
+      }
     }
   </style>
+
 </head>
 
 <body>
 
   <div class="container">
 
-    <!-- PANEL ADMINA -->
-    <div class="admin-box">
+```
+<!-- PANEL ADMINA -->
+<div class="admin-box">
 
-      <div class="admin-title">
-        👑 PANEL ADMINISTRATORA
-      </div>
+  <div class="admin-title">
+    👑 PANEL ADMINISTRATORA
+  </div>
 
-      <div class="admin-row">
+  <div class="admin-row">
 
-        <input
-          type="password"
-          id="adminPin"
-          placeholder="PIN administratora"
-        >
+    <input
+      type="password"
+      id="adminPin"
+      placeholder="PIN administratora"
+    >
 
-        <button id="adminLoginBtn">
-          ZALOGUJ ADMINA
-        </button>
-
-      </div>
-
-      <div id="adminStatus">
-        Wpisz PIN, aby rozpocząć nowe losowanie.
-      </div>
-
-    </div>
-
-    <h1>🏁 SRS LOSOWANIE TORU</h1>
-
-    <div class="subtitle">
-      Każdy użytkownik może wylosować tor raz na 2 dni.
-    </div>
-
-    <button id="drawBtn">
-      🎲 LOSUJ TOR
+    <button id="adminLoginBtn">
+      ZALOGUJ ADMINA
     </button>
 
-    <div id="connectionStatus">
-      🔄 Łączenie z Firebase...
+  </div>
+
+  <div id="adminStatus">
+    Wpisz PIN, aby rozpocząć nowe losowanie.
+  </div>
+
+</div>
+
+<h1>🏁 SRS LOSOWANIE TORU</h1>
+
+<div class="subtitle">
+  Każdy użytkownik może wybrać grupę auta i wylosować tor raz na 2 dni.
+</div>
+
+<div class="car-group-title">
+  🏎️ WYBIERZ GRUPĘ AUTA
+</div>
+
+<div class="car-groups">
+
+  <button class="group-btn" data-group="Gr.1">
+    🏎️ Gr.1
+  </button>
+
+  <button class="group-btn" data-group="Gr.2">
+    🏁 Gr.2
+  </button>
+
+  <button class="group-btn" data-group="Gr.3">
+    🚗 Gr.3
+  </button>
+
+  <button class="group-btn" data-group="Gr.4">
+    🚙 Gr.4
+  </button>
+
+</div>
+
+<button id="drawBtn" disabled>
+  🎲 NAJPIERW WYBIERZ GRUPĘ
+</button>
+
+<div id="connectionStatus">
+  🔄 Łączenie z Firebase...
+</div>
+
+<div class="card">
+
+  <div class="draw-label">
+    WYBRANA GRUPA AUTA:
+  </div>
+
+  <div id="drawnGroup">
+    Jeszcze nie wybrano
+  </div>
+
+  <div class="draw-label">
+    WYLOSOWANY TOR:
+  </div>
+
+  <div id="drawnTrack">
+    Jeszcze nie wylosowano
+  </div>
+
+</div>
+
+<div class="card">
+
+  <h2>📊 WYNIKI LOSOWANIA TORÓW</h2>
+
+  <div id="results">
+    <div class="empty-results">
+      🔄 Ładowanie wyników...
     </div>
+  </div>
 
-    <div class="card">
+  <div class="winner" id="winner">
+    🏆 Najczęściej losowany tor:
+    <strong>brak danych</strong>
+  </div>
 
-      <div class="draw-label">
-        WYLOSOWANY TOR:
-      </div>
+</div>
 
-      <div id="drawnTrack">
-        Jeszcze nie wylosowano
-      </div>
-
-    </div>
-
-    <div class="card">
-
-      <h2>📊 WYNIKI LOSOWANIA</h2>
-
-      <div id="results">
-        <div class="empty-results">
-          🔄 Ładowanie wyników...
-        </div>
-      </div>
-
-      <div class="winner" id="winner">
-        🏆 Najczęściej losowany tor:
-        <strong>brak danych</strong>
-      </div>
-
-    </div>
-
-    <div class="info">
-      👑 Po wpisaniu poprawnego PIN-u wszystkie poprzednie losowania są usuwane.
-    </div>
+<div class="info">
+  👑 Po wpisaniu poprawnego PIN-u administratora wszystkie poprzednie wyniki są usuwane.
+  <br>
+  👤 Każdy użytkownik może wybrać grupę auta i losować ponownie po 2 dniach.
+</div>
+```
 
   </div>
 
   <script type="module">
 
-    /* =========================
-       FIREBASE
-    ========================= */
-
     import {
       initializeApp
     } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
-
 
     import {
       getDatabase,
@@ -328,9 +418,7 @@
     } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
 
 
-    /* =========================
-       KONFIGURACJA FIREBASE
-    ========================= */
+    /* FIREBASE */
 
     const firebaseConfig = {
       apiKey: "AIzaSyDRDAiSlJBPOG8N_c4ctBRLYrwx3ER5rKw",
@@ -343,22 +431,26 @@
       measurementId: "G-HGT81Y72HF"
     };
 
-
     const app = initializeApp(firebaseConfig);
-
     const database = getDatabase(app);
 
 
-    /* =========================
-       PIN ADMINA
-    ========================= */
+    /* PIN ADMINA */
 
     const ADMIN_PIN = "840416";
 
 
-    /* =========================
-       LISTA TORÓW
-    ========================= */
+    /* GRUPY AUT */
+
+    const carGroups = [
+      "Gr.1",
+      "Gr.2",
+      "Gr.3",
+      "Gr.4"
+    ];
+
+
+    /* LISTA TORÓW */
 
     const tracks = [
 
@@ -458,47 +550,146 @@
     ];
 
 
-    /* =========================
-       ELEMENTY
-    ========================= */
+    /* ELEMENTY */
 
-    const drawBtn =
-      document.getElementById("drawBtn");
+    const drawBtn = document.getElementById("drawBtn");
+    const drawnTrack = document.getElementById("drawnTrack");
+    const drawnGroup = document.getElementById("drawnGroup");
+    const results = document.getElementById("results");
+    const winner = document.getElementById("winner");
+    const connectionStatus = document.getElementById("connectionStatus");
 
-    const drawnTrack =
-      document.getElementById("drawnTrack");
+    const adminPin = document.getElementById("adminPin");
+    const adminLoginBtn = document.getElementById("adminLoginBtn");
+    const adminStatus = document.getElementById("adminStatus");
 
-    const results =
-      document.getElementById("results");
-
-    const winner =
-      document.getElementById("winner");
-
-    const connectionStatus =
-      document.getElementById("connectionStatus");
-
-    const adminPin =
-      document.getElementById("adminPin");
-
-    const adminLoginBtn =
-      document.getElementById("adminLoginBtn");
-
-    const adminStatus =
-      document.getElementById("adminStatus");
+    const groupButtons = document.querySelectorAll(".group-btn");
 
 
-    /* =========================
-       STATUS
-    ========================= */
+    /* STATUS */
 
     let isAdmin = false;
-
     let firebaseConnected = false;
+    let selectedGroup = null;
 
 
-    /* =========================
-       ADMIN LOGIN + USUWANIE
-    ========================= */
+    /* BLOKADA 2 DNI */
+
+    const USER_KEY = "srs_user_last_draw_time";
+
+    const BLOCK_TIME =
+      2 * 24 * 60 * 60 * 1000;
+
+
+    function userAlreadyDrawn() {
+
+      const lastDrawTime =
+        Number(localStorage.getItem(USER_KEY));
+
+      if (!lastDrawTime) {
+        return false;
+      }
+
+      const timePassed =
+        Date.now() - lastDrawTime;
+
+      if (timePassed >= BLOCK_TIME) {
+
+        localStorage.removeItem(USER_KEY);
+
+        return false;
+      }
+
+      return true;
+    }
+
+
+    /* WYBÓR GRUPY AUTA */
+
+    groupButtons.forEach((button) => {
+
+      button.addEventListener("click", () => {
+
+        if (!isAdmin && userAlreadyDrawn()) {
+          return;
+        }
+
+        selectedGroup =
+          button.dataset.group;
+
+        groupButtons.forEach((btn) => {
+          btn.classList.remove("selected");
+        });
+
+        button.classList.add("selected");
+
+        drawnGroup.textContent =
+          "🏎️ " + selectedGroup;
+
+        updateButton();
+
+      });
+
+    });
+
+
+    /* AKTUALIZACJA PRZYCISKU */
+
+    function updateButton() {
+
+      const blocked =
+        !isAdmin && userAlreadyDrawn();
+
+
+      groupButtons.forEach((button) => {
+
+        button.disabled = blocked;
+
+      });
+
+
+      if (!firebaseConnected) {
+
+        drawBtn.disabled = true;
+
+        drawBtn.textContent =
+          "⏳ ŁĄCZENIE Z FIREBASE...";
+
+        return;
+      }
+
+
+      if (blocked) {
+
+        drawBtn.disabled = true;
+
+        drawBtn.textContent =
+          "⏳ PONOWNIE ZA 2 DNI";
+
+        return;
+      }
+
+
+      if (!selectedGroup) {
+
+        drawBtn.disabled = true;
+
+        drawBtn.textContent =
+          "🏎️ NAJPIERW WYBIERZ GRUPĘ";
+
+        return;
+      }
+
+
+      drawBtn.disabled = false;
+
+      drawBtn.textContent =
+        "🎲 LOSUJ TOR";
+
+    }
+
+
+    /* ADMIN */
 
     adminLoginBtn.addEventListener("click", async () => {
 
@@ -517,7 +708,6 @@
           "#ff4444";
 
         return;
-
       }
 
 
@@ -526,7 +716,7 @@
         adminLoginBtn.disabled = true;
 
         adminStatus.innerHTML =
-          "🗑️ Usuwanie wszystkich poprzednich torów...";
+          "🗑️ Usuwanie wszystkich poprzednich wyników...";
 
         adminStatus.style.color =
           "#ffcc00";
@@ -539,28 +729,35 @@
 
         isAdmin = true;
 
+        selectedGroup = null;
+
+
+        groupButtons.forEach((button) => {
+          button.classList.remove("selected");
+          button.disabled = false;
+        });
+
+
+        drawnGroup.textContent =
+          "Jeszcze nie wybrano";
 
         drawnTrack.textContent =
           "Jeszcze nie wylosowano";
 
 
         results.innerHTML =
-          `
-          <div class="empty-results">
+          `<div class="empty-results">
             Brak wyników. Rozpoczęto nowe losowanie.
-          </div>
-          `;
+          </div>`;
 
 
         winner.innerHTML =
-          `
-          🏆 Najczęściej losowany tor:
-          <strong>brak danych</strong>
-          `;
+          `🏆 Najczęściej losowany tor:
+          <strong>brak danych</strong>`;
 
 
         adminStatus.innerHTML =
-          "👑 Administrator zalogowany — wszystkie stare tory zostały usunięte.";
+          "👑 Administrator zalogowany — rozpoczęto nowe losowanie.";
 
         adminStatus.style.color =
           "#22c55e";
@@ -575,16 +772,13 @@
 
         adminPin.value = "";
 
-
         updateButton();
-
 
       } catch (error) {
 
         console.error(error);
 
         isAdmin = false;
-
 
         adminStatus.innerHTML =
           "❌ Błąd podczas usuwania wyników.";
@@ -600,134 +794,45 @@
     });
 
 
-    /* ENTER W POLU PIN */
+    /* ENTER W PINIE */
 
     adminPin.addEventListener("keydown", (event) => {
 
       if (event.key === "Enter") {
-
         adminLoginBtn.click();
-
       }
 
     });
 
 
-    /* =========================
-       BLOKADA UŻYTKOWNIKA - 2 DNI
-    ========================= */
-
-    const USER_KEY =
-      "srs_user_last_draw_time";
-
-    const BLOCK_TIME =
-      2 * 24 * 60 * 60 * 1000;
-
-
-    function userAlreadyDrawn() {
-
-      const lastDrawTime =
-        Number(localStorage.getItem(USER_KEY));
-
-
-      if (!lastDrawTime) {
-
-        return false;
-
-      }
-
-
-      const timePassed =
-        Date.now() - lastDrawTime;
-
-
-      if (timePassed >= BLOCK_TIME) {
-
-        localStorage.removeItem(USER_KEY);
-
-        return false;
-
-      }
-
-
-      return true;
-
-    }
-
-
-    /* =========================
-       PRZYCISK LOSOWANIA
-    ========================= */
-
-    function updateButton() {
-
-      if (!firebaseConnected) {
-
-        drawBtn.disabled = true;
-
-        drawBtn.textContent =
-          "⏳ ŁĄCZENIE Z FIREBASE...";
-
-        return;
-
-      }
-
-
-      if (isAdmin) {
-
-        drawBtn.disabled = false;
-
-        drawBtn.textContent =
-          "🎲 LOSUJ TOR";
-
-        return;
-
-      }
-
-
-      if (userAlreadyDrawn()) {
-
-        drawBtn.disabled = true;
-
-        drawBtn.textContent =
-          "⏳ LOSOWANIE DOSTĘPNE ZA 2 DNI";
-
-        return;
-
-      }
-
-
-      drawBtn.disabled = false;
-
-      drawBtn.textContent =
-        "🎲 LOSUJ TOR";
-
-    }
-
-
-    /* =========================
-       LOSOWANIE
-    ========================= */
+    /* LOSOWANIE */
 
     drawBtn.addEventListener("click", () => {
-
       startDraw();
-
     });
 
 
     async function startDraw() {
 
+      if (!selectedGroup) {
+
+        alert(
+          "🏎️ Najpierw wybierz grupę auta!"
+        );
+
+        return;
+      }
+
+
       if (!isAdmin && userAlreadyDrawn()) {
 
         alert(
-          "❌ Możesz ponownie wylosować tor po 2 dniach."
+          "❌ Możesz ponownie wybrać grupę i wylosować tor po 2 dniach."
         );
 
         updateButton();
 
         return;
-
       }
 
 
@@ -738,11 +843,15 @@
         );
 
         return;
-
       }
 
 
       drawBtn.disabled = true;
+
+      groupButtons.forEach((button) => {
+        button.disabled = true;
+      });
+
 
       drawBtn.textContent =
         "🎲 LOSOWANIE...";
@@ -757,7 +866,6 @@
                 Math.random() * tracks.length
               )
             ];
-
 
           drawnTrack.textContent =
             "🏁 " + randomTrack;
@@ -778,6 +886,9 @@
           ];
 
 
+        drawnGroup.textContent =
+          "🏎️ " + selectedGroup;
+
         drawnTrack.textContent =
           "🏁 " + selectedTrack;
 
@@ -788,6 +899,7 @@
             ref(database, "losowania"),
             {
               track: selectedTrack,
+              carGroup: selectedGroup,
               time: Date.now(),
               admin: isAdmin
             }
@@ -795,13 +907,11 @@
 
 
           connectionStatus.innerHTML =
-            "✅ Wynik zapisany w Firebase.";
+            "✅ Wybrana grupa i wylosowany tor zostały zapisane.";
 
           connectionStatus.style.color =
             "#22c55e";
 
-
-          /* BLOKADA NA 2 DNI */
 
           if (!isAdmin) {
 
@@ -816,7 +926,6 @@
         } catch (error) {
 
           console.error(error);
-
 
           connectionStatus.innerHTML =
             "❌ Błąd zapisu do Firebase.";
@@ -834,9 +943,7 @@
     }
 
 
-    /* =========================
-       WYNIKI FIREBASE
-    ========================= */
+    /* WYNIKI FIREBASE */
 
     const drawsRef =
       ref(database, "losowania");
@@ -865,18 +972,14 @@
         if (!data) {
 
           results.innerHTML =
-            `
-            <div class="empty-results">
+            `<div class="empty-results">
               Jeszcze nie ma żadnych wyników.
-            </div>
-            `;
+            </div>`;
 
 
           winner.innerHTML =
-            `
-            🏆 Najczęściej losowany tor:
-            <strong>brak danych</strong>
-            `;
+            `🏆 Najczęściej losowany tor:
+            <strong>brak danych</strong>`;
 
 
           updateButton();
@@ -895,9 +998,7 @@
 
 
           if (!trackCounts[draw.track]) {
-
             trackCounts[draw.track] = 0;
-
           }
 
 
@@ -970,7 +1071,6 @@
 
         console.error(error);
 
-
         firebaseConnected = false;
 
 
@@ -982,11 +1082,9 @@
 
 
         results.innerHTML =
-          `
-          <div class="empty-results">
+          `<div class="empty-results">
             ⚠️ Sprawdź konfigurację i reguły Firebase.
-          </div>
-          `;
+          </div>`;
 
 
         updateButton();
@@ -996,7 +1094,7 @@
     );
 
 
-    /* SPRAWDZA CO MINUTĘ, CZY MINĘŁY 2 DNI */
+    /* SPRAWDZA CO MINUTĘ */
 
     setInterval(
       updateButton,
