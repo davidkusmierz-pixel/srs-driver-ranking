@@ -1,1 +1,263 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <title>SRS LOSOWANIE TORU</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      background: #111214;
+      color: #ffffff;
+      padding: 30px 15px;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 32px;
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      color: #bdbdbd;
+      letter-spacing: 2px;
+      font-size: 14px;
+    }
+
+    .card {
+      background: #202124;
+      border: 2px solid #393b40;
+      border-radius: 20px;
+      min-height: 160px;
+      padding: 30px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    #trackName {
+      font-size: 30px;
+      font-weight: bold;
+    }
+
+    #drawButton {
+      width: 100%;
+      border: none;
+      border-radius: 15px;
+      padding: 20px;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      background: #ffffff;
+      color: #111111;
+    }
+
+    #drawButton:active {
+      transform: scale(0.98);
+    }
+
+    #message {
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-weight: bold;
+      font-size: 17px;
+    }
+
+    .ranking {
+      background: #202124;
+      border: 2px solid #393b40;
+      border-radius: 20px;
+      padding: 25px;
+    }
+
+    .ranking h2 {
+      margin: 0 0 20px;
+      text-align: center;
+    }
+
+    .ranking-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      padding: 15px 5px;
+      border-bottom: 1px solid #393b40;
+    }
+
+    .ranking-item:last-child {
+      border-bottom: none;
+    }
+
+    .empty {
+      text-align: center;
+      color: #aaaaaa;
+      padding: 15px;
+    }
+
+    @media (max-width: 500px) {
+      h1 {
+        font-size: 26px;
+      }
+
+      #trackName {
+        font-size: 23px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <div class="header">
+      <h1>🏁 SRS LOSOWANIE TORU</h1>
+      <div class="subtitle">SIM RACING SQUAD 🎲</div>
+    </div>
+
+    <div class="card">
+      <div id="trackName">
+        🎲 KLIKNIJ LOSUJ TOR
+      </div>
+    </div>
+
+    <button id="drawButton" type="button">
+      🎲 LOSUJ TOR
+    </button>
+
+    <div id="message"></div>
+
+    <div class="ranking">
+      <h2>🏆 NAJCZĘŚCIEJ LOSOWANE TORY</h2>
+      <div id="rankingList"></div>
+    </div>
+
+  </div>
+
+  <script>
+    const tracks = [
+      "Trial Mountain Circuit",
+      "Deep Forest Raceway",
+      "Dragon Trail – Wybrzeże",
+      "Red Bull Ring",
+      "Suzuka Circuit",
+      "Mount Panorama",
+      "Laguna Seca",
+      "Monza",
+      "Spa-Francorchamps",
+      "Watkins Glen"
+    ];
+
+    const button = document.getElementById("drawButton");
+    const trackName = document.getElementById("trackName");
+    const message = document.getElementById("message");
+    const rankingList = document.getElementById("rankingList");
+
+    function getRanking() {
+      try {
+        return JSON.parse(localStorage.getItem("srsTrackRanking")) || {};
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function saveRanking(ranking) {
+      localStorage.setItem(
+        "srsTrackRanking",
+        JSON.stringify(ranking)
+      );
+    }
+
+    function renderRanking() {
+      const ranking = getRanking();
+
+      const sorted = Object.entries(ranking)
+        .sort(function(a, b) {
+          return b[1] - a[1];
+        });
+
+      if (sorted.length === 0) {
+        rankingList.innerHTML =
+          '<div class="empty">Brak losowań.</div>';
+        return;
+      }
+
+      rankingList.innerHTML = "";
+
+      sorted.forEach(function(item, index) {
+        const row = document.createElement("div");
+
+        row.className = "ranking-item";
+
+        row.innerHTML =
+          "<span>" +
+          (index + 1) +
+          ". 🏁 " +
+          item[0] +
+          "</span>" +
+          "<strong>" +
+          item[1] +
+          "×</strong>";
+
+        rankingList.appendChild(row);
+      });
+    }
+
+    function drawTrack() {
+      const randomNumber =
+        Math.floor(Math.random() * tracks.length);
+
+      const selectedTrack =
+        tracks[randomNumber];
+
+      trackName.textContent =
+        "🏆 " + selectedTrack;
+
+      message.textContent =
+        "🎉 TOR ZOSTAŁ WYLOSOWANY!";
+
+      const ranking = getRanking();
+
+      if (!ranking[selectedTrack]) {
+        ranking[selectedTrack] = 0;
+      }
+
+      ranking[selectedTrack]++;
+
+      saveRanking(ranking);
+
+      renderRanking();
+    }
+
+    button.addEventListener(
+      "click",
+      drawTrack
+    );
+
+    renderRanking();
+  </script>
+
+</body>
+</html>
