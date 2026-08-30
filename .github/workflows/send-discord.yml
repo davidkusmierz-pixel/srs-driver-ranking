@@ -2,7 +2,7 @@ name: SRS Discord Track Bot
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "* * * * *"
 
   workflow_dispatch:
 
@@ -16,6 +16,9 @@ jobs:
         run: |
           DATA=$(curl -s "https://srs-losowanie-default-rtdb.firebaseio.com/srsLastTrack.json")
 
+          echo "Dane z Firebase:"
+          echo "$DATA"
+
           TRACK=$(echo "$DATA" | jq -r '.track // empty')
           SEND=$(echo "$DATA" | jq -r '.send // false')
 
@@ -28,14 +31,23 @@ jobs:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
           TRACK: ${{ steps.track.outputs.track }}
         run: |
-          curl -H "Content-Type: application/json" \
-          -d "{\"content\":\"🏁 **SRS LOSOWANIE TORU**\n\n🎲 Wylosowany tor: 🏆 **$TRACK**\n\n🔥 Powodzenia na torze!\"}" \
-          "$DISCORD_WEBHOOK"
+          jq -n \
+            --arg track "$TRACK" \
+            '{
+              content: (
+                "🏁 **SRS LOSOWANIE TORU**\n\n" +
+                "🎲 Wylosowany tor: 🏆 **" + $track + "**\n\n" +
+                "🔥 Powodzenia na torze!"
+              )
+            }' | curl \
+              -H "Content-Type: application/json" \
+              -d @- \
+              "$DISCORD_WEBHOOK"
 
       - name: Oznacz jako wysłane
         if: steps.track.outputs.send == 'true'
         run: |
           curl -X PATCH \
-          -H "Content-Type: application/json" \
-          -d '{"send":false}' \
-          "https://srs-losowanie-default-rtdb.firebaseio.com/srsLastTrack.json"
+            -H "Content-Type: application/json" \
+            -d '{"send":false}' \
+            "https://srs-losowanie-default-rtdb.firebaseio.com/srsLastTrack.json"
