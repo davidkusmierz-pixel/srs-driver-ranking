@@ -1,1 +1,166 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<title>SRS – Losowanie Torów</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Arial, sans-serif;
+        background: #111;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .container {
+        width: 90%;
+        max-width: 650px;
+        text-align: center;
+        padding: 30px 20px;
+    }
+
+    h1 {
+        margin-bottom: 10px;
+    }
+
+    .subtitle {
+        color: #aaa;
+        margin-bottom: 30px;
+    }
+
+    .slot {
+        background: #1b1b1b;
+        border: 2px solid #333;
+        border-radius: 15px;
+        padding: 30px 20px;
+        margin-bottom: 25px;
+        min-height: 140px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #trackName {
+        font-size: 32px;
+        font-weight: bold;
+    }
+
+    .result {
+        margin-top: 20px;
+        font-size: 18px;
+        min-height: 30px;
+    }
+
+    button {
+        width: 100%;
+        border: none;
+        border-radius: 12px;
+        padding: 18px;
+        font-size: 20px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    @media (max-width: 500px) {
+        #trackName {
+            font-size: 24px;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🏁 SRS LOSOWANIE TORU</h1>
+
+    <p class="subtitle">
+        Sim Racing Squad 🎲
+    </p>
+
+    <div class="slot">
+        <div id="trackName">🎲 GOTOWY?</div>
+    </div>
+
+    <button id="drawButton" onclick="drawTrack()">
+        🎲 LOSUJ TOR
+    </button>
+
+    <div class="result" id="result"></div>
+
+</div>
+
+<script>
+
+const tracks = [
+    "🏁 Trial Mountain Circuit",
+    "🏁 Deep Forest Raceway",
+    "🏁 Dragon Trail – Seaside",
+    "🏁 Red Bull Ring",
+    "🏁 Suzuka Circuit",
+    "🏁 Spa-Francorchamps",
+    "🏁 Autodromo Nazionale Monza",
+    "🏁 Mount Panorama",
+    "🏁 Watkins Glen",
+    "🏁 Nürburgring GP"
+];
+
+function drawTrack() {
+
+    const button = document.getElementById("drawButton");
+    const trackName = document.getElementById("trackName");
+    const result = document.getElementById("result");
+
+    button.disabled = true;
+    result.innerHTML = "🎰 Trwa losowanie...";
+
+    let count = 0;
+
+    const interval = setInterval(() => {
+
+        const randomTrack =
+            tracks[Math.floor(Math.random() * tracks.length)];
+
+        trackName.innerHTML = randomTrack;
+
+        count++;
+
+        if (count >= 20) {
+
+            clearInterval(interval);
+
+            const winner =
+                tracks[Math.floor(Math.random() * tracks.length)];
+
+            trackName.innerHTML = winner;
+
+            result.innerHTML =
+                "🏆 WYLOSOWANY TOR! 🏆";
+
+            button.disabled = false;
+        }
+
+    }, 100);
+
+}
+
+</script>
+
+</body>
+</html>
