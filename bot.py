@@ -13,7 +13,7 @@ from flask_cors import CORS
 TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 
 # ID kanału Discord, na który ma przychodzić wynik
-CHANNEL_ID = 123456789012345678
+CHANNEL_ID = 1511120399230832772
 
 
 DISCORD_PLAYERS = {
