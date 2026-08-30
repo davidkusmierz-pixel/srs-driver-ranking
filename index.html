@@ -1,8 +1,150 @@
+```html
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>SRS LOSOWANIE TORU</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+      text-align: center;
+      padding: 30px 15px;
+    }
+
+    .container {
+      max-width: 850px;
+      margin: auto;
+    }
+
+    h1 {
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: #aaa;
+      margin-bottom: 30px;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 18px 35px;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 10px;
+    }
+
+    #losujBtn {
+      background: #e10600;
+      color: white;
+    }
+
+    #losujBtn:hover {
+      transform: scale(1.03);
+    }
+
+    .wynik {
+      margin-top: 30px;
+      padding: 25px;
+      background: #222;
+      border-radius: 15px;
+    }
+
+    #wylosowanyTor {
+      font-size: 28px;
+      font-weight: bold;
+      margin-top: 15px;
+    }
+
+    .ranking {
+      margin-top: 30px;
+      background: #222;
+      padding: 20px;
+      border-radius: 15px;
+      text-align: left;
+    }
+
+    .ranking h2 {
+      text-align: center;
+    }
+
+    .tor {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px;
+      margin: 7px 0;
+      background: #333;
+      border-radius: 8px;
+    }
+
+    .info {
+      margin-top: 20px;
+      color: #aaa;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <h1>🏁 SRS LOSOWANIE TORU</h1>
+
+    <div class="subtitle">
+      Każdy użytkownik może wylosować tor tylko jeden raz.
+    </div>
+
+    <button id="losujBtn">
+      🎲 LOSUJ TOR
+    </button>
+
+    <div class="wynik">
+      <div>WYLOSOWANY TOR:</div>
+      <div id="wylosowanyTor">
+        Jeszcze nie wylosowano
+      </div>
+    </div>
+
+    <div class="ranking">
+      <h2>📊 WYNIKI LOSOWANIA</h2>
+      <div id="ranking">
+        Ładowanie wyników...
+      </div>
+    </div>
+
+    <div class="info">
+      👑 Administrator może losować dalej po wpisaniu PIN-u.
+    </div>
+
+  </div>
+
+
 <script type="module">
 
-  /* 🔒 PIN ADMINISTRATORA */
+  /* =========================
+     🔒 PIN ADMINISTRATORA
+  ========================= */
+
   const ADMIN_PIN = "840416";
 
+  let adminMode = false;
+
+
+  /* =========================
+     🔥 FIREBASE IMPORT
+  ========================= */
 
   import {
     initializeApp
@@ -12,6 +154,299 @@
     getDatabase,
     ref,
     onValue,
-    runTransaction,
-    set
+    runTransaction
   } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+
+
+  /* =========================
+     🔥 TWOJA KONFIGURACJA FIREBASE
+  ========================= */
+
+  const firebaseConfig = {
+
+    apiKey: "WKLEJ_TUTAJ_SWOJ_API_KEY",
+
+    authDomain: "WKLEJ_TUTAJ.firebaseapp.com",
+
+    databaseURL: "WKLEJ_TUTAJ_FIREBASE_DATABASE_URL",
+
+    projectId: "WKLEJ_TUTAJ_PROJECT_ID",
+
+    storageBucket: "WKLEJ_TUTAJ.appspot.com",
+
+    messagingSenderId: "WKLEJ_TUTAJ_SENDER_ID",
+
+    appId: "WKLEJ_TUTAJ_APP_ID"
+
+  };
+
+
+  /* =========================
+     🔥 URUCHOM FIREBASE
+  ========================= */
+
+  const app = initializeApp(firebaseConfig);
+
+  const db = getDatabase(app);
+
+
+  /* =========================
+     🏁 LISTA TORÓW
+  ========================= */
+
+  const tory = [
+
+    "Alsace Village",
+    "Autodrome Lago Maggiore",
+    "Autodromo Nazionale Monza",
+    "Blue Moon Bay Speedway",
+    "Brands Hatch",
+    "Circuit de Barcelona-Catalunya",
+    "Circuit de la Sarthe",
+    "Circuit de Spa-Francorchamps",
+    "Colorado Springs",
+    "Daytona International Speedway",
+    "Deep Forest Raceway",
+    "Dragon Trail – Gardens",
+    "Dragon Trail – Seaside",
+    "Fishermans Ranch",
+    "Fuji International Speedway",
+    "Goodwood Motor Circuit",
+    "High Speed Ring",
+    "Interlagos",
+    "Kyoto Driving Park",
+    "Lake Louise",
+    "Laguna Seca",
+    "Mount Panorama",
+    "Nürburgring",
+    "Northern Isle Speedway",
+    "Red Bull Ring",
+    "Sardegna",
+    "Special Stage Route X",
+    "Suzuka Circuit",
+    "Tokyo Expressway",
+    "Trial Mountain Circuit",
+    "Tsukuba Circuit",
+    "Watkins Glen",
+    "Willow Springs",
+    "WeatherTech Raceway Laguna Seca"
+  ];
+
+
+  /* =========================
+     🔒 SPRAWDZENIE BLOKADY
+  ========================= */
+
+  function czyMoznaLosowac() {
+
+    // 👑 Administrator
+    if (adminMode) {
+      return true;
+    }
+
+    // 👤 Jeszcze nie losował
+    if (
+      localStorage.getItem("srs_juz_losowal")
+      !== "tak"
+    ) {
+      return true;
+    }
+
+    // 🔒 Już losował
+    const pin = prompt(
+      "🔒 Już wykorzystałeś swoje losowanie!\n\n" +
+      "👑 Jeśli jesteś administratorem, wpisz PIN:"
+    );
+
+
+    // Anulowanie
+    if (pin === null) {
+      return false;
+    }
+
+
+    // 👑 Poprawny PIN
+    if (pin === ADMIN_PIN) {
+
+      adminMode = true;
+
+      alert(
+        "👑 TRYB ADMINISTRATORA AKTYWNY!\n\n" +
+        "Możesz teraz losować bez ograniczeń."
+      );
+
+      return true;
+    }
+
+
+    // ❌ Zły PIN
+    alert(
+      "❌ Nie możesz losować drugi raz!"
+    );
+
+    return false;
+
+  }
+
+
+  /* =========================
+     🔒 ZAPIS BLOKADY
+  ========================= */
+
+  function zablokujKolejneLosowanie() {
+
+    if (!adminMode) {
+
+      localStorage.setItem(
+        "srs_juz_losowal",
+        "tak"
+      );
+
+    }
+
+  }
+
+
+  /* =========================
+     🎲 LOSOWANIE
+  ========================= */
+
+  const losujBtn =
+    document.getElementById("losujBtn");
+
+  const wylosowanyTor =
+    document.getElementById("wylosowanyTor");
+
+
+  losujBtn.addEventListener(
+    "click",
+    async () => {
+
+
+      /* 🔒 SPRAWDZENIE */
+      if (!czyMoznaLosowac()) {
+        return;
+      }
+
+
+      /* 🎲 LOSOWANIE */
+      const tor =
+        tory[
+          Math.floor(
+            Math.random() * tory.length
+          )
+        ];
+
+
+      /* 🖥️ POKAZANIE WYNIKU */
+      wylosowanyTor.textContent = tor;
+
+
+      /* 🔥 ZAPIS DO FIREBASE */
+      const torRef =
+        ref(
+          db,
+          "losowanieTorow/" +
+          tor.replace(/[.#$[\]/]/g, "_")
+        );
+
+
+      try {
+
+        await runTransaction(
+          torRef,
+          (currentValue) => {
+
+            return (
+              currentValue || 0
+            ) + 1;
+
+          }
+        );
+
+
+        /* 🔒 BLOKADA */
+        zablokujKolejneLosowanie();
+
+
+      } catch (error) {
+
+        console.error(error);
+
+        alert(
+          "❌ Błąd zapisu do Firebase."
+        );
+
+      }
+
+    }
+  );
+
+
+  /* =========================
+     📊 POBIERANIE RANKINGU
+  ========================= */
+
+  const ranking =
+    document.getElementById("ranking");
+
+
+  onValue(
+    ref(db, "losowanieTorow"),
+    (snapshot) => {
+
+      const dane =
+        snapshot.val() || {};
+
+
+      const posortowane =
+        Object.entries(dane)
+        .sort(
+          (a, b) =>
+            b[1] - a[1]
+        );
+
+
+      if (
+        posortowane.length === 0
+      ) {
+
+        ranking.innerHTML =
+          "Brak wyników.";
+
+        return;
+
+      }
+
+
+      ranking.innerHTML =
+        posortowane
+        .map(
+          ([tor, liczba], index) => `
+
+            <div class="tor">
+
+              <span>
+                ${index + 1}.
+                ${tor}
+              </span>
+
+              <strong>
+                ${liczba} losowań
+              </strong>
+
+            </div>
+
+          `
+        )
+        .join("");
+
+    }
+  );
+
+
+</script>
+
+</body>
+</html>
+```
