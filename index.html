@@ -147,7 +147,6 @@
     }
 
     @media (max-width: 500px) {
-
       body {
         padding: 20px 10px;
       }
@@ -197,550 +196,248 @@
     <div id="message"></div>
 
     <div class="ranking">
-
-      <h2>
-        🏆 NAJCZĘŚCIEJ LOSOWANE TORY
-      </h2>
-
+      <h2>🏆 NAJCZĘŚCIEJ LOSOWANE TORY</h2>
       <div id="rankingList"></div>
-
     </div>
 
   </div>
 
-
   <script type="module">
-
-    /* =========================================
-       🔥 FIREBASE
-    ========================================== */
 
     import {
       initializeApp
     } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
 
-
     import {
       getDatabase,
       ref,
       onValue,
-      runTransaction,
-      set
+      runTransaction
     } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
 
 
     const firebaseConfig = {
-
-      apiKey:
-        "AIzaSyDRDAiSlJBPOG8N_c4ctBRLYrwx3ER5rKw",
-
-      authDomain:
-        "srs-losowanie.firebaseapp.com",
-
-      databaseURL:
-        "https://srs-losowanie-default-rtdb.firebaseio.com",
-
-      projectId:
-        "srs-losowanie",
-
-      storageBucket:
-        "srs-losowanie.firebasestorage.app",
-
-      messagingSenderId:
-        "212959687651",
-
-      appId:
-        "1:212959687651:web:0a9a5e647450767bc026d6"
-
+      apiKey: "AIzaSyDRDAiSlJBPOG8N_c4ctBRLYrwx3ER5rKw",
+      authDomain: "srs-losowanie.firebaseapp.com",
+      databaseURL: "https://srs-losowanie-default-rtdb.firebaseio.com",
+      projectId: "srs-losowanie",
+      storageBucket: "srs-losowanie.firebasestorage.app",
+      messagingSenderId: "212959687651",
+      appId: "1:212959687651:web:0a9a5e647450767bc026d6"
     };
 
 
-    const app =
-      initializeApp(firebaseConfig);
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
 
-
-    const database =
-      getDatabase(app);
-
-
-    /* =========================================
-       🏁 LISTA TORÓW GRAN TURISMO 7
-    ========================================== */
 
     const tracks = [
-
       "24 Heures du Mans Racing Circuit",
       "24 Heures du Mans Racing Circuit – No Chicane",
-
       "Alsace – Village",
-      "Alsace – Village Reverse",
-      "Alsace – Test Course",
-      "Alsace – Test Course Reverse",
-
       "Autódromo de Interlagos",
-
       "Autodrome Lago Maggiore – Full Course",
-      "Autodrome Lago Maggiore – Full Course Reverse",
-      "Autodrome Lago Maggiore – Centre",
-      "Autodrome Lago Maggiore – Centre Reverse",
-      "Autodrome Lago Maggiore – East",
-      "Autodrome Lago Maggiore – East Reverse",
-      "Autodrome Lago Maggiore – East End",
-      "Autodrome Lago Maggiore – East End Reverse",
-      "Autodrome Lago Maggiore – West",
-      "Autodrome Lago Maggiore – West Reverse",
-      "Autodrome Lago Maggiore – West End",
-      "Autodrome Lago Maggiore – West End Reverse",
-
       "Autopolis – Full Course",
-      "Autopolis – Shortcut Course",
-
       "Blue Moon Bay Speedway",
-      "Blue Moon Bay Speedway Reverse",
-      "Blue Moon Bay – Infield A",
-      "Blue Moon Bay – Infield A Reverse",
-      "Blue Moon Bay – Infield B",
-      "Blue Moon Bay – Infield B Reverse",
-
       "Brands Hatch – GP Circuit",
       "Brands Hatch – Indy Circuit",
-
       "Broad Bean Raceway",
-      "Broad Bean Raceway Reverse",
-
       "Circuit de Barcelona-Catalunya – GP",
-      "Circuit de Barcelona-Catalunya – GP No Chicane",
-      "Circuit de Barcelona-Catalunya – National",
-      "Circuit de Barcelona-Catalunya – Rallycross",
-
       "Circuit de Sainte-Croix – A",
-      "Circuit de Sainte-Croix – A Reverse",
-      "Circuit de Sainte-Croix – B",
-      "Circuit de Sainte-Croix – B Reverse",
-      "Circuit de Sainte-Croix – C",
-      "Circuit de Sainte-Croix – C Reverse",
-
       "Circuit de Spa-Francorchamps",
       "Circuit Gilles-Villeneuve",
-
       "Colorado Springs – Lake",
-      "Colorado Springs – Lake Reverse",
-
       "Daytona International Speedway – Tri-Oval",
       "Daytona International Speedway – Road Course",
-
       "Deep Forest Raceway",
-      "Deep Forest Raceway Reverse",
-
       "Dragon Trail – Seaside",
-      "Dragon Trail – Seaside Reverse",
       "Dragon Trail – Gardens",
-      "Dragon Trail – Gardens Reverse",
-
       "Eiger Nordwand",
-      "Eiger Nordwand Reverse",
-
       "Fisherman's Ranch",
-      "Fisherman's Ranch Reverse",
-
       "Fuji International Speedway",
-      "Fuji International Speedway – Short Course",
-
       "Goodwood Motor Circuit",
-
       "Grand Valley – Highway 1",
-      "Grand Valley – Highway 1 Reverse",
       "Grand Valley – South",
-      "Grand Valley – South Reverse",
-
       "High Speed Ring",
-      "High Speed Ring Reverse",
-
       "Kyoto Driving Park – Miyabi",
       "Kyoto Driving Park – Yamagiwa",
-      "Kyoto Driving Park – Yamagiwa Reverse",
       "Kyoto Driving Park – Yamagiwa + Miyabi",
-      "Kyoto Driving Park – Yamagiwa + Miyabi Reverse",
-
       "Lake Louise – Long Track",
-      "Lake Louise – Long Track Reverse",
       "Lake Louise – Short Track",
-      "Lake Louise – Short Track Reverse",
-      "Lake Louise – Tri-Oval",
-      "Lake Louise – Tri-Oval Reverse",
-
       "Michelin Raceway Road Atlanta",
-
       "Autodromo Nazionale Monza",
-      "Autodromo Nazionale Monza – No Chicane",
-
       "Mount Panorama Motor Racing Circuit",
-
       "Nürburgring – GP",
-      "Nürburgring – GP Reverse",
       "Nürburgring – Nordschleife",
-      "Nürburgring – Nordschleife Tourist",
       "Nürburgring – Endurance",
-      "Nürburgring – Endurance II",
-      "Nürburgring – Sprint",
-
       "Northern Isle Speedway",
-
       "Red Bull Ring",
-      "Red Bull Ring Reverse",
-
       "Sardegna – Road Track A",
-      "Sardegna – Road Track A Reverse",
       "Sardegna – Road Track B",
-      "Sardegna – Road Track B Reverse",
       "Sardegna – Road Track C",
-      "Sardegna – Road Track C Reverse",
-
       "Sardegna – Windmills",
-      "Sardegna – Windmills Reverse",
-
       "Special Stage Route X",
-
       "Suzuka Circuit",
-      "Suzuka Circuit – East",
-      "Suzuka Circuit – East Reverse",
-
       "Tokyo Expressway – Central Clockwise",
       "Tokyo Expressway – Central Counterclockwise",
       "Tokyo Expressway – East Clockwise",
       "Tokyo Expressway – East Counterclockwise",
       "Tokyo Expressway – South Clockwise",
       "Tokyo Expressway – South Counterclockwise",
-
       "Trial Mountain Circuit",
-      "Trial Mountain Circuit Reverse",
-
       "Tsukuba Circuit",
-
       "Watkins Glen – Long Course",
       "Watkins Glen – Short Course",
-
       "WeatherTech Raceway Laguna Seca",
-
       "Willow Springs – Big Willow",
-      "Willow Springs – Horse Thief Mile",
-      "Willow Springs – Horse Thief Mile Reverse",
-      "Willow Springs – Streets of Willow Springs",
-      "Willow Springs – Streets of Willow Springs Reverse",
-
       "Yas Marina Circuit – Full Circuit",
       "Yas Marina Circuit – Short Circuit"
-
     ];
 
 
-    /* =========================================
-       🔗 ELEMENTY STRONY
-    ========================================== */
+    const button = document.getElementById("drawButton");
+    const trackName = document.getElementById("trackName");
+    const message = document.getElementById("message");
+    const rankingList = document.getElementById("rankingList");
 
-    const button =
-      document.getElementById("drawButton");
-
-
-    const trackName =
-      document.getElementById("trackName");
-
-
-    const message =
-      document.getElementById("message");
-
-
-    const rankingList =
-      document.getElementById("rankingList");
-
-
-    /* =========================================
-       🔑 ID TORU DO FIREBASE
-    ========================================== */
 
     function getTrackId(track) {
-
       return "track_" +
-        btoa(
-          encodeURIComponent(track)
-        )
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=/g, "");
-
+        btoa(unescape(encodeURIComponent(track)))
+          .replace(/\+/g, "-")
+          .replace(/\//g, "_")
+          .replace(/=/g, "");
     }
 
 
-    /* =========================================
-       🏆 TOP 3 RANKING
-    ========================================== */
-
     function renderRanking(ranking) {
 
-      const sortedTracks =
-        tracks
-          .map(function(track) {
-
-            const trackId =
-              getTrackId(track);
-
-
-            return {
-
-              name: track,
-
-              count:
-                ranking[trackId] || 0
-
-            };
-
-          })
-
-
-          .filter(function(track) {
-
-            return track.count > 0;
-
-          })
-
-
-          .sort(function(a, b) {
-
-            return b.count - a.count;
-
-          });
-
+      const sortedTracks = tracks
+        .map(function(track) {
+          return {
+            name: track,
+            count: ranking[getTrackId(track)] || 0
+          };
+        })
+        .filter(function(track) {
+          return track.count > 0;
+        })
+        .sort(function(a, b) {
+          return b.count - a.count;
+        });
 
       rankingList.innerHTML = "";
 
-
-      if (
-        sortedTracks.length === 0
-      ) {
-
+      if (sortedTracks.length === 0) {
         rankingList.innerHTML =
           '<div class="empty-ranking">' +
           '🎲 JESZCZE NIE WYLOSOWANO ŻADNEGO TORU' +
           '</div>';
-
-
         return;
-
       }
 
+      sortedTracks.slice(0, 10).forEach(function(track, index) {
 
-      sortedTracks
-        .slice(0, 3)
-        .forEach(
-          function(track, index) {
+        const row = document.createElement("div");
+        row.className = "ranking-item";
 
-            const row =
-              document.createElement("div");
+        let position;
 
+        if (index === 0) {
+          position = "🥇";
+        } else if (index === 1) {
+          position = "🥈";
+        } else if (index === 2) {
+          position = "🥉";
+        } else {
+          position = (index + 1) + ".";
+        }
 
-            row.className =
-              "ranking-item";
+        row.innerHTML =
+          '<div class="track-info">' +
+            '<span class="position">' + position + '</span>' +
+            '<span>🏁 ' + track.name + '</span>' +
+          '</div>' +
+          '<strong class="count">' +
+            track.count + '×' +
+          '</strong>';
 
+        rankingList.appendChild(row);
 
-            let position;
-
-
-            if (index === 0) {
-
-              position = "🥇";
-
-            }
-
-            else if (index === 1) {
-
-              position = "🥈";
-
-            }
-
-            else {
-
-              position = "🥉";
-
-            }
-
-
-            row.innerHTML =
-
-              '<div class="track-info">' +
-
-                '<span class="position">' +
-
-                  position +
-
-                '</span>' +
-
-                '<span>🏁 ' +
-
-                  track.name +
-
-                '</span>' +
-
-              '</div>' +
-
-              '<strong class="count">' +
-
-                track.count +
-
-                '×</strong>';
-
-
-            rankingList.appendChild(row);
-
-          }
-
-        );
-
+      });
     }
 
 
-    /* =========================================
-       🔥 POBIERANIE RANKINGU Z FIREBASE
-    ========================================== */
-
-    const rankingRef =
-      ref(
-        database,
-        "srsTrackRanking"
-      );
-
-
-    onValue(
-      rankingRef,
-      function(snapshot) {
-
-        const ranking =
-          snapshot.val() || {};
-
-
-        renderRanking(
-          ranking
-        );
-
-      }
+    const rankingRef = ref(
+      database,
+      "srsTrackRanking"
     );
 
 
-    /* =========================================
-       🎲 LOSOWANIE TORU
-    ========================================== */
+    onValue(rankingRef, function(snapshot) {
+
+      const ranking = snapshot.val() || {};
+
+      renderRanking(ranking);
+
+    });
+
 
     function drawTrack() {
 
       button.disabled = true;
 
-
-      message.textContent =
-        "🎲 LOSOWANIE TORU...";
+      message.textContent = "🎲 LOSOWANIE TORU...";
 
 
-      const animation =
-        setInterval(function() {
+      const animation = setInterval(function() {
 
-          const randomTrack =
-            tracks[
-              Math.floor(
-                Math.random() *
-                tracks.length
-              )
-            ];
+        const randomTrack =
+          tracks[
+            Math.floor(
+              Math.random() * tracks.length
+            )
+          ];
 
+        trackName.textContent =
+          "🎲 " + randomTrack;
 
-          trackName.textContent =
-            "🎲 " +
-            randomTrack;
-
-        }, 100);
+      }, 100);
 
 
       setTimeout(function() {
 
-        clearInterval(
-          animation
-        );
+        clearInterval(animation);
 
 
         const selectedTrack =
           tracks[
             Math.floor(
-              Math.random() *
-              tracks.length
+              Math.random() * tracks.length
             )
           ];
 
 
         trackName.textContent =
-          "🏆 " +
-          selectedTrack;
-
+          "🏆 " + selectedTrack;
 
         message.textContent =
-          "💾 ZAPISYWANIE WYNIKU...";
+          "💾 ZAPISYWANIE LOSOWANIA...";
 
 
-        const trackId =
-          getTrackId(
-            selectedTrack
-          );
+        const trackRef = ref(
+          database,
+          "srsTrackRanking/" +
+          getTrackId(selectedTrack)
+        );
 
-
-        const trackRef =
-          ref(
-            database,
-            "srsTrackRanking/" +
-            trackId
-          );
-
-
-        /* ZWIĘKSZENIE LICZNIKA */
 
         runTransaction(
           trackRef,
           function(currentValue) {
-
-            return (
-              currentValue || 0
-            ) + 1;
-
+            return (currentValue || 0) + 1;
           }
         )
-
-
-        /* ZAPIS OSTATNIEGO TORU DLA DISCORDA */
-
-        .then(function() {
-
-          return set(
-
-            ref(
-              database,
-              "srsLastTrack"
-            ),
-
-            {
-
-              track:
-                selectedTrack,
-
-              send:
-                true,
-
-              timestamp:
-                Date.now()
-
-            }
-
-          );
-
-        })
-
-
-        /* GOTOWE */
-
         .then(function() {
 
           message.textContent =
@@ -749,34 +446,21 @@
           button.disabled = false;
 
         })
-
-
-        /* BŁĄD */
-
         .catch(function(error) {
 
-          console.error(
-            error
-          );
-
+          console.error(error);
 
           message.textContent =
-            "❌ BŁĄD ZAPISU DO FIREBASE!";
-
+            "❌ BŁĄD ZAPISU!";
 
           button.disabled = false;
 
         });
 
-
       }, 2500);
 
     }
 
-
-    /* =========================================
-       🖱️ KLIKNIĘCIE PRZYCISKU
-    ========================================== */
 
     button.addEventListener(
       "click",
