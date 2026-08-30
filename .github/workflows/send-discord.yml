@@ -1,1 +1,16 @@
 
+name: SRS Discord Track Bot
+
+on:
+  workflow_dispatch:
+
+jobs:
+  send-discord:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Wyślij wiadomość testową
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{"content":"🏁 TEST SRS LOSOWANIE TORU"}' \
+          "${{ secrets.DISCORD_WEBHOOK }}"
