@@ -27,8 +27,6 @@
       padding: 25px 20px 50px;
     }
 
-    /* ADMIN */
-
     .admin-box {
       margin-bottom: 25px;
       padding: 15px;
@@ -50,7 +48,7 @@
     }
 
     #adminPin {
-      width: 160px;
+      width: 180px;
       padding: 12px;
       border: 1px solid #555;
       border-radius: 8px;
@@ -81,8 +79,6 @@
       color: #aaa;
     }
 
-    /* HEADER */
-
     h1 {
       margin: 10px 0 5px;
       font-size: 32px;
@@ -94,8 +90,6 @@
       color: #aaa;
       font-size: 16px;
     }
-
-    /* BUTTON */
 
     #drawBtn {
       border: none;
@@ -127,8 +121,6 @@
       margin-top: 20px;
       font-weight: bold;
     }
-
-    /* CARDS */
 
     .card {
       margin-top: 30px;
@@ -197,12 +189,6 @@
       padding: 20px;
     }
 
-    .info {
-      margin-top: 20px;
-      color: #aaa;
-      line-height: 1.5;
-    }
-
     .winner {
       margin-top: 20px;
       padding: 15px;
@@ -216,17 +202,27 @@
       color: #ff3333;
     }
 
+    .info {
+      margin-top: 20px;
+      color: #aaa;
+      line-height: 1.5;
+    }
+
     @media (max-width: 600px) {
       h1 {
         font-size: 25px;
       }
 
       #drawnTrack {
-        font-size: 24px;
+        font-size: 23px;
       }
 
       .card h2 {
         font-size: 21px;
+      }
+
+      .result-track {
+        font-size: 14px;
       }
     }
   </style>
@@ -236,12 +232,15 @@
 
   <div class="container">
 
-    <!-- ADMIN PIN NA GÓRZE -->
-
+    <!-- PANEL ADMINA -->
     <div class="admin-box">
-      <div class="admin-title">👑 PANEL ADMINISTRATORA</div>
+
+      <div class="admin-title">
+        👑 PANEL ADMINISTRATORA
+      </div>
 
       <div class="admin-row">
+
         <input
           type="password"
           id="adminPin"
@@ -251,11 +250,13 @@
         <button id="adminLoginBtn">
           ZALOGUJ ADMINA
         </button>
+
       </div>
 
       <div id="adminStatus">
-        Administrator nie jest zalogowany
+        Wpisz PIN, aby rozpocząć nowe losowanie.
       </div>
+
     </div>
 
 
@@ -299,6 +300,7 @@
         </div>
       </div>
 
+
       <div class="winner" id="winner">
         🏆 Najczęściej losowany tor:
         <strong>brak danych</strong>
@@ -308,7 +310,7 @@
 
 
     <div class="info">
-      👑 Administrator może losować wielokrotnie po wpisaniu PIN-u.
+      👑 Po wpisaniu poprawnego PIN-u wszystkie poprzednie losowania są usuwane.
     </div>
 
   </div>
@@ -317,7 +319,7 @@
   <script type="module">
 
     /* =========================
-       FIREBASE IMPORT
+       FIREBASE
     ========================= */
 
     import {
@@ -329,12 +331,13 @@
       getDatabase,
       ref,
       push,
-      onValue
+      onValue,
+      remove
     } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
 
 
     /* =========================
-       TWOJA KONFIGURACJA FIREBASE
+       KONFIGURACJA FIREBASE
     ========================= */
 
     const firebaseConfig = {
@@ -349,21 +352,17 @@
     };
 
 
-    /* =========================
-       URUCHOM FIREBASE
-    ========================= */
-
     const app = initializeApp(firebaseConfig);
 
     const database = getDatabase(app);
 
 
     /* =========================
-       PIN ADMINISTRATORA
-       ZMIEŃ TUTAJ
+       PIN ADMINA
+       ZMIEŃ TUTAJ PIN
     ========================= */
 
-    const ADMIN_PIN = "1234";
+    const ADMIN_PIN = "840416";
 
 
     /* =========================
@@ -392,7 +391,6 @@
       "Circuit de Barcelona-Catalunya - No Chicane",
 
       "Circuit de la Sarthe",
-
       "Circuit de Spa-Francorchamps",
 
       "Colorado Springs - Lake",
@@ -425,8 +423,6 @@
 
       "Lake Louise Long Track",
       "Lake Louise Short Track",
-
-      "Le Mans Circuit de la Sarthe",
 
       "Monza Circuit",
       "Monza No Chicane",
@@ -472,7 +468,7 @@
 
 
     /* =========================
-       ELEMENTY STRONY
+       ELEMENTY
     ========================= */
 
     const drawBtn =
@@ -501,32 +497,25 @@
 
 
     /* =========================
-       STATUS ADMINA
+       STATUS
     ========================= */
 
     let isAdmin = false;
 
-
-    adminLoginBtn.addEventListener("click", () => {
-
-      const enteredPin = adminPin.value.trim();
+    let firebaseConnected = false;
 
 
-      if (enteredPin === ADMIN_PIN) {
+    /* =========================
+       ADMIN LOGIN + USUWANIE
+    ========================= */
 
-        isAdmin = true;
+    adminLoginBtn.addEventListener("click", async () => {
 
-        adminStatus.innerHTML =
-          "👑 <strong>Administrator zalogowany</strong> — możesz losować bez limitu.";
+      const enteredPin =
+        adminPin.value.trim();
 
-        adminStatus.style.color =
-          "#22c55e";
 
-        adminPin.value = "";
-
-        updateButton();
-
-      } else {
+      if (enteredPin !== ADMIN_PIN) {
 
         isAdmin = false;
 
@@ -536,13 +525,117 @@
         adminStatus.style.color =
           "#ff4444";
 
+        return;
+
+      }
+
+
+      try {
+
+        adminLoginBtn.disabled = true;
+
+        adminStatus.innerHTML =
+          "🗑️ Usuwanie wszystkich poprzednich torów...";
+
+        adminStatus.style.color =
+          "#ffcc00";
+
+
+        /* USUWA WSZYSTKIE LOSOWANIA */
+
+        await remove(
+          ref(database, "losowania")
+        );
+
+
+        /* ADMIN ZALOGOWANY */
+
+        isAdmin = true;
+
+
+        /* CZYŚCI OSTATNI TOR */
+
+        drawnTrack.textContent =
+          "Jeszcze nie wylosowano";
+
+
+        /* CZYŚCI WYNIKI */
+
+        results.innerHTML =
+          `
+          <div class="empty-results">
+            Brak wyników. Rozpoczęto nowe losowanie.
+          </div>
+          `;
+
+
+        /* CZYŚCI NAJPOPULARNIEJSZY TOR */
+
+        winner.innerHTML =
+          `
+          🏆 Najczęściej losowany tor:
+          <strong>brak danych</strong>
+          `;
+
+
+        /* STATUS */
+
+        adminStatus.innerHTML =
+          "👑 Administrator zalogowany — wszystkie stare tory zostały usunięte.";
+
+        adminStatus.style.color =
+          "#22c55e";
+
+
+        connectionStatus.innerHTML =
+          "🗑️ Wyniki wyczyszczone. Można rozpocząć nowe losowanie.";
+
+        connectionStatus.style.color =
+          "#22c55e";
+
+
+        adminPin.value = "";
+
+
+        updateButton();
+
+
+      } catch (error) {
+
+        console.error(error);
+
+        isAdmin = false;
+
+
+        adminStatus.innerHTML =
+          "❌ Błąd podczas usuwania wyników.";
+
+        adminStatus.style.color =
+          "#ff4444";
+
+      }
+
+
+      adminLoginBtn.disabled = false;
+
+    });
+
+
+    /* ENTER W POLU PIN */
+
+    adminPin.addEventListener("keydown", (event) => {
+
+      if (event.key === "Enter") {
+
+        adminLoginBtn.click();
+
       }
 
     });
 
 
     /* =========================
-       SPRAWDZENIE LOSOWANIA
+       BLOKADA UŻYTKOWNIKA
     ========================= */
 
     const USER_KEY =
@@ -557,6 +650,18 @@
 
 
     function updateButton() {
+
+      if (!firebaseConnected) {
+
+        drawBtn.disabled = true;
+
+        drawBtn.textContent =
+          "⏳ ŁĄCZENIE Z FIREBASE...";
+
+        return;
+
+      }
+
 
       if (isAdmin) {
 
@@ -591,16 +696,36 @@
 
 
     /* =========================
-       LOSOWANIE TORU
+       LOSOWANIE
     ========================= */
 
-    drawBtn.addEventListener("click", async () => {
+    drawBtn.addEventListener("click", () => {
+
+      startDraw();
+
+    });
+
+
+    async function startDraw() {
 
       if (!isAdmin && userAlreadyDrawn()) {
 
-        alert("❌ Możesz wylosować tor tylko jeden raz.");
+        alert(
+          "❌ Możesz wylosować tor tylko jeden raz."
+        );
 
         updateButton();
+
+        return;
+
+      }
+
+
+      if (!firebaseConnected) {
+
+        alert(
+          "⚠️ Brak połączenia z Firebase."
+        );
 
         return;
 
@@ -626,8 +751,10 @@
               )
             ];
 
+
           drawnTrack.textContent =
-            randomTrack;
+            "🏁 " + randomTrack;
+
 
           animationCount++;
 
@@ -684,9 +811,9 @@
 
           console.error(error);
 
+
           connectionStatus.innerHTML =
-            "❌ Błąd zapisu do Firebase: " +
-            error.message;
+            "❌ Błąd zapisu do Firebase.";
 
           connectionStatus.style.color =
             "#ff4444";
@@ -698,11 +825,11 @@
 
       }, 2500);
 
-    });
+    }
 
 
     /* =========================
-       WYNIKI Z FIREBASE
+       WYNIKI FIREBASE
     ========================= */
 
     const drawsRef =
@@ -710,8 +837,13 @@
 
 
     onValue(
+
       drawsRef,
+
       (snapshot) => {
+
+        firebaseConnected = true;
+
 
         connectionStatus.innerHTML =
           "✅ Połączono z Firebase.";
@@ -740,6 +872,9 @@
             <strong>brak danych</strong>
             `;
 
+
+          updateButton();
+
           return;
 
         }
@@ -748,31 +883,26 @@
         const trackCounts = {};
 
 
-        Object.values(data).forEach(
-          draw => {
+        Object.values(data).forEach((draw) => {
 
-            if (!draw.track) return;
-
-
-            if (!trackCounts[draw.track]) {
-
-              trackCounts[draw.track] = 0;
-
-            }
+          if (!draw.track) return;
 
 
-            trackCounts[draw.track]++;
+          if (!trackCounts[draw.track]) {
+
+            trackCounts[draw.track] = 0;
 
           }
-        );
+
+
+          trackCounts[draw.track]++;
+
+        });
 
 
         const sortedTracks =
           Object.entries(trackCounts)
-          .sort(
-            (a, b) =>
-              b[1] - a[1]
-          );
+            .sort((a, b) => b[1] - a[1]);
 
 
         results.innerHTML = "";
@@ -783,6 +913,7 @@
 
             const row =
               document.createElement("div");
+
 
             row.className =
               "result-row";
@@ -823,12 +954,18 @@
 
         }
 
+
+        updateButton();
+
       },
 
 
       (error) => {
 
         console.error(error);
+
+
+        firebaseConnected = false;
 
 
         connectionStatus.innerHTML =
@@ -841,17 +978,19 @@
         results.innerHTML =
           `
           <div class="empty-results">
-            ⚠️ Sprawdź reguły Firebase.
+            ⚠️ Sprawdź konfigurację i reguły Firebase.
           </div>
           `;
 
+
+        updateButton();
+
       }
+
     );
 
 
-    /* =========================
-       START
-    ========================= */
+    /* START */
 
     updateButton();
 
