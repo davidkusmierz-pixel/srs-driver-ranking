@@ -58,6 +58,7 @@
     #trackName {
       font-size: 30px;
       font-weight: bold;
+      line-height: 1.3;
     }
 
     #drawButton {
@@ -101,6 +102,7 @@
       border: 2px solid #393b40;
       border-radius: 20px;
       padding: 25px;
+      margin-top: 10px;
     }
 
     .ranking h2 {
@@ -111,6 +113,7 @@
     .ranking-item {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       gap: 15px;
       padding: 15px 5px;
       border-bottom: 1px solid #393b40;
@@ -124,11 +127,12 @@
       display: flex;
       gap: 10px;
       align-items: center;
+      text-align: left;
     }
 
     .position {
       min-width: 35px;
-      font-weight: bold;
+      font-size: 20px;
     }
 
     .count {
@@ -136,7 +140,14 @@
       white-space: nowrap;
     }
 
+    .empty-ranking {
+      text-align: center;
+      color: #bdbdbd;
+      padding: 15px 0;
+    }
+
     @media (max-width: 500px) {
+
       body {
         padding: 20px 10px;
       }
@@ -155,6 +166,10 @@
 
       .ranking-item {
         font-size: 14px;
+      }
+
+      #drawButton {
+        font-size: 17px;
       }
     }
   </style>
@@ -182,8 +197,13 @@
     <div id="message"></div>
 
     <div class="ranking">
-      <h2>🏆 NAJCZĘŚCIEJ LOSOWANE TORY</h2>
+
+      <h2>
+        🏆 NAJCZĘŚCIEJ LOSOWANE TORY
+      </h2>
+
       <div id="rankingList"></div>
+
     </div>
 
   </div>
@@ -210,14 +230,28 @@
 
 
     const firebaseConfig = {
-      apiKey: "AIzaSyDRDAiSlJBPOG8N_c4ctBRLYrwx3ER5rKw",
-      authDomain: "srs-losowanie.firebaseapp.com",
-      databaseURL: "https://srs-losowanie-default-rtdb.firebaseio.com",
-      projectId: "srs-losowanie",
-      storageBucket: "srs-losowanie.firebasestorage.app",
-      messagingSenderId: "212959687651",
-      appId: "1:212959687651:web:0a9a5e647450767bc026d6",
-      measurementId: "G-HGT81Y72HF"
+
+      apiKey:
+        "AIzaSyDRDAiSlJBPOG8N_c4ctBRLYrwx3ER5rKw",
+
+      authDomain:
+        "srs-losowanie.firebaseapp.com",
+
+      databaseURL:
+        "https://srs-losowanie-default-rtdb.firebaseio.com",
+
+      projectId:
+        "srs-losowanie",
+
+      storageBucket:
+        "srs-losowanie.firebasestorage.app",
+
+      messagingSenderId:
+        "212959687651",
+
+      appId:
+        "1:212959687651:web:0a9a5e647450767bc026d6"
+
     };
 
 
@@ -230,7 +264,7 @@
 
 
     /* =========================================
-       🏁 GRAN TURISMO 7 – LISTA TORÓW
+       🏁 LISTA TORÓW GRAN TURISMO 7
     ========================================== */
 
     const tracks = [
@@ -407,18 +441,38 @@
     const button =
       document.getElementById("drawButton");
 
+
     const trackName =
       document.getElementById("trackName");
 
+
     const message =
       document.getElementById("message");
+
 
     const rankingList =
       document.getElementById("rankingList");
 
 
     /* =========================================
-       🏆 WYŚWIETLANIE RANKINGU
+       🔑 ID TORU DO FIREBASE
+    ========================================== */
+
+    function getTrackId(track) {
+
+      return "track_" +
+        btoa(
+          encodeURIComponent(track)
+        )
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=/g, "");
+
+    }
+
+
+    /* =========================================
+       🏆 TOP 3 RANKING
     ========================================== */
 
     function renderRanking(ranking) {
@@ -427,21 +481,32 @@
         tracks
           .map(function(track) {
 
+            const trackId =
+              getTrackId(track);
+
+
             return {
+
               name: track,
-              count: ranking[track] || 0
+
+              count:
+                ranking[trackId] || 0
+
             };
 
           })
 
+
+          .filter(function(track) {
+
+            return track.count > 0;
+
+          })
+
+
           .sort(function(a, b) {
 
-            if (b.count !== a.count) {
-              return b.count - a.count;
-            }
-
-            return tracks.indexOf(a.name) -
-                   tracks.indexOf(b.name);
+            return b.count - a.count;
 
           });
 
@@ -449,61 +514,99 @@
       rankingList.innerHTML = "";
 
 
-      sortedTracks.forEach(
-        function(track, index) {
+      if (
+        sortedTracks.length === 0
+      ) {
 
-          const row =
-            document.createElement("div");
-
-          row.className =
-            "ranking-item";
-
-
-          let position =
-            (index + 1) + ".";
+        rankingList.innerHTML =
+          '<div class="empty-ranking">' +
+          '🎲 JESZCZE NIE WYLOSOWANO ŻADNEGO TORU' +
+          '</div>';
 
 
-          if (index === 0) {
-            position = "🥇";
+        return;
+
+      }
+
+
+      sortedTracks
+        .slice(0, 3)
+        .forEach(
+          function(track, index) {
+
+            const row =
+              document.createElement("div");
+
+
+            row.className =
+              "ranking-item";
+
+
+            let position;
+
+
+            if (index === 0) {
+
+              position = "🥇";
+
+            }
+
+            else if (index === 1) {
+
+              position = "🥈";
+
+            }
+
+            else {
+
+              position = "🥉";
+
+            }
+
+
+            row.innerHTML =
+
+              '<div class="track-info">' +
+
+                '<span class="position">' +
+
+                  position +
+
+                '</span>' +
+
+                '<span>🏁 ' +
+
+                  track.name +
+
+                '</span>' +
+
+              '</div>' +
+
+              '<strong class="count">' +
+
+                track.count +
+
+                '×</strong>';
+
+
+            rankingList.appendChild(row);
+
           }
 
-          else if (index === 1) {
-            position = "🥈";
-          }
-
-          else if (index === 2) {
-            position = "🥉";
-          }
-
-
-          row.innerHTML =
-            '<div class="track-info">' +
-              '<span class="position">' +
-                position +
-              '</span>' +
-              '<span>🏁 ' +
-                track.name +
-              '</span>' +
-            '</div>' +
-            '<strong class="count">' +
-              track.count +
-              '×</strong>';
-
-
-          rankingList.appendChild(row);
-
-        }
-      );
+        );
 
     }
 
 
     /* =========================================
-       🔥 RANKING FIREBASE
+       🔥 POBIERANIE RANKINGU Z FIREBASE
     ========================================== */
 
     const rankingRef =
-      ref(database, "srsTrackRanking");
+      ref(
+        database,
+        "srsTrackRanking"
+      );
 
 
     onValue(
@@ -513,7 +616,10 @@
         const ranking =
           snapshot.val() || {};
 
-        renderRanking(ranking);
+
+        renderRanking(
+          ranking
+        );
 
       }
     );
@@ -545,14 +651,17 @@
 
 
           trackName.textContent =
-            "🎲 " + randomTrack;
+            "🎲 " +
+            randomTrack;
 
         }, 100);
 
 
       setTimeout(function() {
 
-        clearInterval(animation);
+        clearInterval(
+          animation
+        );
 
 
         const selectedTrack =
@@ -565,20 +674,29 @@
 
 
         trackName.textContent =
-          "🏆 " + selectedTrack;
+          "🏆 " +
+          selectedTrack;
 
 
         message.textContent =
-          "🎉 ZAPISYWANIE WYNIKU...";
+          "💾 ZAPISYWANIE WYNIKU...";
+
+
+        const trackId =
+          getTrackId(
+            selectedTrack
+          );
 
 
         const trackRef =
           ref(
             database,
             "srsTrackRanking/" +
-            encodeURIComponent(selectedTrack)
+            trackId
           );
 
+
+        /* ZWIĘKSZENIE LICZNIKA */
 
         runTransaction(
           trackRef,
@@ -591,47 +709,65 @@
           }
         )
 
+
+        /* ZAPIS OSTATNIEGO TORU DLA DISCORDA */
+
         .then(function() {
 
-          const lastTrackRef =
+          return set(
+
             ref(
               database,
               "srsLastTrack"
-            );
+            ),
 
-
-          return set(
-            lastTrackRef,
             {
-              track: selectedTrack,
-              send: true,
-              timestamp: Date.now()
+
+              track:
+                selectedTrack,
+
+              send:
+                true,
+
+              timestamp:
+                Date.now()
+
             }
+
           );
 
         })
 
+
+        /* GOTOWE */
+
         .then(function() {
 
           message.textContent =
-            "🎉 TOR ZOSTAŁ WYLOSOWANY! WYNIK ZOSTANIE WYSŁANY NA DISCORD.";
+            "🎉 TOR ZOSTAŁ WYLOSOWANY!";
 
           button.disabled = false;
 
         })
 
+
+        /* BŁĄD */
+
         .catch(function(error) {
 
-          console.error(error);
+          console.error(
+            error
+          );
 
 
           message.textContent =
-            "❌ BŁĄD ZAPISU LOSOWANIA!";
+            "❌ BŁĄD ZAPISU DO FIREBASE!";
 
 
           button.disabled = false;
 
         });
+
 
       }, 2500);
 
@@ -639,7 +775,7 @@
 
 
     /* =========================================
-       🖱️ PRZYCISK
+       🖱️ KLIKNIĘCIE PRZYCISKU
     ========================================== */
 
     button.addEventListener(
