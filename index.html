@@ -72,6 +72,10 @@
       color: #111111;
     }
 
+    #drawButton:hover {
+      transform: scale(1.02);
+    }
+
     #drawButton:active {
       transform: scale(0.98);
     }
@@ -157,6 +161,11 @@
   </div>
 
   <script>
+
+    /* ================================
+       🏁 LISTA TORÓW
+    ================================= */
+
     const tracks = [
       "Trial Mountain Circuit",
       "Deep Forest Raceway",
@@ -170,18 +179,34 @@
       "Watkins Glen"
     ];
 
+
+    /* ================================
+       🔗 WKLEJ ADRES WEBHOOKA DISCORD
+    ================================= */
+
+    const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1543558910227513385/bzl4FcRUTWUn0J2kpna8VvVU60ITGtiaBTn87MzSzqQBItctf2uPWJ5SzoBaLJO2VWA_";
+
+
     const button = document.getElementById("drawButton");
     const trackName = document.getElementById("trackName");
     const message = document.getElementById("message");
     const rankingList = document.getElementById("rankingList");
 
+
+    /* ================================
+       📊 RANKING
+    ================================= */
+
     function getRanking() {
       try {
-        return JSON.parse(localStorage.getItem("srsTrackRanking")) || {};
+        return JSON.parse(
+          localStorage.getItem("srsTrackRanking")
+        ) || {};
       } catch (error) {
         return {};
       }
     }
+
 
     function saveRanking(ranking) {
       localStorage.setItem(
@@ -190,7 +215,9 @@
       );
     }
 
+
     function renderRanking() {
+
       const ranking = getRanking();
 
       const sorted = Object.entries(ranking)
@@ -199,14 +226,17 @@
         });
 
       if (sorted.length === 0) {
+
         rankingList.innerHTML =
           '<div class="empty">Brak losowań.</div>';
+
         return;
       }
 
       rankingList.innerHTML = "";
 
       sorted.forEach(function(item, index) {
+
         const row = document.createElement("div");
 
         row.className = "ranking-item";
@@ -222,41 +252,130 @@
           "×</strong>";
 
         rankingList.appendChild(row);
+
       });
+
     }
 
+
+    /* ================================
+       💬 WYSYŁANIE WYNIKU NA DISCORD
+    ================================= */
+
+    function sendToDiscord(track) {
+
+      if (
+        DISCORD_WEBHOOK_URL ===
+        "WKLEJ_TUTAJ_ADRES_WEBHOOKA"
+      ) {
+        console.log("Nie wklejono webhooka Discord.");
+        return;
+      }
+
+      fetch(DISCORD_WEBHOOK_URL, {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+
+          username: "SRS LOSOWANIE TORU",
+
+          content:
+            "🏁 **SRS LOSOWANIE TORU**\n\n" +
+            "🎲 Wylosowany tor:\n" +
+            "🏆 **" + track + "**\n\n" +
+            "🔥 Powodzenia na torze!"
+
+        })
+
+      })
+      .then(function(response) {
+
+        if (response.ok) {
+          console.log(
+            "Wynik wysłany na Discord!"
+          );
+        } else {
+          console.error(
+            "Błąd wysyłania na Discord."
+          );
+        }
+
+      })
+      .catch(function(error) {
+
+        console.error(
+          "Błąd webhooka:",
+          error
+        );
+
+      });
+
+    }
+
+
+    /* ================================
+       🎲 LOSOWANIE TORU
+    ================================= */
+
     function drawTrack() {
+
       const randomNumber =
-        Math.floor(Math.random() * tracks.length);
+        Math.floor(
+          Math.random() * tracks.length
+        );
 
       const selectedTrack =
         tracks[randomNumber];
 
+
       trackName.textContent =
         "🏆 " + selectedTrack;
+
 
       message.textContent =
         "🎉 TOR ZOSTAŁ WYLOSOWANY!";
 
+
       const ranking = getRanking();
+
 
       if (!ranking[selectedTrack]) {
         ranking[selectedTrack] = 0;
       }
 
+
       ranking[selectedTrack]++;
+
 
       saveRanking(ranking);
 
+
       renderRanking();
+
+
+      /* 💬 WYSYŁA WYNIK NA DISCORD */
+
+      sendToDiscord(selectedTrack);
+
     }
+
+
+    /* ================================
+       🖱️ PRZYCISK
+    ================================= */
 
     button.addEventListener(
       "click",
       drawTrack
     );
 
+
     renderRanking();
+
   </script>
 
 </body>
