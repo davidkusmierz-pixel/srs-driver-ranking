@@ -30,7 +30,6 @@ body {
 
 h1 {
     margin-bottom: 5px;
-    font-size: 32px;
 }
 
 .subtitle {
@@ -55,8 +54,7 @@ h1 {
     font-weight: bold;
 }
 
-.mainButton,
-.discordButton {
+button {
     width: 100%;
     border: none;
     border-radius: 12px;
@@ -64,35 +62,22 @@ h1 {
     font-size: 19px;
     font-weight: bold;
     cursor: pointer;
-    margin-bottom: 10px;
-}
-
-.mainButton {
-    background: white;
-    color: black;
-}
-
-.discordButton {
-    display: none;
-    background: #5865F2;
-    color: white;
 }
 
 button:disabled {
-    opacity: 0.5;
+    opacity: 0.6;
     cursor: not-allowed;
 }
 
 .result {
     min-height: 45px;
-    margin: 20px 0 10px;
-    font-size: 20px;
+    margin-top: 20px;
+    font-size: 19px;
     font-weight: bold;
 }
 
-.stats,
-.history {
-    margin-top: 25px;
+.stats {
+    margin-top: 30px;
     background: #1b1b1b;
     border: 1px solid #333;
     border-radius: 18px;
@@ -100,42 +85,25 @@ button:disabled {
     text-align: left;
 }
 
-.stats h2,
-.history h2 {
+.stats h2 {
     text-align: center;
     margin-top: 0;
 }
 
-.trackStat,
-.historyItem {
+.trackStat {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    padding: 11px 5px;
+    padding: 10px 5px;
     border-bottom: 1px solid #333;
 }
 
-.trackStat:last-child,
-.historyItem:last-child {
+.trackStat:last-child {
     border-bottom: none;
 }
 
-.medal {
-    margin-right: 5px;
-}
-
 @media (max-width: 500px) {
-    h1 {
-        font-size: 26px;
-    }
-
     #trackName {
         font-size: 23px;
-    }
-
-    .trackStat,
-    .historyItem {
-        font-size: 14px;
     }
 }
 </style>
@@ -157,36 +125,11 @@ button:disabled {
         </div>
     </div>
 
-    <button
-        class="mainButton"
-        id="drawButton"
-        onclick="drawTrack()"
-    >
+    <button id="drawButton">
         🎲 LOSUJ TOR
     </button>
 
-    <div
-        class="result"
-        id="result"
-    ></div>
-
-    <button
-        class="discordButton"
-        id="discordButton"
-        onclick="sendToDiscord()"
-    >
-        📢 WYŚLIJ WYNIK NA DISCORD
-    </button>
-
-    <div class="history">
-
-        <h2>📜 OSTATNIE LOSOWANIA</h2>
-
-        <div id="history">
-            Brak losowań
-        </div>
-
-    </div>
+    <div class="result" id="result"></div>
 
     <div class="stats">
 
@@ -213,15 +156,20 @@ const tracks = [
     "Nürburgring GP"
 ];
 
+/* =====================
+   SPRAWDZANIE UDZIAŁU
+===================== */
 
-/* =========================
+const hasVoted =
+    localStorage.getItem("srsAlreadyVoted") === "true";
+
+/* =====================
    STATYSTYKI
-========================= */
+===================== */
 
 let stats = JSON.parse(
     localStorage.getItem("srsTrackStats")
 ) || {};
-
 
 tracks.forEach(track => {
 
@@ -231,41 +179,14 @@ tracks.forEach(track => {
 
 });
 
-
-/* =========================
-   HISTORIA
-========================= */
-
-let history = JSON.parse(
-    localStorage.getItem("srsTrackHistory")
-) || [];
-
-
-let lastWinner = null;
-
-
-/* =========================
-   ZAPIS
-========================= */
-
-function saveData() {
+function saveStats() {
 
     localStorage.setItem(
         "srsTrackStats",
         JSON.stringify(stats)
     );
 
-    localStorage.setItem(
-        "srsTrackHistory",
-        JSON.stringify(history)
-    );
-
 }
-
-
-/* =========================
-   RANKING
-========================= */
 
 function showRanking() {
 
@@ -284,85 +205,57 @@ function showRanking() {
 
             let medal = "";
 
-            if (index === 0) {
-                medal = "🥇";
-            }
-
-            else if (index === 1) {
-                medal = "🥈";
-            }
-
-            else if (index === 2) {
-                medal = "🥉";
-            }
+            if (index === 0) medal = "🥇";
+            else if (index === 1) medal = "🥈";
+            else if (index === 2) medal = "🥉";
 
             ranking.innerHTML += `
-
                 <div class="trackStat">
-
-                    <span>
-                        ${medal} 🏁 ${track}
-                    </span>
-
-                    <strong>
-                        ${stats[track]}
-                    </strong>
-
+                    <span>${medal} 🏁 ${track}</span>
+                    <strong>${stats[track]}×</strong>
                 </div>
-
             `;
-
         }
     );
-
 }
 
+/* =====================
+   BLOKADA PO ODSWIEŻENIU
+===================== */
 
-/* =========================
-   HISTORIA LOSOWAŃ
-========================= */
+function checkVoteStatus() {
 
-function showHistory() {
+    const button =
+        document.getElementById("drawButton");
 
-    const historyBox =
-        document.getElementById("history");
+    const result =
+        document.getElementById("result");
 
-    if (history.length === 0) {
+    if (hasVoted) {
 
-        historyBox.innerHTML =
-            "🎲 Brak losowań";
+        button.disabled = true;
 
-        return;
+        button.innerHTML =
+            "✅ JUŻ WZIĄŁEŚ UDZIAŁ";
+
+        result.innerHTML =
+            "🏁 Możesz wziąć udział tylko raz.";
 
     }
 
-    historyBox.innerHTML = "";
-
-    history.slice(0, 10)
-        .forEach((item, index) => {
-
-            historyBox.innerHTML += `
-
-                <div class="historyItem">
-
-                    <span>
-                        ${index + 1}. 🏁 ${item}
-                    </span>
-
-                </div>
-
-            `;
-
-        });
-
 }
 
-
-/* =========================
+/* =====================
    LOSOWANIE
-========================= */
+===================== */
 
 function drawTrack() {
+
+    if (
+        localStorage.getItem("srsAlreadyVoted") === "true"
+    ) {
+        return;
+    }
 
     const button =
         document.getElementById("drawButton");
@@ -373,42 +266,28 @@ function drawTrack() {
     const result =
         document.getElementById("result");
 
-    const discordButton =
-        document.getElementById("discordButton");
-
-
     button.disabled = true;
-
-    discordButton.style.display =
-        "none";
-
 
     result.innerHTML =
         "🎰 TRWA LOSOWANIE...";
 
-
     let counter = 0;
 
     let speed = 60;
-
 
     function spin() {
 
         const randomTrack =
             tracks[
                 Math.floor(
-                    Math.random()
-                    * tracks.length
+                    Math.random() * tracks.length
                 )
             ];
-
 
         trackName.innerHTML =
             "🏁 " + randomTrack;
 
-
         counter++;
-
 
         if (counter < 35) {
 
@@ -419,66 +298,40 @@ function drawTrack() {
                 speed
             );
 
-        }
-
-        else {
+        } else {
 
             const winner =
                 tracks[
                     Math.floor(
-                        Math.random()
-                        * tracks.length
+                        Math.random() * tracks.length
                     )
                 ];
-
-
-            lastWinner =
-                winner;
-
 
             trackName.innerHTML =
                 "🏆 " + winner;
 
-
             result.innerHTML =
-                "🎉 WYLOSOWANY TOR! 🎉";
+                "🎉 TWÓJ WYLOSOWANY TOR!";
 
-
-            /* Dodaj punkt */
+            /* Zapis wyniku */
 
             stats[winner]++;
 
-
-            /* Dodaj do historii */
-
-            history.unshift(
-                winner
-            );
-
-
-            /* Maksymalnie 10 */
-
-            if (history.length > 10) {
-
-                history.pop();
-
-            }
-
-
-            saveData();
-
+            saveStats();
 
             showRanking();
 
-            showHistory();
+            /* BLOKADA UŻYTKOWNIKA */
 
+            localStorage.setItem(
+                "srsAlreadyVoted",
+                "true"
+            );
 
-            button.disabled =
-                false;
+            button.innerHTML =
+                "✅ JUŻ WZIĄŁEŚ UDZIAŁ";
 
-
-            discordButton.style.display =
-                "block";
+            button.disabled = true;
 
         }
 
@@ -488,55 +341,20 @@ function drawTrack() {
 
 }
 
-
-/* =========================
-   DISCORD
-========================= */
-
-function sendToDiscord() {
-
-    if (!lastWinner) {
-
-        return;
-
-    }
-
-    const sortedTracks =
-        [...tracks].sort(
-            (a, b) => stats[b] - stats[a]
-        );
-
-
-    const mostPopular =
-        sortedTracks[0];
-
-
-    alert(
-        "📢 Wynik gotowy do wysłania na Discord!\n\n"
-        +
-        "🏆 Wylosowany tor: "
-        +
-        lastWinner
-        +
-        "\n📊 Liczba losowań: "
-        +
-        stats[lastWinner]
-        +
-        "\n🥇 Najczęściej losowany: "
-        +
-        mostPopular
-    );
-
-}
-
-
-/* =========================
+/* =====================
    START
-========================= */
+===================== */
+
+document
+    .getElementById("drawButton")
+    .addEventListener(
+        "click",
+        drawTrack
+    );
 
 showRanking();
 
-showHistory();
+checkVoteStatus();
 
 </script>
 
