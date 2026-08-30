@@ -70,6 +70,7 @@
       cursor: pointer;
       background: #ffffff;
       color: #111111;
+      transition: 0.2s;
     }
 
     #drawButton:hover {
@@ -78,6 +79,11 @@
 
     #drawButton:active {
       transform: scale(0.98);
+    }
+
+    #drawButton:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     #message {
@@ -114,19 +120,41 @@
       border-bottom: none;
     }
 
-    .empty {
-      text-align: center;
-      color: #aaaaaa;
-      padding: 15px;
+    .track-info {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .position {
+      min-width: 35px;
+      font-weight: bold;
+    }
+
+    .count {
+      font-size: 18px;
+      white-space: nowrap;
     }
 
     @media (max-width: 500px) {
+      body {
+        padding: 20px 10px;
+      }
+
       h1 {
-        font-size: 26px;
+        font-size: 25px;
       }
 
       #trackName {
-        font-size: 23px;
+        font-size: 22px;
+      }
+
+      .ranking {
+        padding: 18px;
+      }
+
+      .ranking-item {
+        font-size: 14px;
       }
     }
   </style>
@@ -160,219 +188,601 @@
 
   </div>
 
+
   <script>
 
-    /* ================================
-       🏁 LISTA TORÓW
-    ================================= */
+    /* =========================================
+       🏁 GRAN TURISMO 7 – LISTA TORÓW
+    ========================================== */
 
     const tracks = [
-      "Trial Mountain Circuit",
+
+      /* 24 HEURES DU MANS */
+
+      "24 Heures du Mans Racing Circuit",
+      "24 Heures du Mans Racing Circuit – No Chicane",
+
+
+      /* ALSACE */
+
+      "Alsace – Village",
+      "Alsace – Village Reverse",
+      "Alsace – Test Course",
+      "Alsace – Test Course Reverse",
+
+
+      /* AUTODROME INTERLAGOS */
+
+      "Autódromo de Interlagos",
+
+
+      /* LAGO MAGGIORE */
+
+      "Autodrome Lago Maggiore – Full Course",
+      "Autodrome Lago Maggiore – Full Course Reverse",
+      "Autodrome Lago Maggiore – Centre",
+      "Autodrome Lago Maggiore – Centre Reverse",
+      "Autodrome Lago Maggiore – East",
+      "Autodrome Lago Maggiore – East Reverse",
+      "Autodrome Lago Maggiore – East End",
+      "Autodrome Lago Maggiore – East End Reverse",
+      "Autodrome Lago Maggiore – West",
+      "Autodrome Lago Maggiore – West Reverse",
+      "Autodrome Lago Maggiore – West End",
+      "Autodrome Lago Maggiore – West End Reverse",
+
+
+      /* AUTOPOLIS */
+
+      "Autopolis – Full Course",
+      "Autopolis – Shortcut Course",
+
+
+      /* BLUE MOON BAY */
+
+      "Blue Moon Bay Speedway",
+      "Blue Moon Bay Speedway Reverse",
+      "Blue Moon Bay – Infield A",
+      "Blue Moon Bay – Infield A Reverse",
+      "Blue Moon Bay – Infield B",
+      "Blue Moon Bay – Infield B Reverse",
+
+
+      /* BRANDS HATCH */
+
+      "Brands Hatch – GP Circuit",
+      "Brands Hatch – Indy Circuit",
+
+
+      /* BROAD BEAN */
+
+      "Broad Bean Raceway",
+      "Broad Bean Raceway Reverse",
+
+
+      /* BARCELONA */
+
+      "Circuit de Barcelona-Catalunya – GP",
+      "Circuit de Barcelona-Catalunya – GP No Chicane",
+      "Circuit de Barcelona-Catalunya – National",
+      "Circuit de Barcelona-Catalunya – Rallycross",
+
+
+      /* SAINTE-CROIX */
+
+      "Circuit de Sainte-Croix – A",
+      "Circuit de Sainte-Croix – A Reverse",
+      "Circuit de Sainte-Croix – B",
+      "Circuit de Sainte-Croix – B Reverse",
+      "Circuit de Sainte-Croix – C",
+      "Circuit de Sainte-Croix – C Reverse",
+
+
+      /* SPA */
+
+      "Circuit de Spa-Francorchamps",
+      "Circuit de Spa-Francorchamps – 24h Layout",
+
+
+      /* GILLES-VILLENEUVE */
+
+      "Circuit Gilles-Villeneuve",
+
+
+      /* COLORADO SPRINGS */
+
+      "Colorado Springs – Lake",
+      "Colorado Springs – Lake Reverse",
+
+
+      /* DAYTONA */
+
+      "Daytona International Speedway – Tri-Oval",
+      "Daytona International Speedway – Road Course",
+
+
+      /* DEEP FOREST */
+
       "Deep Forest Raceway",
-      "Dragon Trail – Wybrzeże",
+      "Deep Forest Raceway Reverse",
+
+
+      /* DRAGON TRAIL */
+
+      "Dragon Trail – Seaside",
+      "Dragon Trail – Seaside Reverse",
+      "Dragon Trail – Gardens",
+      "Dragon Trail – Gardens Reverse",
+
+
+      /* EIGER NORDWAND */
+
+      "Eiger Nordwand",
+      "Eiger Nordwand Reverse",
+
+
+      /* FISHERMAN'S RANCH */
+
+      "Fisherman's Ranch",
+      "Fisherman's Ranch Reverse",
+
+
+      /* FUJI */
+
+      "Fuji International Speedway",
+      "Fuji International Speedway – Short Course",
+
+
+      /* GOODWOOD */
+
+      "Goodwood Motor Circuit",
+
+
+      /* GRAND VALLEY */
+
+      "Grand Valley – Highway 1",
+      "Grand Valley – Highway 1 Reverse",
+      "Grand Valley – South",
+      "Grand Valley – South Reverse",
+
+
+      /* HIGH SPEED RING */
+
+      "High Speed Ring",
+      "High Speed Ring Reverse",
+
+
+      /* KYOTO */
+
+      "Kyoto Driving Park – Miyabi",
+      "Kyoto Driving Park – Yamagiwa",
+      "Kyoto Driving Park – Yamagiwa Reverse",
+      "Kyoto Driving Park – Yamagiwa + Miyabi",
+      "Kyoto Driving Park – Yamagiwa + Miyabi Reverse",
+
+
+      /* LAKE LOUISE */
+
+      "Lake Louise – Long Track",
+      "Lake Louise – Long Track Reverse",
+      "Lake Louise – Short Track",
+      "Lake Louise – Short Track Reverse",
+      "Lake Louise – Tri-Oval",
+      "Lake Louise – Tri-Oval Reverse",
+
+
+      /* ROAD ATLANTA */
+
+      "Michelin Raceway Road Atlanta",
+
+
+      /* MONZA */
+
+      "Autodromo Nazionale Monza",
+      "Autodromo Nazionale Monza – No Chicane",
+
+
+      /* MOUNT PANORAMA */
+
+      "Mount Panorama Motor Racing Circuit",
+
+
+      /* NÜRBURGRING */
+
+      "Nürburgring – GP",
+      "Nürburgring – GP Reverse",
+      "Nürburgring – Nordschleife",
+      "Nürburgring – Nordschleife Tourist",
+      "Nürburgring – Endurance",
+      "Nürburgring – Endurance II",
+      "Nürburgring – Sprint",
+
+
+      /* NORTHERN ISLE */
+
+      "Northern Isle Speedway",
+
+
+      /* RED BULL RING */
+
       "Red Bull Ring",
+      "Red Bull Ring Reverse",
+
+
+      /* SARDEGNA ROAD */
+
+      "Sardegna – Road Track A",
+      "Sardegna – Road Track A Reverse",
+      "Sardegna – Road Track B",
+      "Sardegna – Road Track B Reverse",
+      "Sardegna – Road Track C",
+      "Sardegna – Road Track C Reverse",
+
+
+      /* SARDEGNA WINDMILLS */
+
+      "Sardegna – Windmills",
+      "Sardegna – Windmills Reverse",
+
+
+      /* SPECIAL STAGE ROUTE X */
+
+      "Special Stage Route X",
+
+
+      /* SUZUKA */
+
       "Suzuka Circuit",
-      "Mount Panorama",
-      "Laguna Seca",
-      "Monza",
-      "Spa-Francorchamps",
-      "Watkins Glen"
+      "Suzuka Circuit – East",
+      "Suzuka Circuit – East Reverse",
+
+
+      /* TOKYO EXPRESSWAY */
+
+      "Tokyo Expressway – Central Clockwise",
+      "Tokyo Expressway – Central Counterclockwise",
+      "Tokyo Expressway – East Clockwise",
+      "Tokyo Expressway – East Counterclockwise",
+      "Tokyo Expressway – South Clockwise",
+      "Tokyo Expressway – South Counterclockwise",
+
+
+      /* TRIAL MOUNTAIN */
+
+      "Trial Mountain Circuit",
+      "Trial Mountain Circuit Reverse",
+
+
+      /* TSUKUBA */
+
+      "Tsukuba Circuit",
+
+
+      /* WATKINS GLEN */
+
+      "Watkins Glen – Long Course",
+      "Watkins Glen – Short Course",
+
+
+      /* LAGUNA SECA */
+
+      "WeatherTech Raceway Laguna Seca",
+
+
+      /* WILLOW SPRINGS */
+
+      "Willow Springs – Big Willow",
+      "Willow Springs – Horse Thief Mile",
+      "Willow Springs – Horse Thief Mile Reverse",
+      "Willow Springs – Streets of Willow Springs",
+      "Willow Springs – Streets of Willow Springs Reverse",
+
+
+      /* YAS MARINA */
+
+      "Yas Marina Circuit – Full Circuit",
+      "Yas Marina Circuit – Short Circuit"
+
     ];
 
 
-    /* ================================
-       🔗 WKLEJ ADRES WEBHOOKA DISCORD
-    ================================= */
+    /* =========================================
+       🔗 ELEMENTY STRONY
+    ========================================== */
 
-    const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1543558910227513385/bzl4FcRUTWUn0J2kpna8VvVU60ITGtiaBTn87MzSzqQBItctf2uPWJ5SzoBaLJO2VWA_";
+    const button =
+      document.getElementById("drawButton");
+
+    const trackName =
+      document.getElementById("trackName");
+
+    const message =
+      document.getElementById("message");
+
+    const rankingList =
+      document.getElementById("rankingList");
 
 
-    const button = document.getElementById("drawButton");
-    const trackName = document.getElementById("trackName");
-    const message = document.getElementById("message");
-    const rankingList = document.getElementById("rankingList");
-
-
-    /* ================================
-       📊 RANKING
-    ================================= */
+    /* =========================================
+       📊 POBIERANIE RANKINGU
+    ========================================== */
 
     function getRanking() {
+
       try {
-        return JSON.parse(
-          localStorage.getItem("srsTrackRanking")
-        ) || {};
-      } catch (error) {
-        return {};
+
+        const savedRanking =
+          JSON.parse(
+            localStorage.getItem(
+              "srsTrackRanking"
+            )
+          ) || {};
+
+
+        tracks.forEach(function(track) {
+
+          if (
+            savedRanking[track] === undefined
+          ) {
+
+            savedRanking[track] = 0;
+
+          }
+
+        });
+
+
+        return savedRanking;
+
       }
+
+      catch (error) {
+
+        const newRanking = {};
+
+        tracks.forEach(function(track) {
+
+          newRanking[track] = 0;
+
+        });
+
+        return newRanking;
+
+      }
+
     }
 
 
+    /* =========================================
+       💾 ZAPIS RANKINGU
+    ========================================== */
+
     function saveRanking(ranking) {
+
       localStorage.setItem(
         "srsTrackRanking",
         JSON.stringify(ranking)
       );
+
     }
 
+
+    /* =========================================
+       🏆 WYŚWIETLANIE RANKINGU
+    ========================================== */
 
     function renderRanking() {
 
-      const ranking = getRanking();
+      const ranking =
+        getRanking();
 
-      const sorted = Object.entries(ranking)
-        .sort(function(a, b) {
-          return b[1] - a[1];
-        });
 
-      if (sorted.length === 0) {
+      const sortedTracks =
+        tracks
+          .map(function(track) {
 
-        rankingList.innerHTML =
-          '<div class="empty">Brak losowań.</div>';
+            return {
 
-        return;
-      }
+              name: track,
+
+              count:
+                ranking[track] || 0
+
+            };
+
+          })
+
+          .sort(function(a, b) {
+
+            if (
+              b.count !== a.count
+            ) {
+
+              return (
+                b.count - a.count
+              );
+
+            }
+
+
+            return (
+              tracks.indexOf(a.name) -
+              tracks.indexOf(b.name)
+            );
+
+          });
+
 
       rankingList.innerHTML = "";
 
-      sorted.forEach(function(item, index) {
 
-        const row = document.createElement("div");
+      sortedTracks.forEach(
+        function(track, index) {
 
-        row.className = "ranking-item";
-
-        row.innerHTML =
-          "<span>" +
-          (index + 1) +
-          ". 🏁 " +
-          item[0] +
-          "</span>" +
-          "<strong>" +
-          item[1] +
-          "×</strong>";
-
-        rankingList.appendChild(row);
-
-      });
-
-    }
+          const row =
+            document.createElement("div");
 
 
-    /* ================================
-       💬 WYSYŁANIE WYNIKU NA DISCORD
-    ================================= */
+          row.className =
+            "ranking-item";
 
-    function sendToDiscord(track) {
 
-      if (
-        DISCORD_WEBHOOK_URL ===
-        "WKLEJ_TUTAJ_ADRES_WEBHOOKA"
-      ) {
-        console.log("Nie wklejono webhooka Discord.");
-        return;
-      }
+          let position =
+            (index + 1) + ".";
 
-      fetch(DISCORD_WEBHOOK_URL, {
-        method: "POST",
 
-        headers: {
-          "Content-Type": "application/json"
-        },
+          if (index === 0) {
 
-        body: JSON.stringify({
+            position = "🥇";
 
-          username: "SRS LOSOWANIE TORU",
+          }
 
-          content:
-            "🏁 **SRS LOSOWANIE TORU**\n\n" +
-            "🎲 Wylosowany tor:\n" +
-            "🏆 **" + track + "**\n\n" +
-            "🔥 Powodzenia na torze!"
+          else if (index === 1) {
 
-        })
+            position = "🥈";
 
-      })
-      .then(function(response) {
+          }
 
-        if (response.ok) {
-          console.log(
-            "Wynik wysłany na Discord!"
-          );
-        } else {
-          console.error(
-            "Błąd wysyłania na Discord."
-          );
+          else if (index === 2) {
+
+            position = "🥉";
+
+          }
+
+
+          row.innerHTML =
+
+            '<div class="track-info">' +
+
+              '<span class="position">' +
+
+                position +
+
+              '</span>' +
+
+              '<span>🏁 ' +
+
+                track.name +
+
+              '</span>' +
+
+            '</div>' +
+
+            '<strong class="count">' +
+
+              track.count +
+
+              '×</strong>';
+
+
+          rankingList.appendChild(row);
+
         }
-
-      })
-      .catch(function(error) {
-
-        console.error(
-          "Błąd webhooka:",
-          error
-        );
-
-      });
+      );
 
     }
 
 
-    /* ================================
-       🎲 LOSOWANIE TORU
-    ================================= */
+    /* =========================================
+       🎲 LOSOWANIE
+    ========================================== */
 
     function drawTrack() {
 
-      const randomNumber =
-        Math.floor(
-          Math.random() * tracks.length
-        );
-
-      const selectedTrack =
-        tracks[randomNumber];
-
-
-      trackName.textContent =
-        "🏆 " + selectedTrack;
+      button.disabled = true;
 
 
       message.textContent =
-        "🎉 TOR ZOSTAŁ WYLOSOWANY!";
+        "🎲 LOSOWANIE TORU...";
 
 
-      const ranking = getRanking();
+      let animationCount = 0;
 
 
-      if (!ranking[selectedTrack]) {
-        ranking[selectedTrack] = 0;
-      }
+      const animation =
+        setInterval(function() {
+
+          const randomTrack =
+
+            tracks[
+              Math.floor(
+                Math.random() *
+                tracks.length
+              )
+            ];
 
 
-      ranking[selectedTrack]++;
+          trackName.textContent =
+            "🎲 " +
+            randomTrack;
 
 
-      saveRanking(ranking);
+          animationCount++;
+
+        }, 100);
 
 
-      renderRanking();
+      setTimeout(function() {
+
+        clearInterval(
+          animation
+        );
 
 
-      /* 💬 WYSYŁA WYNIK NA DISCORD */
+        const selectedTrack =
 
-      sendToDiscord(selectedTrack);
+          tracks[
+            Math.floor(
+              Math.random() *
+              tracks.length
+            )
+          ];
+
+
+        trackName.textContent =
+          "🏆 " +
+          selectedTrack;
+
+
+        message.textContent =
+          "🎉 TOR ZOSTAŁ WYLOSOWANY!";
+
+
+        const ranking =
+          getRanking();
+
+
+        ranking[selectedTrack]++;
+
+
+        saveRanking(
+          ranking
+        );
+
+
+        renderRanking();
+
+
+        button.disabled = false;
+
+      }, 2500);
 
     }
 
 
-    /* ================================
+    /* =========================================
        🖱️ PRZYCISK
-    ================================= */
+    ========================================== */
 
     button.addEventListener(
       "click",
       drawTrack
     );
 
+
+    /* =========================================
+       START
+    ========================================== */
 
     renderRanking();
 
