@@ -241,10 +241,13 @@ def update_discord_message(message_id, message):
 
 def main():
 
-    print("========== START RANKINGU ==========")
+    print(
+        "========== START RANKINGU =========="
+    )
+
 
     # ==================================================
-    # WEBHOOK
+    # SPRAWDZENIE WEBHOOKA
     # ==================================================
 
     if (
@@ -263,7 +266,7 @@ def main():
 
 
     # ==================================================
-    # POBIERANIE WSZYSTKICH ZAWODNIKÓW
+    # POBIERANIE WSZYSTKICH KIEROWCÓW
     # ==================================================
 
     for psn, username in PLAYERS.items():
@@ -289,7 +292,7 @@ def main():
                 f"BŁĄD {username}: {error}"
             )
 
-            # ZAWODNIK NADAL JEST W RANKINGU
+            # Kierowca pozostaje w rankingu
             ranking.append({
                 "username": username,
                 "pk": "?",
@@ -299,9 +302,7 @@ def main():
 
 
     # ==================================================
-    # SORTOWANIE
-    #
-    # NAJLEPSZY = 1
+    # SORTOWANIE OD NAJLEPSZEGO
     # ==================================================
 
     ranking.sort(
@@ -325,10 +326,10 @@ def main():
     # ==================================================
     # ODWRÓCENIE KOLEJNOŚCI
     #
-    # NA GÓRZE:
+    # GÓRA:
     # OSTATNIE MIEJSCE
     #
-    # NA DOLE:
+    # DÓŁ:
     # 3
     # 2
     # 1
@@ -338,7 +339,7 @@ def main():
 
 
     # ==================================================
-    # TWORZENIE WIADOMOŚCI
+    # TWORZENIE CZĘŚCI RANKINGU
     #
     # BEZ NAGŁÓWKA NA GÓRZE
     # ==================================================
@@ -356,7 +357,7 @@ def main():
 
 
         # ==================================================
-        # MEDAL
+        # MEDALE
         # ==================================================
 
         if position == 1:
@@ -387,7 +388,7 @@ def main():
             f"🏅 PK **{player['pk']}** • "
             f"PFK **{player['pfk']}**\n"
 
-            f"📊 Score: "
+            f"📊 PUNKTY: "
             f"**{player['score']:.2f}**\n\n"
 
             "━━━━━━━━━━━━━━━━━━━━\n\n"
@@ -395,7 +396,7 @@ def main():
 
 
         # ==================================================
-        # LIMIT WIADOMOŚCI DISCORDA
+        # LIMIT DISCORDA
         # ==================================================
 
         if (
@@ -433,8 +434,9 @@ def main():
 
 
     # ==================================================
-    # INFORMACJE NA SAMYM DOLE
+    # STOPKA - DOKŁADNIE JAK CHCIAŁEŚ
     #
+    # TYLKO NA SAMYM DOLE
     # POD 1. MIEJSCEM
     # ==================================================
 
@@ -446,33 +448,40 @@ def main():
 
 
     footer = (
-        "🏎️ Każdy kierowca otrzymuje miejsce w rankingu "
+        "━━━━━━━━━━━━━━━━━━━━\n\n"
+
+        "🚗 Każdy kierowca otrzymuje miejsce w rankingu "
         "zgodnie ze swoim aktualnym EDGE SCORE..\n\n"
 
-        "📊 **Ranking SRS tworzony jest na podstawie "
-        "danych z DG EDGE**\n\n"
+        "📊 **Ranking SRS tworzony jest na podstawie danych z DG EDGE**\n\n"
 
-        "🔄 Dane są automatycznie odświeżane, dzięki czemu "
-        "ranking zawsze uwzględnia najnowsze wyniki z "
-        "**DG EDGE**.\n\n"
+        "🔄Dane są automatycznie odświeżane, dzięki czemu ranking "
+        "zawsze uwzględnia najnowsze wyniki z **DG EDGE**.\n\n"
 
         "━━━━━━━━━━━━━━━━━━━━\n"
 
-        f"🕒 **Ostatnia aktualizacja:** "
+        f"🕒 Ostatnia aktualizacja: "
         f"{update_time}\n"
 
         "🏁 **RANKING GŁÓWNY SRS** 🏁"
     )
 
 
+    # ==================================================
+    # STOPKA TYLKO W OSTATNIEJ CZĘŚCI
+    # ==================================================
+
     messages[-1] += footer
 
 
     # ==================================================
-    # ID STARYCH WIADOMOŚCI
+    # ODCZYT STARYCH ID
     # ==================================================
 
     old_message_ids = load_message_ids()
+
+    new_message_ids = []
+
 
     print(
         f"Znaleziono ID wiadomości: "
@@ -480,29 +489,24 @@ def main():
     )
 
     print(
-        f"Aktualnych części: "
+        f"Aktualnych części rankingu: "
         f"{len(messages)}"
     )
 
 
     # ==================================================
-    # NADPISYWANIE STARYCH WIADOMOŚCI
-    #
-    # KAŻDA ISTNIEJĄCA CZĘŚĆ
-    # JEST NADPISYWANA
+    # NADPISYWANIE / DODAWANIE
     #
     # NIC NIE USUWAMY
     # ==================================================
-
-    new_message_ids = []
-
 
     for number, message in enumerate(
         messages
     ):
 
+
         # ==================================================
-        # MAMY STARE ID
+        # ISTNIEJE STARE ID
         # ==================================================
 
         if number < len(old_message_ids):
@@ -529,7 +533,7 @@ def main():
             except requests.exceptions.HTTPError as error:
 
                 print(
-                    f"BŁĄD nadpisywania części "
+                    f"BŁĄD aktualizacji części "
                     f"{number + 1}: {error}"
                 )
 
@@ -562,7 +566,7 @@ def main():
 
 
         # ==================================================
-        # BRAK STAREGO ID
+        # BRAK ID
         # ==================================================
 
         else:
@@ -593,10 +597,15 @@ def main():
     # ==================================================
     # ZACHOWANIE STARYCH ID
     #
-    # NIC NIE USUWAMY
+    # NICZEGO NIE USUWAMY
     #
-    # JEŚLI STARYCH CZĘŚCI JEST WIĘCEJ,
-    # ICH ID ZOSTAJĄ W PLIKU.
+    # JEŚLI BYŁO 4 CZĘŚCI,
+    # A TERAZ SĄ 3:
+    #
+    # CZĘŚĆ 1 -> NADPISANA
+    # CZĘŚĆ 2 -> NADPISANA
+    # CZĘŚĆ 3 -> NADPISANA
+    # CZĘŚĆ 4 -> POZOSTAJE BEZ ZMIAN
     # ==================================================
 
     ids_to_save = old_message_ids.copy()
@@ -618,7 +627,7 @@ def main():
 
 
     # ==================================================
-    # ZAPIS
+    # ZAPIS ID
     # ==================================================
 
     save_message_ids(
@@ -627,7 +636,7 @@ def main():
 
 
     print(
-        f"Zapisano ID w: "
+        f"Zapisano ID w pliku: "
         f"{MESSAGE_IDS_FILE}"
     )
 
