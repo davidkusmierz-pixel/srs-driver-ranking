@@ -14,7 +14,7 @@ WEBHOOK_URL = "https://discord.com/api/webhooks/1540826456802992178/kCh8knUjF5cb
 
 
 # ==================================================
-# PSN ID : NAZWA WYŚWIETLANA NA DISCORDZIE
+# PSN ID : NAZWA NA DISCORDZIE
 # ==================================================
 
 PLAYERS = {
@@ -73,11 +73,13 @@ HEADERS = {
 
 MESSAGE_IDS_FILE = "ranking_message_ids.txt"
 
+# Discord ma limit 2000 znaków.
+# Zostawiamy zapas.
 MAX_MESSAGE_LENGTH = 1900
 
 
 # ==================================================
-# POBIERANIE DANYCH
+# POBIERANIE DANYCH Z DG EDGE
 # ==================================================
 
 def get_player(psn, username):
@@ -102,19 +104,19 @@ def get_player(psn, username):
         strip=True
     )
 
-    # ==================================================
+    # --------------------------------------------------
     # PK / PFK
-    # ==================================================
+    # --------------------------------------------------
 
     pk_pfk_match = re.search(
-        rf"{re.escape(psn)}.*?\b([A-E]\+?|S)\s+([A-E]|S)\b",
+        rf"{re.escape(psn)}.*?\b([A-E]\+?|S)\s+([A-E]\+?|S)\b",
         text,
         re.IGNORECASE
     )
 
-    # ==================================================
+    # --------------------------------------------------
     # EDGE SCORE
-    # ==================================================
+    # --------------------------------------------------
 
     score_match = re.search(
         r"(\d{1,3}\.\d{1,2})\s+Edge Score",
@@ -122,23 +124,18 @@ def get_player(psn, username):
         re.IGNORECASE
     )
 
-    pk = (
-        pk_pfk_match.group(1)
-        if pk_pfk_match
-        else "?"
-    )
+    pk = "?"
+    pfk = "?"
+    score = None
 
-    pfk = (
-        pk_pfk_match.group(2)
-        if pk_pfk_match
-        else "?"
-    )
+    if pk_pfk_match:
+        pk = pk_pfk_match.group(1)
+        pfk = pk_pfk_match.group(2)
 
-    score = (
-        float(score_match.group(1))
-        if score_match
-        else 0.0
-    )
+    if score_match:
+        score = float(
+            score_match.group(1)
+        )
 
     return {
         "username": username,
@@ -154,11 +151,9 @@ def get_player(psn, username):
 
 def load_message_ids():
 
-    if not os.path.exists(MESSAGE_IDS_FILE):
-
-        print(
-            f"Brak pliku {MESSAGE_IDS_FILE}"
-        )
+    if not os.path.exists(
+        MESSAGE_IDS_FILE
+    ):
 
         return []
 
@@ -195,7 +190,7 @@ def save_message_ids(message_ids):
 
 
 # ==================================================
-# WYSŁANIE NOWEJ WIADOMOŚCI
+# NOWA WIADOMOŚĆ
 # ==================================================
 
 def send_discord_message(message):
@@ -213,8 +208,10 @@ def send_discord_message(message):
 
     response.raise_for_status()
 
+    data = response.json()
+
     return str(
-        response.json()["id"]
+        data["id"]
     )
 
 
@@ -222,12 +219,35 @@ def send_discord_message(message):
 # NADPISANIE WIADOMOŚCI
 # ==================================================
 
-def update_discord_message(message_id, message):
+def update_discord_message(
+    message_id,
+    message
+):
 
     response = requests.patch(
         f"{WEBHOOK_URL}/messages/{message_id}",
         json={
             "content": message
+        },
+        timeout=30
+    )
+
+    response.raise_for_status()
+
+
+# ==================================================
+# WYCZYSZCZENIE STAREJ WIADOMOŚCI
+#
+# NIE USUWA WIADOMOŚCI.
+# TYLKO ZMIENIA JEJ TREŚĆ NA PUSTĄ.
+# ==================================================
+
+def clear_discord_message(message_id):
+
+    response = requests.patch(
+        f"{WEBHOOK_URL}/messages/{message_id}",
+        json={
+            "content": "\u200b"
         },
         timeout=30
     )
@@ -262,11 +282,15 @@ def main():
         return
 
 
+    # ==================================================
+    # RANKING
+    # ==================================================
+
     ranking = []
 
 
     # ==================================================
-    # POBIERANIE WSZYSTKICH KIEROWCÓW
+    # POBIERANIE KAŻDEGO KIEROWCY
     # ==================================================
 
     for psn, username in PLAYERS.items():
@@ -274,7 +298,7 @@ def main():
         try:
 
             print(
-                f"Pobieram dane: {username}"
+                f"Pobieram: {username}"
             )
 
             player = get_player(
@@ -292,21 +316,28 @@ def main():
                 f"BŁĄD {username}: {error}"
             )
 
-            # Kierowca pozostaje w rankingu
+            # Kierowca zostaje na liście,
+            # ale bez fałszywego wyniku.
+
             ranking.append({
                 "username": username,
                 "pk": "?",
                 "pfk": "?",
-                "score": 0.0
+                "score": None
             })
 
 
     # ==================================================
-    # SORTOWANIE OD NAJLEPSZEGO
+    # SORTOWANIE
+    #
+    # NAJLEPSZY = 1
     # ==================================================
 
     ranking.sort(
-        key=lambda x: x["score"],
+        key=lambda player: (
+            player["score"] is not None,
+            player["score"] or 0
+        ),
         reverse=True
     )
 
@@ -324,10 +355,12 @@ def main():
 
 
     # ==================================================
-    # ODWRÓCENIE KOLEJNOŚCI
+    # ODWRÓCENIE
     #
     # GÓRA:
-    # OSTATNIE MIEJSCE
+    # 41
+    # 40
+    # 39
     #
     # DÓŁ:
     # 3
@@ -339,16 +372,10 @@ def main():
 
 
     # ==================================================
-    # TWORZENIE CZĘŚCI RANKINGU
-    #
-    # BEZ NAGŁÓWKA NA GÓRZE
+    # TWORZENIE TEKSTÓW ZAWODNIKÓW
     # ==================================================
 
-    messages = []
-
-    current_message = "\u200b\n"
-
-    message_number = 1
+    player_blocks = []
 
 
     for player in ranking:
@@ -356,9 +383,9 @@ def main():
         position = player["position"]
 
 
-        # ==================================================
-        # MEDALE
-        # ==================================================
+        # --------------------------------------------------
+        # MEDAL
+        # --------------------------------------------------
 
         if position == 1:
 
@@ -377,67 +404,43 @@ def main():
             medal = "🏁"
 
 
-        # ==================================================
-        # ZAWODNIK
-        # ==================================================
+        # --------------------------------------------------
+        # SCORE
+        # --------------------------------------------------
 
-        player_text = (
+        if player["score"] is None:
+
+            score_text = "?"
+
+        else:
+
+            score_text = f"{player['score']:.2f}"
+
+
+        # --------------------------------------------------
+        # ZAWODNIK
+        # --------------------------------------------------
+
+        block = (
             f"{medal} **{position}. "
             f"{player['username']}**\n"
 
             f"🏅 PK **{player['pk']}** • "
             f"PFK **{player['pfk']}**\n"
 
-            f"📊 PUNKTY: "
-            f"**{player['score']:.2f}**\n\n"
+            f"📊 Score: **{score_text}**\n\n"
 
             "━━━━━━━━━━━━━━━━━━━━\n\n"
         )
 
 
-        # ==================================================
-        # LIMIT DISCORDA
-        # ==================================================
-
-        if (
-            len(current_message)
-            + len(player_text)
-            > MAX_MESSAGE_LENGTH
-        ):
-
-            messages.append(
-                current_message
-            )
-
-            message_number += 1
-
-            current_message = (
-                f"🏁 **RANKING SRS — "
-                f"CZĘŚĆ {message_number}**\n\n"
-
-                "━━━━━━━━━━━━━━━━━━━━\n\n"
-            )
-
-
-        current_message += player_text
-
-
-    # ==================================================
-    # OSTATNIA CZĘŚĆ
-    # ==================================================
-
-    if current_message:
-
-        messages.append(
-            current_message
+        player_blocks.append(
+            block
         )
 
 
     # ==================================================
-    # STOPKA - DOKŁADNIE JAK CHCIAŁEŚ
-    #
-    # TYLKO NA SAMYM DOLE
-    # POD 1. MIEJSCEM
+    # STOPKA
     # ==================================================
 
     update_time = datetime.now(
@@ -448,8 +451,6 @@ def main():
 
 
     footer = (
-        "━━━━━━━━━━━━━━━━━━━━\n\n"
-
         "🚗 Każdy kierowca otrzymuje miejsce w rankingu "
         "zgodnie ze swoim aktualnym EDGE SCORE..\n\n"
 
@@ -468,50 +469,130 @@ def main():
 
 
     # ==================================================
-    # STOPKA TYLKO W OSTATNIEJ CZĘŚCI
+    # DZIELENIE NA WIADOMOŚCI
+    #
+    # KAŻDY KIEROWCA JEST DODANY.
+    # NIE UCINAMY RANKINGU.
     # ==================================================
 
-    messages[-1] += footer
+    messages = []
+
+    current_message = "\u200b\n"
+
+
+    for block in player_blocks:
+
+        # Jeżeli kolejny kierowca przekroczyłby limit,
+        # kończymy aktualną wiadomość.
+
+        if (
+            len(current_message)
+            + len(block)
+            > MAX_MESSAGE_LENGTH
+        ):
+
+            messages.append(
+                current_message
+            )
+
+            current_message = "\u200b\n"
+
+
+        current_message += block
 
 
     # ==================================================
-    # ODCZYT STARYCH ID
+    # OSTATNIA CZĘŚĆ
+    # ==================================================
+
+    # Dodajemy stopkę do ostatniej części.
+    #
+    # Jeżeli stopka nie zmieści się razem z ostatnim
+    # kierowcą, tworzymy osobną ostatnią wiadomość.
+
+    if (
+        len(current_message)
+        + len(footer)
+        <= MAX_MESSAGE_LENGTH
+    ):
+
+        current_message += footer
+
+        messages.append(
+            current_message
+        )
+
+    else:
+
+        messages.append(
+            current_message
+        )
+
+        messages.append(
+            "\u200b\n"
+            + footer
+        )
+
+
+    # ==================================================
+    # SPRAWDZENIE
+    # ==================================================
+
+    print(
+        f"Liczba kierowców: {len(ranking)}"
+    )
+
+    print(
+        f"Liczba wiadomości: {len(messages)}"
+    )
+
+
+    for number, message in enumerate(
+        messages,
+        start=1
+    ):
+
+        print(
+            f"Część {number}: "
+            f"{len(message)} znaków"
+        )
+
+
+    # ==================================================
+    # STARE ID
     # ==================================================
 
     old_message_ids = load_message_ids()
 
-    new_message_ids = []
-
-
     print(
-        f"Znaleziono ID wiadomości: "
+        f"Starych ID: "
         f"{len(old_message_ids)}"
     )
 
-    print(
-        f"Aktualnych części rankingu: "
-        f"{len(messages)}"
-    )
+
+    # ==================================================
+    # AKTUALNE ID
+    # ==================================================
+
+    new_message_ids = []
 
 
     # ==================================================
-    # NADPISYWANIE / DODAWANIE
-    #
-    # NIC NIE USUWAMY
+    # NADPISYWANIE ISTNIEJĄCYCH
+    # LUB TWORZENIE NOWYCH
     # ==================================================
 
-    for number, message in enumerate(
+    for index, message in enumerate(
         messages
     ):
 
+        # --------------------------------------------------
+        # MAMY STARE ID
+        # --------------------------------------------------
 
-        # ==================================================
-        # ISTNIEJE STARE ID
-        # ==================================================
+        if index < len(old_message_ids):
 
-        if number < len(old_message_ids):
-
-            message_id = old_message_ids[number]
+            message_id = old_message_ids[index]
 
             try:
 
@@ -525,22 +606,20 @@ def main():
                 )
 
                 print(
-                    f"NADPISANO część "
-                    f"{number + 1}/{len(messages)}"
+                    f"OK - nadpisano część "
+                    f"{index + 1}"
                 )
 
 
-            except requests.exceptions.HTTPError as error:
+            except Exception as error:
 
                 print(
-                    f"BŁĄD aktualizacji części "
-                    f"{number + 1}: {error}"
+                    f"BŁĄD nadpisywania części "
+                    f"{index + 1}: {error}"
                 )
 
-                print(
-                    "Tworzę nową wiadomość..."
-                )
-
+                # Jeżeli stare ID nie działa,
+                # tworzymy nową wiadomość.
 
                 try:
 
@@ -553,8 +632,8 @@ def main():
                     )
 
                     print(
-                        f"Utworzono część "
-                        f"{number + 1}: {new_id}"
+                        f"Utworzono nową część "
+                        f"{index + 1}"
                     )
 
                 except Exception as send_error:
@@ -565,9 +644,9 @@ def main():
                     )
 
 
-        # ==================================================
-        # BRAK ID
-        # ==================================================
+        # --------------------------------------------------
+        # BRAK ID - NOWA WIADOMOŚĆ
+        # --------------------------------------------------
 
         else:
 
@@ -582,62 +661,86 @@ def main():
                 )
 
                 print(
-                    f"DODANO część "
-                    f"{number + 1}/{len(messages)}"
+                    f"OK - wysłano nową część "
+                    f"{index + 1}"
                 )
 
             except Exception as error:
 
                 print(
                     f"BŁĄD wysyłania części "
-                    f"{number + 1}: {error}"
+                    f"{index + 1}: {error}"
                 )
 
 
     # ==================================================
-    # ZACHOWANIE STARYCH ID
+    # STARE DODATKOWE WIADOMOŚCI
     #
-    # NICZEGO NIE USUWAMY
+    # JEŻELI WCZEŚNIEJ BYŁO NP. 5 CZĘŚCI,
+    # A TERAZ SĄ 4:
     #
-    # JEŚLI BYŁO 4 CZĘŚCI,
-    # A TERAZ SĄ 3:
+    # PIĄTA NIE ZOSTAJE ZE STARYM RANKINGIEM.
     #
-    # CZĘŚĆ 1 -> NADPISANA
-    # CZĘŚĆ 2 -> NADPISANA
-    # CZĘŚĆ 3 -> NADPISANA
-    # CZĘŚĆ 4 -> POZOSTAJE BEZ ZMIAN
+    # ZOSTAJE W DISCORDZIE, ALE JEJ TREŚĆ
+    # ZOSTAJE WYCZYSZCZONA.
     # ==================================================
 
-    ids_to_save = old_message_ids.copy()
+    if len(old_message_ids) > len(messages):
 
+        for index in range(
+            len(messages),
+            len(old_message_ids)
+        ):
 
-    for index, message_id in enumerate(
-        new_message_ids
-    ):
+            old_id = old_message_ids[index]
 
-        if index < len(ids_to_save):
+            try:
 
-            ids_to_save[index] = message_id
+                clear_discord_message(
+                    old_id
+                )
 
-        else:
+                print(
+                    f"Wyczyszczono starą część "
+                    f"{index + 1}"
+                )
 
-            ids_to_save.append(
-                message_id
-            )
+            except Exception as error:
+
+                print(
+                    f"Nie można wyczyścić "
+                    f"starej części {index + 1}: "
+                    f"{error}"
+                )
 
 
     # ==================================================
     # ZAPIS ID
+    #
+    # ZAPISUJEMY TYLKO AKTUALNE CZĘŚCI.
     # ==================================================
 
     save_message_ids(
-        ids_to_save
+        new_message_ids
     )
 
 
+    # ==================================================
+    # KONIEC
+    # ==================================================
+
     print(
-        f"Zapisano ID w pliku: "
-        f"{MESSAGE_IDS_FILE}"
+        "----------------------------------"
+    )
+
+    print(
+        f"Wysłano/nadpisano "
+        f"{len(new_message_ids)} części."
+    )
+
+    print(
+        f"W rankingu jest "
+        f"{len(ranking)} kierowców."
     )
 
     print(
