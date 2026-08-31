@@ -36,8 +36,8 @@ jobs:
 
       - name: Sprawdzenie zapisanych ID
         run: |
-          echo "ZAWARTOŚĆ message_ids.txt:"
-          cat message_ids.txt || true
+          echo "ZAWARTOŚĆ ranking_message_ids.txt:"
+          cat ranking_message_ids.txt || true
 
           echo ""
           echo "STATUS GIT:"
@@ -48,7 +48,7 @@ jobs:
           git config --global user.name "SRS Ranking Bot"
           git config --global user.email "ranking@srs.local"
 
-          git add -f message_ids.txt
+          git add -f ranking_message_ids.txt
 
           git status
 
