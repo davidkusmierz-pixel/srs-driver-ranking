@@ -50,7 +50,6 @@ PLAYERS = {
     "RRA_Tony": "Dawid_Tony11",
     "RM_Shifter": "D.Pawełka",
     "NormanPowerGT": "YT-NormanPowerGT",
-    "destro2207": "Desmond",
     "apr_poke": "Poke",
     "HoseeMoralezz": "HoseeMoralezz",
     "Bogdan_Zastrzyk": "Zastrzyk",
