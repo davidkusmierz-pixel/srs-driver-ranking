@@ -19,7 +19,7 @@ WEBHOOK_URL = "https://discord.com/api/webhooks/1540826456802992178/kCh8knUjF5cb
 
 PLAYERS = {
     
-    SolidSnakePoland": "RickyK",
+    "SolidSnakePoland": "RickyK",
     "ALF7": "SRS ALF7_VR2",
     "lucekbks": "SRS-Popek",
     "MTE_JaXoN_GT": "@JaXoN_GT_YT",
