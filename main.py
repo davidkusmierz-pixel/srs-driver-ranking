@@ -74,9 +74,12 @@ HEADERS = {
 # PLIK Z ID WIADOMOŚCI RANKINGU
 MESSAGE_IDS_FILE = "ranking_message_ids.txt"
 
+# Maksymalny rozmiar wiadomości Discorda
+MAX_MESSAGE_LENGTH = 1900
+
 
 # ==================================================
-# POBIERANIE DANYCH Z DG EDGE
+# POBIERANIE DANYCH
 # ==================================================
 
 def get_player(psn, username):
@@ -230,7 +233,7 @@ def send_discord_message(message):
 
 
 # ==================================================
-# NADPISANIE ISTNIEJĄCEJ WIADOMOŚCI
+# NADPISANIE WIADOMOŚCI
 # ==================================================
 
 def update_discord_message(message_id, message):
@@ -304,11 +307,7 @@ def main():
                 f"BŁĄD {username}: {error}"
             )
 
-            # ==================================================
-            # JEŚLI DG EDGE NIE POBIERZE DANYCH,
-            # KIEROWCA NADAL ZOSTAJE W RANKINGU
-            # ==================================================
-
+            # Kierowca nadal zostaje w rankingu
             ranking.append({
                 "username": username,
                 "pk": "?",
@@ -319,12 +318,6 @@ def main():
 
     # ==================================================
     # SORTOWANIE OD NAJLEPSZEGO
-    #
-    # 1
-    # 2
-    # 3
-    # ...
-    # 40
     # ==================================================
 
     ranking.sort(
@@ -348,13 +341,13 @@ def main():
     # ==================================================
     # ODWRÓCENIE KOLEJNOŚCI
     #
-    # NA GÓRZE:
+    # GÓRA:
     # 40
     # 39
     # 38
     # ...
     #
-    # NA DOLE:
+    # DÓŁ:
     # 3
     # 2
     # 1
@@ -364,40 +357,47 @@ def main():
 
 
     # ==================================================
-    # PIERWSZA CZĘŚĆ RANKINGU
+    # STOPKA - TYLKO NA SAMYM DOLE
     # ==================================================
 
-    current_message = (
-        "\u200b\n"
-        "📈 **RANKING GŁÓWNY**\n\n"
-
-        "🏁 Klasyfikacja według **EDGE SCORE**\n\n"
-
-        "📊 **Punkty są liczone na podstawie:**\n"
-
-        "⏱️ **Czasówek Daily Race** – "
-        "uzyskanych czasów kwalifikacyjnych\n"
-
-        "🏁 **Wyzwań i czasówek** – "
-        "uzyskanych wyników i czasów\n\n"
-
-        "💬 **Im lepsze czasy i wyniki, "
-        "tym więcej punktów zdobywa kierowca.**\n\n"
-
-        "🔄 **Aktualizacja: raz dziennie**\n\n"
-
-        "━━━━━━━━━━━━━━━━━━━━\n\n"
+    update_time = datetime.now(
+        ZoneInfo("Europe/Warsaw")
+    ).strftime(
+        "%d.%m.%Y %H:%M"
     )
 
 
-    messages = []
+    footer = (
+        "━━━━━━━━━━━━━━━━━━━━\n\n"
 
-    message_number = 1
+        "🏎️ Każdy kierowca otrzymuje miejsce w rankingu "
+        "zgodnie ze swoim aktualnym EDGE SCORE..\n\n"
+
+        "📊 **Ranking SRS tworzony jest na podstawie "
+        "danych z DG EDGE**\n\n"
+
+        "🔄 Dane są automatycznie odświeżane, dzięki czemu "
+        "ranking zawsze uwzględnia najnowsze wyniki z "
+        "**DG EDGE**.\n\n"
+
+        "━━━━━━━━━━━━━━━━━━━━\n"
+
+        f"🕒 **Ostatnia aktualizacja:** {update_time}\n"
+
+        "🏁 **RANKING GŁÓWNY SRS** 🏁"
+    )
 
 
     # ==================================================
     # TWORZENIE CZĘŚCI RANKINGU
     # ==================================================
+
+    messages = []
+
+    current_message = "\u200b\n"
+
+    message_number = 1
+
 
     for player in ranking:
 
@@ -405,7 +405,7 @@ def main():
 
 
         # ==================================================
-        # EMOTIKONA MIEJSCA
+        # MEDAL
         # ==================================================
 
         if position == 1:
@@ -436,8 +436,10 @@ def main():
             f"🏅 PK **{player['pk']}** • "
             f"PFK **{player['pfk']}**\n"
 
-            f"📊 Score: "
+            f"📊 PUNKTY: "
             f"**{player['score']:.2f}**\n\n"
+
+            "━━━━━━━━━━━━━━━━━━━━\n\n"
         )
 
 
@@ -448,7 +450,7 @@ def main():
         if (
             len(current_message)
             + len(player_text)
-            > 1900
+            > MAX_MESSAGE_LENGTH
         ):
 
             messages.append(
@@ -458,7 +460,7 @@ def main():
             message_number += 1
 
             current_message = (
-                f"📈 **RANKING GŁÓWNY — "
+                f"🏁 **RANKING SRS — "
                 f"CZĘŚĆ {message_number}**\n\n"
 
                 "━━━━━━━━━━━━━━━━━━━━\n\n"
@@ -480,25 +482,10 @@ def main():
 
 
     # ==================================================
-    # STOPKA
+    # STOPKA NA SAMYM DOLE
     #
-    # ZNAJDUJE SIĘ POD 1. MIEJSCEM
+    # TYLKO OSTATNIA WIADOMOŚĆ
     # ==================================================
-
-    update_time = datetime.now(
-        ZoneInfo("Europe/Warsaw")
-    ).strftime(
-        "%d.%m.%Y %H:%M"
-    )
-
-
-    footer = (
-        "━━━━━━━━━━━━━━━━━━━━\n\n"
-
-        f"🕒 **Ostatnia aktualizacja:** "
-        f"{update_time}"
-    )
-
 
     messages[-1] += footer
 
@@ -526,7 +513,7 @@ def main():
     # ==================================================
     # NADPISYWANIE / DODAWANIE
     #
-    # NIC NIE USUWAMY
+    # NICZEGO NIE USUWAMY
     # ==================================================
 
     for number, message in enumerate(
@@ -627,10 +614,17 @@ def main():
     # ==================================================
     # ZACHOWANIE STARYCH ID
     #
-    # NICZEGO NIE USUWUJEMY
+    # NIC NIE USUWAMY
     #
-    # JEŚLI BYŁO 4 CZĘŚCI, A TERAZ SĄ 3:
+    # PRZYKŁAD:
     #
+    # BYŁO:
+    # CZĘŚĆ 1
+    # CZĘŚĆ 2
+    # CZĘŚĆ 3
+    # CZĘŚĆ 4
+    #
+    # TERAZ:
     # CZĘŚĆ 1 -> NADPISANA
     # CZĘŚĆ 2 -> NADPISANA
     # CZĘŚĆ 3 -> NADPISANA
