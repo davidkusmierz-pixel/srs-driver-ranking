@@ -71,7 +71,6 @@ HEADERS = {
 }
 
 # OSOBNY PLIK TYLKO DLA RANKINGU
-# NIE RUSZA message_ids.txt
 MESSAGE_IDS_FILE = "ranking_message_ids.txt"
 
 
@@ -162,10 +161,11 @@ def get_player(psn, username):
 def load_message_ids():
 
     if not os.path.exists(MESSAGE_IDS_FILE):
+
         print(
-            f"Brak pliku {MESSAGE_IDS_FILE} - "
-            f"zostanie utworzony automatycznie."
+            f"Brak pliku {MESSAGE_IDS_FILE}."
         )
+
         return []
 
     with open(
@@ -194,7 +194,10 @@ def save_message_ids(message_ids):
     ) as file:
 
         for message_id in message_ids:
-            file.write(f"{message_id}\n")
+
+            file.write(
+                f"{message_id}\n"
+            )
 
 
 # ==================================================
@@ -222,7 +225,7 @@ def send_discord_message(message):
 
 
 # ==================================================
-# AKTUALIZACJA WIADOMOŚCI
+# NADPISANIE / EDYCJA WIADOMOŚCI
 # ==================================================
 
 def update_discord_message(message_id, message):
@@ -239,6 +242,20 @@ def update_discord_message(message_id, message):
 
 
 # ==================================================
+# USUNIĘCIE WIADOMOŚCI
+# ==================================================
+
+def delete_discord_message(message_id):
+
+    response = requests.delete(
+        f"{WEBHOOK_URL}/messages/{message_id}",
+        timeout=30
+    )
+
+    response.raise_for_status()
+
+
+# ==================================================
 # GŁÓWNY PROGRAM
 # ==================================================
 
@@ -247,7 +264,11 @@ def main():
     print("========== START RANKINGU ==========")
 
     if not WEBHOOK_URL or WEBHOOK_URL == "TU_WKLEJ_SWÓJ_WEBHOOK":
-        print("BŁĄD: Wklej webhook Discorda na początku kodu!")
+
+        print(
+            "BŁĄD: Wklej webhook Discorda na początku kodu!"
+        )
+
         return
 
     ranking = []
@@ -261,7 +282,9 @@ def main():
 
         try:
 
-            print(f"Pobieram dane: {username}")
+            print(
+                f"Pobieram dane: {username}"
+            )
 
             player = get_player(
                 psn,
@@ -295,6 +318,7 @@ def main():
         ranking,
         start=1
     ):
+
         player["position"] = position
 
 
@@ -328,15 +352,19 @@ def main():
         # ==================================================
 
         if position == 1:
+
             medal = "🥇"
 
         elif position == 2:
+
             medal = "🥈"
 
         elif position == 3:
+
             medal = "🥉"
 
         else:
+
             medal = "🏁"
 
 
@@ -346,7 +374,8 @@ def main():
 
         player_text = (
             f"{medal} **{position}. {player['username']}**\n\n"
-            f"🏅 PK: **{player['pk']}**   PFK: **{player['pfk']}**\n"
+            f"🏅 PK: **{player['pk']}**   "
+            f"PFK: **{player['pfk']}**\n"
             f"🇵🇱 PL  **{player['country']}**\n"
             f"📊 PUNKTY: **{player['score']:.2f}**\n\n"
             f"━━━━━━━━━━━━━━━━━━━━\n\n"
@@ -354,7 +383,7 @@ def main():
 
 
         # ==================================================
-        # LIMIT WIADOMOŚCI DISCORD
+        # LIMIT DISCORDA
         # ==================================================
 
         if len(current_message) + len(player_text) > 1900:
@@ -376,24 +405,36 @@ def main():
 
 
     # ==================================================
-    # DODANIE OSTATNIEJ CZĘŚCI
+    # OSTATNIA CZĘŚĆ
     # ==================================================
 
     if current_message:
-        messages.append(current_message)
+
+        messages.append(
+            current_message
+        )
 
 
     # ==================================================
-    # INFORMACJE I NAGŁÓWEK NA SAMYM DOLE
+    # STOPKA
     # ==================================================
 
     footer = (
-        "🏎️ Każdy kierowca otrzymuje miejsce w rankingu zgodnie ze swoim aktualnym EDGE SCORE..\n\n"
-        "📊 **Ranking SRS tworzony jest na podstawie danych z DG EDGE**\n\n"
-        "🔄Dane są automatycznie odświeżane, dzięki czemu ranking zawsze uwzględnia najnowsze wyniki z **DG EDGE**.\n\n"
+        "🏎️ Każdy kierowca otrzymuje miejsce w rankingu "
+        "zgodnie ze swoim aktualnym EDGE SCORE..\n\n"
+
+        "📊 **Ranking SRS tworzony jest na podstawie "
+        "danych z DG EDGE**\n\n"
+
+        "🔄 Dane są automatycznie odświeżane, dzięki czemu "
+        "ranking zawsze uwzględnia najnowsze wyniki z "
+        "**DG EDGE**.\n\n"
+
         "━━━━━━━━━━━━━━━━━━━━\n"
+
         f"🕒 Ostatnia aktualizacja: "
         f"{datetime.now(ZoneInfo('Europe/Warsaw')).strftime('%d.%m.%Y %H:%M')}\n"
+
         "🏁 **RANKING GŁÓWNY SRS** 🏁"
     )
 
@@ -401,7 +442,7 @@ def main():
 
 
     # ==================================================
-    # AKTUALIZACJA DISCORDA
+    # ID STARYCH WIADOMOŚCI
     # ==================================================
 
     old_message_ids = load_message_ids()
@@ -409,16 +450,25 @@ def main():
     new_message_ids = []
 
     print(
-        f"Znaleziono ID wiadomości rankingu: "
+        f"Stare wiadomości rankingu: "
         f"{len(old_message_ids)}"
     )
 
+    print(
+        f"Nowych części rankingu: "
+        f"{len(messages)}"
+    )
+
+
+    # ==================================================
+    # AKTUALIZOWANIE ISTNIEJĄCYCH WIADOMOŚCI
+    # ==================================================
 
     for number, message in enumerate(messages):
 
-        # ==================================================
-        # MAMY ZAPISANE ID - PRÓBUJEMY EDYTOWAĆ
-        # ==================================================
+        # ----------------------------------------------
+        # ISTNIEJE STARA WIADOMOŚĆ
+        # ----------------------------------------------
 
         if number < len(old_message_ids):
 
@@ -436,19 +486,19 @@ def main():
                 )
 
                 print(
-                    f"Zaktualizowano część "
+                    f"NADPISANO część "
                     f"{number + 1}/{len(messages)}"
                 )
 
             except requests.exceptions.HTTPError as error:
 
                 print(
-                    f"Nie można zaktualizować wiadomości "
+                    f"Nie można nadpisać wiadomości "
                     f"{message_id}: {error}"
                 )
 
                 print(
-                    "Tworzę nową wiadomość rankingu..."
+                    "Tworzę nową wiadomość..."
                 )
 
                 try:
@@ -469,14 +519,14 @@ def main():
                 except Exception as send_error:
 
                     print(
-                        f"BŁĄD wysyłania nowej wiadomości: "
+                        f"BŁĄD wysyłania: "
                         f"{send_error}"
                     )
 
 
-        # ==================================================
-        # BRAK ID - PIERWSZE URUCHOMIENIE
-        # ==================================================
+        # ----------------------------------------------
+        # BRAK STAREJ WIADOMOŚCI
+        # ----------------------------------------------
 
         else:
 
@@ -504,7 +554,38 @@ def main():
 
 
     # ==================================================
-    # ZAPIS NOWYCH ID RANKINGU
+    # USUWANIE STARYCH, NIEPOTRZEBNYCH CZĘŚCI
+    # ==================================================
+
+    if len(old_message_ids) > len(messages):
+
+        print(
+            "Usuwam stare, niepotrzebne części rankingu..."
+        )
+
+        for old_id in old_message_ids[len(messages):]:
+
+            try:
+
+                delete_discord_message(
+                    old_id
+                )
+
+                print(
+                    f"Usunięto starą wiadomość: "
+                    f"{old_id}"
+                )
+
+            except Exception as error:
+
+                print(
+                    f"Nie można usunąć wiadomości "
+                    f"{old_id}: {error}"
+                )
+
+
+    # ==================================================
+    # ZAPIS AKTUALNYCH ID
     # ==================================================
 
     save_message_ids(
@@ -516,7 +597,9 @@ def main():
         f"ID wiadomości rankingu."
     )
 
-    print("========== KONIEC ==========")
+    print(
+        "========== KONIEC =========="
+    )
 
 
 # ==================================================
@@ -524,4 +607,5 @@ def main():
 # ==================================================
 
 if __name__ == "__main__":
+
     main()
