@@ -65,7 +65,9 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0"
 }
 
-MESSAGE_IDS_FILE = "message_ids.txt"
+# OSOBNY PLIK TYLKO DLA RANKINGU
+# NIE RUSZA message_ids.txt
+MESSAGE_IDS_FILE = "ranking_message_ids.txt"
 
 
 # ==================================================
@@ -149,13 +151,16 @@ def get_player(psn, username):
 
 
 # ==================================================
-# ODCZYT ID WIADOMOŚCI
+# ODCZYT ID WIADOMOŚCI RANKINGU
 # ==================================================
 
 def load_message_ids():
 
     if not os.path.exists(MESSAGE_IDS_FILE):
-        print("Brak pliku message_ids.txt")
+        print(
+            f"Brak pliku {MESSAGE_IDS_FILE} - "
+            f"zostanie utworzony automatycznie."
+        )
         return []
 
     with open(
@@ -172,7 +177,7 @@ def load_message_ids():
 
 
 # ==================================================
-# ZAPIS ID WIADOMOŚCI
+# ZAPIS ID WIADOMOŚCI RANKINGU
 # ==================================================
 
 def save_message_ids(message_ids):
@@ -399,12 +404,16 @@ def main():
     new_message_ids = []
 
     print(
-        f"Znaleziono ID wiadomości: "
+        f"Znaleziono ID wiadomości rankingu: "
         f"{len(old_message_ids)}"
     )
 
 
     for number, message in enumerate(messages):
+
+        # ==================================================
+        # MAMY ZAPISANE ID - PRÓBUJEMY EDYTOWAĆ
+        # ==================================================
 
         if number < len(old_message_ids):
 
@@ -426,11 +435,47 @@ def main():
                     f"{number + 1}/{len(messages)}"
                 )
 
-            except Exception as error:
+            except requests.exceptions.HTTPError as error:
 
                 print(
-                    f"Błąd aktualizacji: {error}"
+                    f"Nie można zaktualizować wiadomości "
+                    f"{message_id}: {error}"
                 )
+
+                print(
+                    "Tworzę nową wiadomość rankingu..."
+                )
+
+                try:
+
+                    new_id = send_discord_message(
+                        message
+                    )
+
+                    new_message_ids.append(
+                        new_id
+                    )
+
+                    print(
+                        f"Utworzono nową wiadomość: "
+                        f"{new_id}"
+                    )
+
+                except Exception as send_error:
+
+                    print(
+                        f"BŁĄD wysyłania nowej wiadomości: "
+                        f"{send_error}"
+                    )
+
+
+        # ==================================================
+        # BRAK ID - PIERWSZE URUCHOMIENIE
+        # ==================================================
+
+        else:
+
+            try:
 
                 new_id = send_discord_message(
                     message
@@ -440,32 +485,38 @@ def main():
                     new_id
                 )
 
-        else:
+                print(
+                    f"Wysłano nową część "
+                    f"{number + 1}/{len(messages)}"
+                )
 
-            new_id = send_discord_message(
-                message
-            )
+            except Exception as error:
 
-            new_message_ids.append(
-                new_id
-            )
-
-            print(
-                f"Wysłano część "
-                f"{number + 1}"
-            )
+                print(
+                    f"BŁĄD wysyłania części "
+                    f"{number + 1}: {error}"
+                )
 
 
     # ==================================================
-    # ZAPIS ID
+    # ZAPIS NOWYCH ID RANKINGU
     # ==================================================
 
     save_message_ids(
         new_message_ids
     )
 
+    print(
+        f"Zapisano {len(new_message_ids)} "
+        f"ID wiadomości rankingu."
+    )
+
     print("========== KONIEC ==========")
 
+
+# ==================================================
+# START
+# ==================================================
 
 if __name__ == "__main__":
     main()
