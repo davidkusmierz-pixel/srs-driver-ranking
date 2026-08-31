@@ -7,6 +7,13 @@ from zoneinfo import ZoneInfo
 
 
 # ==================================================
+# DISCORD WEBHOOK
+# ==================================================
+
+WEBHOOK_URL = "https://discord.com/api/webhooks/1540826456802992178/kCh8knUjF5cb1ZXGegpXEV4vNMHtjIFmEzTBx5iTrG_YgsEQ2ekMAhhcWPk40P895muo"
+
+
+# ==================================================
 # PSN ID : NAZWA WYŚWIETLANA NA DISCORDZIE
 # ==================================================
 
@@ -59,8 +66,6 @@ PLAYERS = {
 # USTAWIENIA
 # ==================================================
 
-WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK")
-
 HEADERS = {
     "User-Agent": "Mozilla/5.0"
 }
@@ -112,7 +117,7 @@ def get_player(psn, username):
 
     # MIEJSCE W POLSCE
     country_match = re.search(
-        r"(\d[\d,\.]*)\s+Country\s+position",
+        r"(\d[\d,.]*)\s+Country\s+position",
         text,
         re.IGNORECASE
     )
@@ -241,8 +246,8 @@ def main():
 
     print("========== START RANKINGU ==========")
 
-    if not WEBHOOK_URL:
-        print("BŁĄD: Brak DISCORD_WEBHOOK!")
+    if not WEBHOOK_URL or WEBHOOK_URL == "TU_WKLEJ_SWÓJ_WEBHOOK":
+        print("BŁĄD: Wklej webhook Discorda na początku kodu!")
         return
 
     ranking = []
