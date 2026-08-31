@@ -100,21 +100,30 @@ def get_player(psn, username):
         strip=True
     )
 
-    # PK i PFK
+    # ==================================================
+    # PK I PFK
+    # ==================================================
+
     pk_pfk_match = re.search(
         rf"{re.escape(psn)}.*?\b([A-E]\+?|S)\s+([A-E]\+?|S)\b",
         text,
         re.IGNORECASE
     )
 
-    # EDGE SCORE = PUNKTY
+    # ==================================================
+    # EDGE SCORE
+    # ==================================================
+
     score_match = re.search(
         r"(\d{1,3}\.\d{1,2})\s+Edge Score",
         text,
         re.IGNORECASE
     )
 
+    # ==================================================
     # MIEJSCE W POLSCE
+    # ==================================================
+
     country_match = re.search(
         r"(\d[\d,.]*)\s+Country\s+position",
         text,
@@ -155,7 +164,7 @@ def get_player(psn, username):
 
 
 # ==================================================
-# ODCZYT ID WIADOMOŚCI RANKINGU
+# ODCZYT ID WIADOMOŚCI
 # ==================================================
 
 def load_message_ids():
@@ -163,7 +172,8 @@ def load_message_ids():
     if not os.path.exists(MESSAGE_IDS_FILE):
 
         print(
-            f"Brak pliku {MESSAGE_IDS_FILE}."
+            f"Brak pliku {MESSAGE_IDS_FILE} - "
+            f"zostanie utworzony automatycznie."
         )
 
         return []
@@ -182,7 +192,7 @@ def load_message_ids():
 
 
 # ==================================================
-# ZAPIS ID WIADOMOŚCI RANKINGU
+# ZAPIS ID WIADOMOŚCI
 # ==================================================
 
 def save_message_ids(message_ids):
@@ -225,7 +235,7 @@ def send_discord_message(message):
 
 
 # ==================================================
-# NADPISANIE / EDYCJA WIADOMOŚCI
+# NADPISANIE WIADOMOŚCI
 # ==================================================
 
 def update_discord_message(message_id, message):
@@ -275,7 +285,7 @@ def main():
 
 
     # ==================================================
-    # POBIERANIE DANYCH
+    # POBIERANIE WSZYSTKICH KIEROWCÓW
     # ==================================================
 
     for psn, username in PLAYERS.items():
@@ -299,6 +309,19 @@ def main():
                 f"BŁĄD {username}: {error}"
             )
 
+            # ==================================================
+            # JEŚLI DG EDGE NIE ODPOWIE,
+            # KIEROWCA NADAL ZOSTAJE W RANKINGU
+            # ==================================================
+
+            ranking.append({
+                "username": username,
+                "pk": "?",
+                "pfk": "?",
+                "country": "?",
+                "score": 0.0
+            })
+
 
     # ==================================================
     # SORTOWANIE OD NAJLEPSZEGO
@@ -311,7 +334,7 @@ def main():
 
 
     # ==================================================
-    # NADANIE PRAWDZIWYCH MIEJSC
+    # NADANIE MIEJSC
     # ==================================================
 
     for position, player in enumerate(
@@ -323,21 +346,30 @@ def main():
 
 
     # ==================================================
-    # ODWRÓCENIE WYŚWIETLANIA
-    # NA GÓRZE NAJNIŻSZE MIEJSCA
-    # NA DOLE 1. MIEJSCE
+    # ODWRÓCENIE RANKINGU
+    #
+    # NA GÓRZE:
+    # 40
+    # 39
+    # 38
+    # ...
+    #
+    # NA DOLE:
+    # 3
+    # 2
+    # 1
     # ==================================================
 
     ranking.reverse()
 
 
     # ==================================================
-    # TWORZENIE RANKINGU
+    # TWORZENIE WIADOMOŚCI
     # ==================================================
 
     messages = []
 
-    current_message = "\u200b\n"
+    current_message = ""
 
     message_number = 1
 
@@ -369,7 +401,7 @@ def main():
 
 
         # ==================================================
-        # FORMAT ZAWODNIKA
+        # ZAWODNIK
         # ==================================================
 
         player_text = (
@@ -405,7 +437,7 @@ def main():
 
 
     # ==================================================
-    # OSTATNIA CZĘŚĆ
+    # DODANIE OSTATNIEJ CZĘŚCI
     # ==================================================
 
     if current_message:
@@ -417,6 +449,9 @@ def main():
 
     # ==================================================
     # STOPKA
+    #
+    # BĘDZIE NA SAMYM DOLE,
+    # POD 1. MIEJSCEM
     # ==================================================
 
     footer = (
@@ -427,8 +462,7 @@ def main():
         "danych z DG EDGE**\n\n"
 
         "🔄 Dane są automatycznie odświeżane, dzięki czemu "
-        "ranking zawsze uwzględnia najnowsze wyniki z "
-        "**DG EDGE**.\n\n"
+        "ranking zawsze uwzględnia najnowsze wyniki z **DG EDGE**.\n\n"
 
         "━━━━━━━━━━━━━━━━━━━━\n"
 
@@ -438,11 +472,16 @@ def main():
         "🏁 **RANKING GŁÓWNY SRS** 🏁"
     )
 
+
+    # ==================================================
+    # STOPKA TYLKO NA SAMYM DOLE
+    # ==================================================
+
     messages[-1] += footer
 
 
     # ==================================================
-    # ID STARYCH WIADOMOŚCI
+    # ODCZYT STARYCH ID
     # ==================================================
 
     old_message_ids = load_message_ids()
@@ -450,25 +489,21 @@ def main():
     new_message_ids = []
 
     print(
-        f"Stare wiadomości rankingu: "
+        f"Stare części rankingu: "
         f"{len(old_message_ids)}"
     )
 
     print(
-        f"Nowych części rankingu: "
+        f"Nowe części rankingu: "
         f"{len(messages)}"
     )
 
 
     # ==================================================
-    # AKTUALIZOWANIE ISTNIEJĄCYCH WIADOMOŚCI
+    # NADPISYWANIE ISTNIEJĄCYCH WIADOMOŚCI
     # ==================================================
 
     for number, message in enumerate(messages):
-
-        # ----------------------------------------------
-        # ISTNIEJE STARA WIADOMOŚĆ
-        # ----------------------------------------------
 
         if number < len(old_message_ids):
 
@@ -497,10 +532,6 @@ def main():
                     f"{message_id}: {error}"
                 )
 
-                print(
-                    "Tworzę nową wiadomość..."
-                )
-
                 try:
 
                     new_id = send_discord_message(
@@ -512,7 +543,7 @@ def main():
                     )
 
                     print(
-                        f"Utworzono nową wiadomość: "
+                        f"Utworzono nową część: "
                         f"{new_id}"
                     )
 
@@ -524,9 +555,9 @@ def main():
                     )
 
 
-        # ----------------------------------------------
-        # BRAK STAREJ WIADOMOŚCI
-        # ----------------------------------------------
+        # ==================================================
+        # BRAK ID - TWORZY NOWĄ WIADOMOŚĆ
+        # ==================================================
 
         else:
 
@@ -554,13 +585,14 @@ def main():
 
 
     # ==================================================
-    # USUWANIE STARYCH, NIEPOTRZEBNYCH CZĘŚCI
+    # USUWANIE STARYCH CZĘŚCI
+    # JEŚLI TERAZ JEST ICH MNIEJ
     # ==================================================
 
     if len(old_message_ids) > len(messages):
 
         print(
-            "Usuwam stare, niepotrzebne części rankingu..."
+            "Usuwam stare części rankingu..."
         )
 
         for old_id in old_message_ids[len(messages):]:
@@ -572,7 +604,7 @@ def main():
                 )
 
                 print(
-                    f"Usunięto starą wiadomość: "
+                    f"Usunięto starą część: "
                     f"{old_id}"
                 )
 
