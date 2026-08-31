@@ -76,7 +76,7 @@ MESSAGE_IDS_FILE = "ranking_message_ids.txt"
 
 
 # ==================================================
-# POBIERANIE DANYCH
+# POBIERANIE DANYCH Z DG EDGE
 # ==================================================
 
 def get_player(psn, username):
@@ -121,17 +121,29 @@ def get_player(psn, username):
         re.IGNORECASE
     )
 
+    # ==================================================
+    # PK
+    # ==================================================
+
     pk = (
         pk_pfk_match.group(1)
         if pk_pfk_match
         else "?"
     )
 
+    # ==================================================
+    # PFK
+    # ==================================================
+
     pfk = (
         pk_pfk_match.group(2)
         if pk_pfk_match
         else "?"
     )
+
+    # ==================================================
+    # SCORE
+    # ==================================================
 
     score = (
         float(score_match.group(1))
@@ -266,7 +278,7 @@ def main():
 
 
     # ==================================================
-    # POBIERANIE DANYCH
+    # POBIERANIE WSZYSTKICH KIEROWCÓW
     # ==================================================
 
     for psn, username in PLAYERS.items():
@@ -293,8 +305,8 @@ def main():
             )
 
             # ==================================================
-            # KIEROWCA ZOSTAJE W RANKINGU
-            # NAWET JEŚLI DG EDGE NIE ODPOWIE
+            # JEŚLI DG EDGE NIE POBIERZE DANYCH,
+            # KIEROWCA NADAL ZOSTAJE W RANKINGU
             # ==================================================
 
             ranking.append({
@@ -307,6 +319,12 @@ def main():
 
     # ==================================================
     # SORTOWANIE OD NAJLEPSZEGO
+    #
+    # 1
+    # 2
+    # 3
+    # ...
+    # 40
     # ==================================================
 
     ranking.sort(
@@ -328,15 +346,15 @@ def main():
 
 
     # ==================================================
-    # ODWRÓCENIE KOLEJNOŚCI WYŚWIETLANIA
+    # ODWRÓCENIE KOLEJNOŚCI
     #
-    # GÓRA:
+    # NA GÓRZE:
     # 40
     # 39
     # 38
     # ...
     #
-    # DÓŁ:
+    # NA DOLE:
     # 3
     # 2
     # 1
@@ -346,15 +364,14 @@ def main():
 
 
     # ==================================================
-    # PIERWSZA CZĘŚĆ
+    # PIERWSZA CZĘŚĆ RANKINGU
     # ==================================================
 
     current_message = (
         "\u200b\n"
         "📈 **RANKING GŁÓWNY**\n\n"
 
-        "🏁 Klasyfikacja według "
-        "**EDGE SCORE**\n\n"
+        "🏁 Klasyfikacja według **EDGE SCORE**\n\n"
 
         "📊 **Punkty są liczone na podstawie:**\n"
 
@@ -379,7 +396,7 @@ def main():
 
 
     # ==================================================
-    # TWORZENIE RANKINGU
+    # TWORZENIE CZĘŚCI RANKINGU
     # ==================================================
 
     for player in ranking:
@@ -388,7 +405,7 @@ def main():
 
 
         # ==================================================
-        # MEDAL / EMOTIKONA
+        # EMOTIKONA MIEJSCA
         # ==================================================
 
         if position == 1:
@@ -409,7 +426,7 @@ def main():
 
 
         # ==================================================
-        # TEKST KIEROWCY
+        # ZAWODNIK
         # ==================================================
 
         player_text = (
@@ -452,7 +469,7 @@ def main():
 
 
     # ==================================================
-    # OSTATNIA CZĘŚĆ
+    # DODANIE OSTATNIEJ CZĘŚCI
     # ==================================================
 
     if current_message:
@@ -465,18 +482,25 @@ def main():
     # ==================================================
     # STOPKA
     #
-    # JEST POD 1. MIEJSCEM
+    # ZNAJDUJE SIĘ POD 1. MIEJSCEM
     # ==================================================
 
-    messages[-1] += (
+    update_time = datetime.now(
+        ZoneInfo("Europe/Warsaw")
+    ).strftime(
+        "%d.%m.%Y %H:%M"
+    )
 
+
+    footer = (
         "━━━━━━━━━━━━━━━━━━━━\n\n"
 
         f"🕒 **Ostatnia aktualizacja:** "
-        f"{datetime.now("
-        f"ZoneInfo('Europe/Warsaw')"
-        f").strftime('%d.%m.%Y %H:%M')}"
+        f"{update_time}"
     )
+
+
+    messages[-1] += footer
 
 
     # ==================================================
@@ -500,7 +524,7 @@ def main():
 
 
     # ==================================================
-    # NADPISYWANIE ISTNIEJĄCYCH CZĘŚCI
+    # NADPISYWANIE / DODAWANIE
     #
     # NIC NIE USUWAMY
     # ==================================================
@@ -509,8 +533,9 @@ def main():
         messages
     ):
 
+
         # ==================================================
-        # MAMY ID STAREJ WIADOMOŚCI
+        # ISTNIEJE ID - NADPISUJEMY
         # ==================================================
 
         if number < len(old_message_ids):
@@ -533,10 +558,11 @@ def main():
                     f"{number + 1}/{len(messages)}"
                 )
 
+
             except requests.exceptions.HTTPError as error:
 
                 print(
-                    f"BŁĄD nadpisywania części "
+                    f"BŁĄD aktualizacji części "
                     f"{number + 1}: {error}"
                 )
 
@@ -544,6 +570,7 @@ def main():
                     "Tworzę nową wiadomość "
                     "dla tej części..."
                 )
+
 
                 try:
 
@@ -569,7 +596,7 @@ def main():
 
 
         # ==================================================
-        # NIE MA ID - DODAJEMY NOWĄ CZĘŚĆ
+        # BRAK ID - DODAJEMY NOWĄ CZĘŚĆ
         # ==================================================
 
         else:
@@ -598,26 +625,17 @@ def main():
 
 
     # ==================================================
-    # UWAGA:
+    # ZACHOWANIE STARYCH ID
     #
-    # STARE DODATKOWE CZĘŚCI NIE SĄ USUWANE.
+    # NICZEGO NIE USUWUJEMY
     #
-    # Jeśli wcześniej było np. 4 części,
-    # a teraz są 3:
+    # JEŚLI BYŁO 4 CZĘŚCI, A TERAZ SĄ 3:
     #
     # CZĘŚĆ 1 -> NADPISANA
     # CZĘŚĆ 2 -> NADPISANA
     # CZĘŚĆ 3 -> NADPISANA
     # CZĘŚĆ 4 -> ZOSTAJE BEZ ZMIAN
     # ==================================================
-
-
-    # ==================================================
-    # ZAPIS ID
-    # ==================================================
-
-    # Zachowujemy również stare ID,
-    # żeby nie zgubić informacji o starych częściach.
 
     ids_to_save = old_message_ids.copy()
 
@@ -637,13 +655,17 @@ def main():
             )
 
 
+    # ==================================================
+    # ZAPIS ID
+    # ==================================================
+
     save_message_ids(
         ids_to_save
     )
 
 
     print(
-        f"Zapisano ID wiadomości w "
+        f"Zapisano ID w pliku: "
         f"{MESSAGE_IDS_FILE}"
     )
 
