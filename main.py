@@ -10,7 +10,7 @@ from zoneinfo import ZoneInfo
 # DISCORD WEBHOOK
 # ==================================================
 
-WEBHOOK_URL = os.getenv"https://discord.com/api/webhooks/1540826456802992178/kCh8knUjF5cb1ZXGegpXEV4vNMHtjIFmEzTBx5iTrG_YgsEQ2ekMAhhcWPk40P895muo""
+WEBHOOK_URL = "https://discord.com/api/webhooks/1540826456802992178/kCh8knUjF5cb1ZXGegpXEV4vNMHtjIFmEzTBx5iTrG_YgsEQ2ekMAhhcWPk40P895muo"
 
 
 # ==================================================
@@ -102,6 +102,7 @@ def get_player(psn, username):
         strip=True
     )
 
+
     # --------------------------------------------------
     # PK / PFK
     # --------------------------------------------------
@@ -111,6 +112,7 @@ def get_player(psn, username):
         text,
         re.IGNORECASE
     )
+
 
     # --------------------------------------------------
     # EDGE SCORE
@@ -122,10 +124,9 @@ def get_player(psn, username):
         re.IGNORECASE
     )
 
+
     # --------------------------------------------------
     # POZYCJA W POLSCE
-    # DG EDGE pokazuje ją jako:
-    # Country position
     # --------------------------------------------------
 
     country_position_match = re.search(
@@ -134,24 +135,32 @@ def get_player(psn, username):
         re.IGNORECASE
     )
 
+
     pk = "?"
     pfk = "?"
     score = None
     country_position = None
 
+
     if pk_pfk_match:
+
         pk = pk_pfk_match.group(1)
         pfk = pk_pfk_match.group(2)
 
+
     if score_match:
+
         score = float(
             score_match.group(1)
         )
 
+
     if country_position_match:
+
         country_position = int(
             country_position_match.group(1).replace(",", "")
         )
+
 
     return {
         "username": username,
@@ -171,7 +180,9 @@ def load_message_ids():
     if not os.path.exists(
         MESSAGE_IDS_FILE
     ):
+
         return []
+
 
     with open(
         MESSAGE_IDS_FILE,
@@ -286,10 +297,13 @@ def main():
     # SPRAWDZENIE WEBHOOKA
     # ==================================================
 
-    if not WEBHOOK_URL:
+    if (
+        not WEBHOOK_URL
+        or WEBHOOK_URL == "TU_WKLEJ_NOWY_WEBHOOK"
+    ):
 
         print(
-            "BŁĄD: Brak zmiennej DISCORD_WEBHOOK_URL!"
+            "BŁĄD: Wklej webhook Discorda!"
         )
 
         return
@@ -314,20 +328,24 @@ def main():
                 f"Pobieram: {username}"
             )
 
+
             player = get_player(
                 psn,
                 username
             )
 
+
             ranking.append(
                 player
             )
+
 
         except Exception as error:
 
             print(
                 f"BŁĄD {username}: {error}"
             )
+
 
             # Kierowca zostaje na liście,
             # ale bez fałszywego wyniku.
@@ -537,11 +555,6 @@ def main():
 
     # ==================================================
     # OSTATNIA CZĘŚĆ
-    #
-    # Dodajemy stopkę do ostatniej części.
-    #
-    # Jeżeli stopka nie zmieści się razem z ostatnim
-    # kierowcą, tworzymy osobną ostatnią wiadomość.
     # ==================================================
 
     if (
@@ -576,6 +589,7 @@ def main():
         f"Liczba kierowców: {len(ranking)}"
     )
 
+
     print(
         f"Liczba wiadomości: {len(messages)}"
     )
@@ -597,6 +611,7 @@ def main():
     # ==================================================
 
     old_message_ids = load_message_ids()
+
 
     print(
         f"Starych ID: "
@@ -620,6 +635,7 @@ def main():
         messages
     ):
 
+
         # --------------------------------------------------
         # MAMY STARE ID
         # --------------------------------------------------
@@ -628,6 +644,7 @@ def main():
 
             message_id = old_message_ids[index]
 
+
             try:
 
                 update_discord_message(
@@ -635,9 +652,11 @@ def main():
                     message
                 )
 
+
                 new_message_ids.append(
                     message_id
                 )
+
 
                 print(
                     f"OK - nadpisano część "
@@ -652,6 +671,7 @@ def main():
                     f"{index + 1}: {error}"
                 )
 
+
                 # Jeżeli stare ID nie działa,
                 # tworzymy nową wiadomość.
 
@@ -661,14 +681,17 @@ def main():
                         message
                     )
 
+
                     new_message_ids.append(
                         new_id
                     )
+
 
                     print(
                         f"Utworzono nową część "
                         f"{index + 1}"
                     )
+
 
                 except Exception as send_error:
 
@@ -690,14 +713,17 @@ def main():
                     message
                 )
 
+
                 new_message_ids.append(
                     new_id
                 )
+
 
                 print(
                     f"OK - wysłano nową część "
                     f"{index + 1}"
                 )
+
 
             except Exception as error:
 
@@ -728,16 +754,19 @@ def main():
 
             old_id = old_message_ids[index]
 
+
             try:
 
                 clear_discord_message(
                     old_id
                 )
 
+
                 print(
                     f"Wyczyszczono starą część "
                     f"{index + 1}"
                 )
+
 
             except Exception as error:
 
@@ -767,15 +796,18 @@ def main():
         "----------------------------------"
     )
 
+
     print(
         f"Wysłano/nadpisano "
         f"{len(new_message_ids)} części."
     )
 
+
     print(
         f"W rankingu jest "
         f"{len(ranking)} kierowców."
     )
+
 
     print(
         "========== KONIEC =========="
