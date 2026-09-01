@@ -10,7 +10,7 @@ from zoneinfo import ZoneInfo
 # DISCORD WEBHOOK
 # ==================================================
 
-WEBHOOK_URL = "https://discord.com/api/webhooks/1540826456802992178/kCh8knUjF5cb1ZXGegpXEV4vNMHtjIFmEzTBx5iTrG_YgsEQ2ekMAhhcWPk40P895muo"
+WEBHOOK_URL = os.getenv"https://discord.com/api/webhooks/1540826456802992178/kCh8knUjF5cb1ZXGegpXEV4vNMHtjIFmEzTBx5iTrG_YgsEQ2ekMAhhcWPk40P895muo""
 
 
 # ==================================================
@@ -18,7 +18,6 @@ WEBHOOK_URL = "https://discord.com/api/webhooks/1540826456802992178/kCh8knUjF5cb
 # ==================================================
 
 PLAYERS = {
-
     "SolidSnakePoland": "RickyK",
     "ALF7": "SRS ALF7_VR2",
     "lucekbks": "SRS-Popek",
@@ -123,9 +122,22 @@ def get_player(psn, username):
         re.IGNORECASE
     )
 
+    # --------------------------------------------------
+    # POZYCJA W POLSCE
+    # DG EDGE pokazuje ją jako:
+    # Country position
+    # --------------------------------------------------
+
+    country_position_match = re.search(
+        r"([\d,]+)\s+Country position",
+        text,
+        re.IGNORECASE
+    )
+
     pk = "?"
     pfk = "?"
     score = None
+    country_position = None
 
     if pk_pfk_match:
         pk = pk_pfk_match.group(1)
@@ -136,11 +148,17 @@ def get_player(psn, username):
             score_match.group(1)
         )
 
+    if country_position_match:
+        country_position = int(
+            country_position_match.group(1).replace(",", "")
+        )
+
     return {
         "username": username,
         "pk": pk,
         "pfk": pfk,
-        "score": score
+        "score": score,
+        "country_position": country_position
     }
 
 
@@ -153,7 +171,6 @@ def load_message_ids():
     if not os.path.exists(
         MESSAGE_IDS_FILE
     ):
-
         return []
 
     with open(
@@ -269,13 +286,10 @@ def main():
     # SPRAWDZENIE WEBHOOKA
     # ==================================================
 
-    if (
-        not WEBHOOK_URL
-        or WEBHOOK_URL == "TU_WKLEJ_NOWY_WEBHOOK"
-    ):
+    if not WEBHOOK_URL:
 
         print(
-            "BŁĄD: Wklej webhook Discorda!"
+            "BŁĄD: Brak zmiennej DISCORD_WEBHOOK_URL!"
         )
 
         return
@@ -322,7 +336,8 @@ def main():
                 "username": username,
                 "pk": "?",
                 "pfk": "?",
-                "score": None
+                "score": None,
+                "country_position": None
             })
 
 
@@ -417,6 +432,21 @@ def main():
 
 
         # --------------------------------------------------
+        # POZYCJA PL
+        # --------------------------------------------------
+
+        if player["country_position"] is None:
+
+            country_position_text = "?"
+
+        else:
+
+            country_position_text = str(
+                player["country_position"]
+            )
+
+
+        # --------------------------------------------------
         # ZAWODNIK
         # --------------------------------------------------
 
@@ -427,7 +457,9 @@ def main():
             f"🏅 PK **{player['pk']}** • "
             f"PFK **{player['pfk']}**\n"
 
-            f"📊 Score: **{score_text}**\n\n"
+            f"📊 Score: **{score_text}**\n"
+
+            f"🇵🇱 Pozycja PL: **{country_position_text}**\n\n"
 
             "━━━━━━━━━━━━━━━━━━━━\n\n"
         )
@@ -451,11 +483,14 @@ def main():
 
     footer = (
         "🚗 Każdy kierowca otrzymuje miejsce w rankingu "
-        "zgodnie ze swoim aktualnym EDGE SCORE..\n\n"
+        "zgodnie ze swoim aktualnym EDGE SCORE.\n\n"
 
         "📊 **Ranking SRS tworzony jest na podstawie danych z DG EDGE**\n\n"
 
-        "🔄Dane są automatycznie odświeżane, dzięki czemu ranking "
+        "🇵🇱 Pozycja PL jest pobierana automatycznie "
+        "z rankingu krajowego DG EDGE.\n\n"
+
+        "🔄 Dane są automatycznie odświeżane, dzięki czemu ranking "
         "zawsze uwzględnia najnowsze wyniki z **DG EDGE**.\n\n"
 
         "━━━━━━━━━━━━━━━━━━━━\n"
@@ -502,12 +537,12 @@ def main():
 
     # ==================================================
     # OSTATNIA CZĘŚĆ
-    # ==================================================
-
+    #
     # Dodajemy stopkę do ostatniej części.
     #
     # Jeżeli stopka nie zmieści się razem z ostatnim
     # kierowcą, tworzymy osobną ostatnią wiadomość.
+    # ==================================================
 
     if (
         len(current_message)
