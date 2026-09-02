@@ -109,48 +109,62 @@ def normalize_text(value):
 # Nie przeszukujemy tysięcy stron /players/page-X.
 # Czytamy bezpośrednio profil danego kierowcy.
 # ==================================================
-def extract_pk_ppk(soup, full_text):
-    patterns = [
-        re.compile(
-            rf"(?<![A-Za-z0-9+])({CLASS_PATTERN})\s+({CLASS_PATTERN})"
-            rf"(?=\s+(?:[^\n,]{{1,80}}\s*,\s*)?Poland\b)",
-            re.IGNORECASE,
-        ),
-        re.compile(
-            rf"(?<![A-Za-z0-9+])({CLASS_PATTERN})\s+({CLASS_PATTERN})"
-            rf"\s+[^\n]{{1,100}}?,\s*Poland\b",
-            re.IGNORECASE,
-        ),
-    ]
+def extract_pk_ppk(soup, full_text, psn=None):
+    """
+    DG EDGE pokazuje klasy bezpośrednio przy nazwie/PSN, np.:
 
-    # Najpierw małe elementy HTML. To zapobiega złapaniu przypadkowego
-    # "S A" z dalszej części całej strony.
-    candidates = []
-    for tag in soup.find_all(["h1", "h2", "div", "span", "p", "li", "section", "header"]):
-        t = normalize_text(tag.get_text(" ", strip=True))
-        if "Poland" in t and 1 <= len(t) <= 180:
-            candidates.append(t)
+        Official55_ A S Japan
+        some_player C S Poland
+        player B A France
 
-    # Krótsze elementy mają pierwszeństwo.
-    candidates.sort(key=len)
+    Nie opieramy się na kraju ani mieście.
+    Najpierw szukamy klas w krótkim fragmencie tekstu znajdującym się
+    bezpośrednio po PSN danego kierowcy. Dzięki temu nie łapiemy przypadkowego
+    "S A" z dalszej części strony.
+    """
 
-    for candidate in candidates:
-        for pattern in patterns:
-            match = pattern.search(candidate)
+    class_re = re.compile(
+        rf"(?<![A-Za-z0-9+])({CLASS_PATTERN})\s+({CLASS_PATTERN})(?![A-Za-z0-9+])",
+        re.IGNORECASE,
+    )
+
+    text = normalize_text(full_text)
+
+    # --------------------------------------------------
+    # 1. NAJPEWNIEJSZY SPOSÓB: FRAGMENT PO PSN
+    # --------------------------------------------------
+    if psn:
+        # Szukamy wszystkich wystąpień, bo nazwa wyświetlana może być
+        # identyczna z PSN. Najbardziej interesuje nas ostatnie wystąpienie.
+        positions = [m.start() for m in re.finditer(re.escape(psn), text, re.IGNORECASE)]
+
+        for pos in reversed(positions):
+            fragment = text[pos + len(psn):pos + len(psn) + 120]
+            match = class_re.search(fragment)
             if match:
                 pk = match.group(1).upper()
                 ppk = match.group(2).upper()
                 if pk in VALID_CLASSES and ppk in VALID_CLASSES:
                     return pk, ppk
 
-    # Fallback: profil może mieć cały blok jako jeden element.
-    for pattern in patterns:
-        match = pattern.search(full_text)
-        if match:
-            pk = match.group(1).upper()
-            ppk = match.group(2).upper()
-            if pk in VALID_CLASSES and ppk in VALID_CLASSES:
-                return pk, ppk
+    # --------------------------------------------------
+    # 2. SZUKANIE W MAŁYCH ELEMENTACH HTML
+    #    BEZ UZALEŻNIANIA OD "Poland"
+    # --------------------------------------------------
+    candidates = []
+    for tag in soup.find_all(["h1", "h2", "div", "span", "p", "li", "section", "header"]):
+        t = normalize_text(tag.get_text(" ", strip=True))
+        if 1 <= len(t) <= 180:
+            match = class_re.search(t)
+            if match:
+                candidates.append((len(t), match.group(1).upper(), match.group(2).upper(), t))
+
+    # Najkrótsze elementy mają pierwszeństwo.
+    candidates.sort(key=lambda item: item[0])
+
+    for _, pk, ppk, _ in candidates:
+        if pk in VALID_CLASSES and ppk in VALID_CLASSES:
+            return pk, ppk
 
     return "?", "?"
 
@@ -230,7 +244,7 @@ def get_player(psn, username):
     if not text:
         raise RuntimeError("Profil zwrócił pusty tekst")
 
-    pk, ppk = extract_pk_ppk(soup, text)
+    pk, ppk = extract_pk_ppk(soup, text, psn)
     score = extract_score(text)
     country_position = extract_country_position(text)
 
