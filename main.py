@@ -104,16 +104,18 @@ def get_player(psn, username):
     # ==================================================
     # PK / PPK
     #
-    # Przykład z DG EDGE:
+    # DG EDGE może pokazywać np.:
     #
-    # C S Poland
+    # A S Poland
+    # A S Gdańsk, Poland
+    # B A Lublin, Poland
     #
-    # C = PK
-    # S = PPK
+    # Pierwsza wartość = PK
+    # Druga wartość = PPK
     # ==================================================
 
     pk_ppk_match = re.search(
-        r"\b([A-E]\+?|S)\s+([A-E]\+?|S)\s+Poland\b",
+        r"\b([A-E]\+?|S)\s+([A-E]\+?|S)\s+.*?\bPoland\b",
         text,
         re.IGNORECASE
     )
@@ -205,9 +207,7 @@ def load_message_ids():
     if not os.path.exists(
         MESSAGE_IDS_FILE
     ):
-
         return []
-
 
     with open(
         MESSAGE_IDS_FILE,
@@ -321,7 +321,7 @@ def main():
 
     if (
         not WEBHOOK_URL
-        or WEBHOOK_URL == "TU_WKLEJ_NOWY_WEBHOOK"
+        or WEBHOOK_URL == "TU_WKLEJ_SWÓJ_WEBHOOK_DISCORDA"
     ):
 
         print(
@@ -357,7 +357,9 @@ def main():
             )
 
 
-            # Pokazujemy w konsoli pobrane dane
+            # ==================================================
+            # POKAZUJEMY W KONSOLI POBRANE DANE
+            # ==================================================
 
             print(
                 f"  PK = {player['pk']} | "
@@ -422,7 +424,7 @@ def main():
     # ODWRÓCENIE RANKINGU
     #
     # Żeby najlepszy był na dole,
-    # tak jak w Twojej poprzedniej wersji.
+    # tak jak w poprzedniej wersji.
     # ==================================================
 
     ranking.reverse()
@@ -610,7 +612,6 @@ def main():
     print(
         f"Liczba kierowców: {len(ranking)}"
     )
-
 
     print(
         f"Liczba wiadomości: {len(messages)}"
