@@ -71,8 +71,6 @@ HEADERS = {
 
 MESSAGE_IDS_FILE = "ranking_message_ids.txt"
 
-# Discord ma limit 2000 znaków.
-# Zostawiamy zapas.
 MAX_MESSAGE_LENGTH = 1900
 
 
@@ -103,20 +101,27 @@ def get_player(psn, username):
     )
 
 
-    # --------------------------------------------------
-    # PK / PFK
-    # --------------------------------------------------
+    # ==================================================
+    # PK / PPK
+    #
+    # Przykład z DG EDGE:
+    #
+    # C S Poland
+    #
+    # C = PK
+    # S = PPK
+    # ==================================================
 
-    pk_pfk_match = re.search(
-        rf"{re.escape(psn)}.*?\b([A-E]\+?|S)\s+([A-E]\+?|S)\b",
+    pk_ppk_match = re.search(
+        r"\b([A-E]\+?|S)\s+([A-E]\+?|S)\s+Poland\b",
         text,
         re.IGNORECASE
     )
 
 
-    # --------------------------------------------------
+    # ==================================================
     # EDGE SCORE
-    # --------------------------------------------------
+    # ==================================================
 
     score_match = re.search(
         r"(\d{1,3}\.\d{1,2})\s+Edge Score",
@@ -125,9 +130,9 @@ def get_player(psn, username):
     )
 
 
-    # --------------------------------------------------
+    # ==================================================
     # POZYCJA W POLSCE
-    # --------------------------------------------------
+    # ==================================================
 
     country_position_match = re.search(
         r"([\d,]+)\s+Country position",
@@ -136,17 +141,29 @@ def get_player(psn, username):
     )
 
 
+    # ==================================================
+    # WARTOŚCI DOMYŚLNE
+    # ==================================================
+
     pk = "?"
-    pfk = "?"
+    ppk = "?"
     score = None
     country_position = None
 
 
-    if pk_pfk_match:
+    # ==================================================
+    # ODCZYT PK / PPK
+    # ==================================================
 
-        pk = pk_pfk_match.group(1)
-        pfk = pk_pfk_match.group(2)
+    if pk_ppk_match:
 
+        pk = pk_ppk_match.group(1).upper()
+        ppk = pk_ppk_match.group(2).upper()
+
+
+    # ==================================================
+    # ODCZYT SCORE
+    # ==================================================
 
     if score_match:
 
@@ -155,6 +172,10 @@ def get_player(psn, username):
         )
 
 
+    # ==================================================
+    # ODCZYT POZYCJI PL
+    # ==================================================
+
     if country_position_match:
 
         country_position = int(
@@ -162,10 +183,14 @@ def get_player(psn, username):
         )
 
 
+    # ==================================================
+    # ZWRACAMY DANE
+    # ==================================================
+
     return {
         "username": username,
         "pk": pk,
-        "pfk": pfk,
+        "ppk": ppk,
         "score": score,
         "country_position": country_position
     }
@@ -217,7 +242,7 @@ def save_message_ids(message_ids):
 
 
 # ==================================================
-# NOWA WIADOMOŚĆ
+# WYSŁANIE NOWEJ WIADOMOŚCI
 # ==================================================
 
 def send_discord_message(message):
@@ -264,9 +289,6 @@ def update_discord_message(
 
 # ==================================================
 # WYCZYSZCZENIE STAREJ WIADOMOŚCI
-#
-# NIE USUWA WIADOMOŚCI.
-# TYLKO ZMIENIA JEJ TREŚĆ NA PUSTĄ.
 # ==================================================
 
 def clear_discord_message(message_id):
@@ -317,7 +339,7 @@ def main():
 
 
     # ==================================================
-    # POBIERANIE KAŻDEGO KIEROWCY
+    # POBIERANIE KIEROWCÓW
     # ==================================================
 
     for psn, username in PLAYERS.items():
@@ -335,6 +357,16 @@ def main():
             )
 
 
+            # Pokazujemy w konsoli pobrane dane
+
+            print(
+                f"  PK = {player['pk']} | "
+                f"PPK = {player['ppk']} | "
+                f"Score = {player['score']} | "
+                f"PL = {player['country_position']}"
+            )
+
+
             ranking.append(
                 player
             )
@@ -348,19 +380,19 @@ def main():
 
 
             # Kierowca zostaje na liście,
-            # ale bez fałszywego wyniku.
+            # ale bez fałszywych danych.
 
             ranking.append({
                 "username": username,
                 "pk": "?",
-                "pfk": "?",
+                "ppk": "?",
                 "score": None,
                 "country_position": None
             })
 
 
     # ==================================================
-    # SORTOWANIE
+    # SORTOWANIE PO EDGE SCORE
     #
     # NAJLEPSZY = 1
     # ==================================================
@@ -387,24 +419,17 @@ def main():
 
 
     # ==================================================
-    # ODWRÓCENIE
+    # ODWRÓCENIE RANKINGU
     #
-    # GÓRA:
-    # 41
-    # 40
-    # 39
-    #
-    # DÓŁ:
-    # 3
-    # 2
-    # 1
+    # Żeby najlepszy był na dole,
+    # tak jak w Twojej poprzedniej wersji.
     # ==================================================
 
     ranking.reverse()
 
 
     # ==================================================
-    # TWORZENIE TEKSTÓW ZAWODNIKÓW
+    # TWORZENIE BLOKÓW ZAWODNIKÓW
     # ==================================================
 
     player_blocks = []
@@ -415,9 +440,9 @@ def main():
         position = player["position"]
 
 
-        # --------------------------------------------------
+        # ==================================================
         # MEDAL
-        # --------------------------------------------------
+        # ==================================================
 
         if position == 1:
 
@@ -436,9 +461,9 @@ def main():
             medal = "🏁"
 
 
-        # --------------------------------------------------
+        # ==================================================
         # SCORE
-        # --------------------------------------------------
+        # ==================================================
 
         if player["score"] is None:
 
@@ -449,9 +474,9 @@ def main():
             score_text = f"{player['score']:.2f}"
 
 
-        # --------------------------------------------------
+        # ==================================================
         # POZYCJA PL
-        # --------------------------------------------------
+        # ==================================================
 
         if player["country_position"] is None:
 
@@ -464,20 +489,21 @@ def main():
             )
 
 
-        # --------------------------------------------------
-        # ZAWODNIK
-        # --------------------------------------------------
+        # ==================================================
+        # BLOK ZAWODNIKA
+        # ==================================================
 
         block = (
             f"{medal} **{position}. "
             f"{player['username']}**\n"
 
             f"🏅 PK **{player['pk']}** • "
-            f"PFK **{player['pfk']}**\n"
+            f"PPK **{player['ppk']}**\n"
 
             f"📊 Score: **{score_text}**\n"
 
-            f"🇵🇱 Pozycja PL: **{country_position_text}**\n\n"
+            f"🇵🇱 Pozycja PL: "
+            f"**{country_position_text}**\n\n"
 
             "━━━━━━━━━━━━━━━━━━━━\n\n"
         )
@@ -503,13 +529,15 @@ def main():
         "🚗 Każdy kierowca otrzymuje miejsce w rankingu "
         "zgodnie ze swoim aktualnym EDGE SCORE.\n\n"
 
-        "📊 **Ranking SRS tworzony jest na podstawie danych z DG EDGE**\n\n"
+        "📊 **Ranking SRS tworzony jest "
+        "na podstawie danych z DG EDGE**\n\n"
 
         "🇵🇱 Pozycja PL jest pobierana automatycznie "
         "z rankingu krajowego DG EDGE.\n\n"
 
-        "🔄 Dane są automatycznie odświeżane, dzięki czemu ranking "
-        "zawsze uwzględnia najnowsze wyniki z **DG EDGE**.\n\n"
+        "🔄 Dane są automatycznie odświeżane, "
+        "dzięki czemu ranking zawsze uwzględnia "
+        "najnowsze wyniki z **DG EDGE**.\n\n"
 
         "━━━━━━━━━━━━━━━━━━━━\n"
 
@@ -521,10 +549,7 @@ def main():
 
 
     # ==================================================
-    # DZIELENIE NA WIADOMOŚCI
-    #
-    # KAŻDY KIEROWCA JEST DODANY.
-    # NIE UCINAMY RANKINGU.
+    # DZIELENIE NA WIADOMOŚCI DISCORD
     # ==================================================
 
     messages = []
@@ -533,9 +558,6 @@ def main():
 
 
     for block in player_blocks:
-
-        # Jeżeli kolejny kierowca przekroczyłby limit,
-        # kończymy aktualną wiadomość.
 
         if (
             len(current_message)
@@ -554,7 +576,7 @@ def main():
 
 
     # ==================================================
-    # OSTATNIA CZĘŚĆ
+    # OSTATNIA WIADOMOŚĆ + STOPKA
     # ==================================================
 
     if (
@@ -582,7 +604,7 @@ def main():
 
 
     # ==================================================
-    # SPRAWDZENIE
+    # INFORMACJE
     # ==================================================
 
     print(
@@ -607,7 +629,7 @@ def main():
 
 
     # ==================================================
-    # STARE ID
+    # STARE ID WIADOMOŚCI
     # ==================================================
 
     old_message_ids = load_message_ids()
@@ -620,15 +642,14 @@ def main():
 
 
     # ==================================================
-    # AKTUALNE ID
+    # NOWE ID
     # ==================================================
 
     new_message_ids = []
 
 
     # ==================================================
-    # NADPISYWANIE ISTNIEJĄCYCH
-    # LUB TWORZENIE NOWYCH
+    # AKTUALIZOWANIE / TWORZENIE
     # ==================================================
 
     for index, message in enumerate(
@@ -636,9 +657,9 @@ def main():
     ):
 
 
-        # --------------------------------------------------
-        # MAMY STARE ID
-        # --------------------------------------------------
+        # ==================================================
+        # ISTNIEJE STARE ID
+        # ==================================================
 
         if index < len(old_message_ids):
 
@@ -672,7 +693,7 @@ def main():
                 )
 
 
-                # Jeżeli stare ID nie działa,
+                # Jeśli stare ID nie działa,
                 # tworzymy nową wiadomość.
 
                 try:
@@ -701,9 +722,9 @@ def main():
                     )
 
 
-        # --------------------------------------------------
-        # BRAK ID - NOWA WIADOMOŚĆ
-        # --------------------------------------------------
+        # ==================================================
+        # BRAK STAREGO ID
+        # ==================================================
 
         else:
 
@@ -735,14 +756,6 @@ def main():
 
     # ==================================================
     # STARE DODATKOWE WIADOMOŚCI
-    #
-    # JEŻELI WCZEŚNIEJ BYŁO NP. 5 CZĘŚCI,
-    # A TERAZ SĄ 4:
-    #
-    # PIĄTA NIE ZOSTAJE ZE STARYM RANKINGIEM.
-    #
-    # ZOSTAJE W DISCORDZIE, ALE JEJ TREŚĆ
-    # ZOSTAJE WYCZYSZCZONA.
     # ==================================================
 
     if len(old_message_ids) > len(messages):
@@ -779,8 +792,6 @@ def main():
 
     # ==================================================
     # ZAPIS ID
-    #
-    # ZAPISUJEMY TYLKO AKTUALNE CZĘŚCI.
     # ==================================================
 
     save_message_ids(
