@@ -10,12 +10,6 @@ from zoneinfo import ZoneInfo
 # ==================================================
 # DISCORD WEBHOOK
 # ==================================================
-# Możesz użyć GitHub Secret:
-# DISCORD_WEBHOOK_URL
-#
-# Jeżeli nie używasz Secret, wpisz webhook poniżej.
-# ==================================================
-
 WEBHOOK_URL = os.getenv(
     "DISCORD_WEBHOOK_URL",
     "https://discord.com/api/webhooks/1540826456802992178/kCh8knUjF5cb1ZXGegpXEV4vNMHtjIFmEzTBx5iTrG_YgsEQ2ekMAhhcWPk40P895muo"
@@ -25,7 +19,6 @@ WEBHOOK_URL = os.getenv(
 # ==================================================
 # PSN ID : NAZWA NA DISCORDZIE
 # ==================================================
-
 PLAYERS = {
     "SolidSnakePoland": "RickyK",
     "ALF7": "SRS ALF7_VR2",
@@ -73,146 +66,101 @@ PLAYERS = {
 # ==================================================
 # USTAWIENIA
 # ==================================================
-
 HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/140.0 Safari/537.36"
+        "Chrome/142.0 Safari/537.36"
     ),
-    "Accept-Language": "pl-PL,pl;q=0.9,en;q=0.8"
+    "Accept-Language": "pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7",
 }
 
 MESSAGE_IDS_FILE = "ranking_message_ids.txt"
-
 MAX_MESSAGE_LENGTH = 1900
-
 REQUEST_ATTEMPTS = 3
-
 RETRY_DELAY = 2
 
 
 # ==================================================
-# CZYSZCZENIE TEKSTU
+# NORMALIZACJA TEKSTU
 # ==================================================
-
-def normalize_text(value):
-
-    if not value:
-        return ""
-
-    value = value.replace("\xa0", " ")
-
-    value = re.sub(
-        r"\s+",
-        " ",
-        value
-    )
-
-    return value.strip()
+def normalize_text(text):
+    text = text.replace("\xa0", " ")
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
 
 
 # ==================================================
-# ODCZYT PK / PPK
+# PK / PPK
 # ==================================================
-
 def extract_pk_ppk(text):
-
     """
-    DG EDGE może pokazywać np.:
+    Pobiera PK i PPK jako DWIE klasy obok siebie.
 
-    A S Poland
-    A S Gdańsk, Poland
-    B A Lublin, Poland
-    B+ A Kraków, Poland
+    NIE sprawdzamy:
+    - Poland
+    - PL
+    - miasta
+    - Gdańska
+    - Lublina
+    - nazwy użytkownika
 
-    Pierwsza wartość = PK
-    Druga wartość = PPK
+    Przykłady:
+
+        A S Gdańsk, Poland -> A / S
+        C S Lublin, Poland -> C / S
+        B A Poland         -> B / A
+        A+ S Poland        -> A+ / S
     """
+
+    text = normalize_text(text)
 
     patterns = [
+        r"(?<![A-Za-z0-9+])([A-E]\+?|S)(?![A-Za-z0-9+])\s+"
+        r"([A-E]\+?|S)(?![A-Za-z0-9+])",
 
-        # Najczęstszy przypadek:
-        # A S Gdańsk, Poland
-
-        r"\b([A-E]\+?|S)\s+([A-E]\+?|S)\s+[^\n]{0,100}?\bPoland\b",
-
-        # Jeżeli pomiędzy klasami i Poland
-        # znajduje się więcej tekstu
-
-        r"\b([A-E]\+?|S)\s+([A-E]\+?|S)\b[^\n]{0,150}?\bPoland\b",
-
-        # W przypadku nietypowego formatowania HTML
-
-        r"\b([A-E]\+?|S)[\s|/]+([A-E]\+?|S)[\s|/]+[^\n]{0,150}?\bPoland\b"
+        r"\b([A-E]\+?|S)\s+([A-E]\+?|S)\b",
     ]
 
-
     for pattern in patterns:
-
-        match = re.search(
-            pattern,
-            text,
-            re.IGNORECASE
+        matches = list(
+            re.finditer(
+                pattern,
+                text,
+                re.IGNORECASE
+            )
         )
 
-        if match:
+        if matches:
+            for match in matches:
+                pk = match.group(1).upper()
+                ppk = match.group(2).upper()
 
-            return (
-                match.group(1).upper(),
-                match.group(2).upper()
-            )
-
-
-    # ==================================================
-    # DODATKOWA METODA
-    # ==================================================
-
-    for match in re.finditer(
-        r".{0,180}\bPoland\b",
-        text,
-        re.IGNORECASE
-    ):
-
-        fragment = match.group(0)
-
-        classes = re.findall(
-            r"\b(?:[A-E]\+?|S)\b",
-            fragment,
-            re.IGNORECASE
-        )
-
-        if len(classes) >= 2:
-
-            return (
-                classes[-2].upper(),
-                classes[-1].upper()
-            )
-
+                if pk in {
+                    "A", "B", "C", "D", "E",
+                    "A+", "B+", "C+", "D+", "E+", "S"
+                }:
+                    if ppk in {
+                        "A", "B", "C", "D", "E",
+                        "A+", "B+", "C+", "D+", "E+", "S"
+                    }:
+                        return pk, ppk
 
     return "?", "?"
 
 
 # ==================================================
-# ODCZYT EDGE SCORE
+# EDGE SCORE
 # ==================================================
-
 def extract_score(text):
+    text = normalize_text(text)
 
     patterns = [
-
-        r"(\d{1,3}(?:\.\d{1,2})?)\s+Edge\s+Score\b",
-
-        r"Edge\s+Score\s*[:\-]?\s*"
-        r"(\d{1,3}(?:\.\d{1,2})?)",
-
-        r"\bScore\s*[:\-]?\s*"
-        r"(\d{1,3}(?:\.\d{1,2})?)"
+        r"(\d{1,3}(?:\.\d{1,2})?)\s+Edge Score\b",
+        r"Edge Score\s*:?\s*(\d{1,3}(?:\.\d{1,2})?)",
     ]
 
-
     for pattern in patterns:
-
         match = re.search(
             pattern,
             text,
@@ -220,40 +168,26 @@ def extract_score(text):
         )
 
         if match:
-
             try:
-
-                return float(
-                    match.group(1)
-                )
-
+                return float(match.group(1))
             except ValueError:
-
                 pass
-
 
     return None
 
 
 # ==================================================
-# ODCZYT POZYCJI W POLSCE
+# POZYCJA W POLSCE
 # ==================================================
-
 def extract_country_position(text):
+    text = normalize_text(text)
 
     patterns = [
-
-        r"([\d,\.]+)\s+Country\s+position\b",
-
-        r"Country\s+position\s*[:\-]?\s*"
-        r"([\d,\.]+)",
-
-        r"([\d,\.]+)\s+Poland\b"
+        r"([\d,]+)\s+Country position\b",
+        r"Country position\s*:?\s*([\d,]+)",
     ]
 
-
     for pattern in patterns:
-
         match = re.search(
             pattern,
             text,
@@ -261,21 +195,12 @@ def extract_country_position(text):
         )
 
         if match:
-
             try:
-
                 return int(
-                    re.sub(
-                        r"[,\.]",
-                        "",
-                        match.group(1)
-                    )
+                    match.group(1).replace(",", "")
                 )
-
             except ValueError:
-
                 pass
-
 
     return None
 
@@ -283,163 +208,86 @@ def extract_country_position(text):
 # ==================================================
 # POBIERANIE DANYCH Z DG EDGE
 # ==================================================
-
 def get_player(psn, username):
-
-    url = (
-        f"https://www.dg-edge.com/players/{psn}"
-    )
+    url = f"https://www.dg-edge.com/players/{psn}"
 
     last_error = None
-
-
-    # ==================================================
-    # 3 PRÓBY POBRANIA PROFILU
-    # ==================================================
 
     for attempt in range(
         1,
         REQUEST_ATTEMPTS + 1
     ):
-
         try:
-
             response = requests.get(
                 url,
                 headers=HEADERS,
                 timeout=30
             )
 
-
-            # ==================================================
-            # PROFIL NIE ISTNIEJE
-            # ==================================================
-
             if response.status_code == 404:
-
                 raise RuntimeError(
-                    "Profil DG EDGE nie istnieje (404)"
+                    "Profil DG EDGE nie istnieje (404)."
                 )
-
-
-            # ==================================================
-            # ZA DUŻO ZAPYTAŃ
-            # ==================================================
 
             if response.status_code == 429:
-
                 raise RuntimeError(
-                    "DG EDGE zwróciło 429 - "
-                    "za dużo zapytań"
+                    "DG EDGE ograniczył liczbę zapytań (429)."
                 )
 
-
             response.raise_for_status()
-
-
-            # ==================================================
-            # PARSOWANIE HTML
-            # ==================================================
 
             soup = BeautifulSoup(
                 response.text,
                 "html.parser"
             )
 
-
-            text = normalize_text(
-                soup.get_text(
-                    " ",
-                    strip=True
-                )
+            text = soup.get_text(
+                " ",
+                strip=True
             )
 
+            text = normalize_text(text)
 
-            if not text:
-
-                raise RuntimeError(
-                    "DG EDGE zwróciło pustą stronę"
-                )
-
-
-            # ==================================================
-            # ODCZYT DANYCH
-            # ==================================================
-
-            pk, ppk = extract_pk_ppk(
-                text
-            )
-
-            score = extract_score(
-                text
-            )
-
-            country_position = (
-                extract_country_position(
-                    text
-                )
-            )
-
-
-            # ==================================================
-            # ZWRACAMY DANE
-            # ==================================================
+            pk, ppk = extract_pk_ppk(text)
+            score = extract_score(text)
+            country_position = extract_country_position(text)
 
             return {
-
                 "username": username,
-
                 "psn": psn,
-
                 "pk": pk,
-
                 "ppk": ppk,
-
                 "score": score,
-
-                "country_position":
-                    country_position,
-
-                "url": url
+                "country_position": country_position,
+                "url": url,
             }
 
-
         except Exception as error:
-
             last_error = error
 
-
-            print(
-                f"  Próba {attempt}/"
-                f"{REQUEST_ATTEMPTS} - "
-                f"błąd: {error}"
-            )
-
-
             if attempt < REQUEST_ATTEMPTS:
-
-                time.sleep(
-                    RETRY_DELAY
+                print(
+                    f"  Próba {attempt}/{REQUEST_ATTEMPTS} "
+                    f"nieudana: {error}"
                 )
 
+                time.sleep(RETRY_DELAY)
 
     raise RuntimeError(
-        str(last_error)
+        f"Nie udało się pobrać profilu po "
+        f"{REQUEST_ATTEMPTS} próbach: {last_error}"
     )
 
 
 # ==================================================
 # ODCZYT ID WIADOMOŚCI
 # ==================================================
-
 def load_message_ids():
 
     if not os.path.exists(
         MESSAGE_IDS_FILE
     ):
-
         return []
-
 
     with open(
         MESSAGE_IDS_FILE,
@@ -448,23 +296,16 @@ def load_message_ids():
     ) as file:
 
         return [
-
             line.strip()
-
             for line in file
-
             if line.strip().isdigit()
-
         ]
 
 
 # ==================================================
 # ZAPIS ID WIADOMOŚCI
 # ==================================================
-
-def save_message_ids(
-    message_ids
-):
+def save_message_ids(message_ids):
 
     with open(
         MESSAGE_IDS_FILE,
@@ -473,7 +314,6 @@ def save_message_ids(
     ) as file:
 
         for message_id in message_ids:
-
             file.write(
                 f"{message_id}\n"
             )
@@ -482,32 +322,22 @@ def save_message_ids(
 # ==================================================
 # WYSŁANIE NOWEJ WIADOMOŚCI
 # ==================================================
-
-def send_discord_message(
-    message
-):
+def send_discord_message(message):
 
     response = requests.post(
-
         WEBHOOK_URL,
-
         params={
             "wait": "true"
         },
-
         json={
             "content": message
         },
-
         timeout=30
     )
 
-
     response.raise_for_status()
 
-
     data = response.json()
-
 
     return str(
         data["id"]
@@ -517,24 +347,18 @@ def send_discord_message(
 # ==================================================
 # NADPISANIE WIADOMOŚCI
 # ==================================================
-
 def update_discord_message(
     message_id,
     message
 ):
 
     response = requests.patch(
-
-        f"{WEBHOOK_URL}/messages/"
-        f"{message_id}",
-
+        f"{WEBHOOK_URL}/messages/{message_id}",
         json={
             "content": message
         },
-
         timeout=30
     )
-
 
     response.raise_for_status()
 
@@ -542,190 +366,60 @@ def update_discord_message(
 # ==================================================
 # WYCZYSZCZENIE STAREJ WIADOMOŚCI
 # ==================================================
-
-def clear_discord_message(
-    message_id
-):
+def clear_discord_message(message_id):
 
     response = requests.patch(
-
-        f"{WEBHOOK_URL}/messages/"
-        f"{message_id}",
-
+        f"{WEBHOOK_URL}/messages/{message_id}",
         json={
             "content": "\u200b"
         },
-
         timeout=30
     )
-
 
     response.raise_for_status()
 
 
 # ==================================================
-# TWORZENIE BLOKU KIEROWCY
-# ==================================================
-
-def create_player_block(
-    player
-):
-
-    position = player[
-        "position"
-    ]
-
-
-    # ==================================================
-    # MEDAL
-    # ==================================================
-
-    if position == 1:
-
-        medal = "🥇"
-
-    elif position == 2:
-
-        medal = "🥈"
-
-    elif position == 3:
-
-        medal = "🥉"
-
-    else:
-
-        medal = "🏁"
-
-
-    # ==================================================
-    # SCORE
-    # ==================================================
-
-    if player[
-        "score"
-    ] is None:
-
-        score_text = "?"
-
-    else:
-
-        score_text = (
-            f"{player['score']:.2f}"
-        )
-
-
-    # ==================================================
-    # POZYCJA PL
-    # ==================================================
-
-    if player[
-        "country_position"
-    ] is None:
-
-        country_position_text = "?"
-
-    else:
-
-        country_position_text = str(
-            player[
-                "country_position"
-            ]
-        )
-
-
-    # ==================================================
-    # BLOK
-    # ==================================================
-
-    return (
-
-        f"{medal} "
-        f"**{position}. "
-        f"{player['username']}**\n"
-
-        f"🏅 PK **{player['pk']}** • "
-        f"PPK **{player['ppk']}**\n"
-
-        f"📊 Score: "
-        f"**{score_text}**\n"
-
-        f"🇵🇱 Pozycja PL: "
-        f"**{country_position_text}**\n\n"
-
-        "━━━━━━━━━━━━━━━━━━━━\n\n"
-    )
-
-
-# ==================================================
 # GŁÓWNY PROGRAM
 # ==================================================
-
 def main():
 
     print(
         "========== START RANKINGU =========="
     )
 
-
-    print(
-        "Liczba kierowców do sprawdzenia: "
-        f"{len(PLAYERS)}"
-    )
-
-
     # ==================================================
     # SPRAWDZENIE WEBHOOKA
     # ==================================================
-
     if (
-
         not WEBHOOK_URL
-
-        or WEBHOOK_URL
-        == "TU_WKLEJ_SWÓJ_WEBHOOK_DISCORDA"
-
+        or WEBHOOK_URL ==
+        "TU_WKLEJ_SWÓJ_WEBHOOK_DISCORDA"
     ):
 
         print(
-            "BŁĄD: Wklej webhook Discorda "
-            "lub ustaw DISCORD_WEBHOOK_URL!"
+            "BŁĄD: Wklej webhook Discorda!"
         )
 
         return
 
-
     ranking = []
-
     failed_players = []
 
-
     # ==================================================
-    # POBIERANIE KAŻDEGO KIEROWCY
+    # POBIERANIE KIEROWCÓW
     # ==================================================
+    total = len(PLAYERS)
 
-    for number, (
-        psn,
-        username
-    ) in enumerate(
+    for number, (psn, username) in enumerate(
         PLAYERS.items(),
         start=1
     ):
 
         print(
-            "----------------------------------"
-        )
-
-
-        print(
-            f"[{number}/{len(PLAYERS)}] "
+            f"[{number}/{total}] "
             f"Pobieram: {username}"
         )
-
-
-        print(
-            f"PSN: {psn}"
-        )
-
 
         try:
 
@@ -734,7 +428,6 @@ def main():
                 username
             )
 
-
             print(
                 f"  PK = {player['pk']} | "
                 f"PPK = {player['ppk']} | "
@@ -742,158 +435,144 @@ def main():
                 f"PL = {player['country_position']}"
             )
 
-
             ranking.append(
                 player
             )
 
-
         except Exception as error:
 
             print(
-                f"  BŁĄD: {error}"
+                f"  BŁĄD {username}: {error}"
             )
 
-
-            print(
-                f"  URL: "
-                f"https://www.dg-edge.com/"
-                f"players/{psn}"
+            failed_players.append(
+                username
             )
 
-
-            failed_players.append({
-
-                "psn": psn,
-
-                "username": username,
-
-                "error": str(error)
-
-            })
-
-
-            # ==================================================
-            # KIEROWCA NIE ZNIKA Z RANKINGU
-            # ==================================================
-
+            # Kierowca ZAWSZE zostaje w rankingu.
             ranking.append({
-
                 "username": username,
-
                 "psn": psn,
-
                 "pk": "?",
-
                 "ppk": "?",
-
                 "score": None,
-
                 "country_position": None,
-
                 "url":
-                    f"https://www.dg-edge.com/"
-                    f"players/{psn}"
+                    f"https://www.dg-edge.com/players/{psn}",
             })
-
 
     # ==================================================
     # SORTOWANIE PO EDGE SCORE
-    #
     # NAJLEPSZY = 1
     # ==================================================
-
     ranking.sort(
-
         key=lambda player: (
-
             player["score"] is not None,
-
             player["score"] or 0
-
         ),
-
         reverse=True
     )
-
 
     # ==================================================
     # NADANIE MIEJSC
     # ==================================================
-
     for position, player in enumerate(
-
         ranking,
-
         start=1
-
     ):
 
-        player[
-            "position"
-        ] = position
+        player["position"] = position
 
-
-    # ==================================================
-    # ODWRÓCENIE RANKINGU
-    #
-    # Najlepszy będzie na dole,
-    # tak jak w poprzedniej wersji.
-    # ==================================================
-
+    # Najlepszy kierowca na dole.
     ranking.reverse()
 
-
     # ==================================================
-    # BLOKI KIEROWCÓW
+    # TWORZENIE BLOKÓW KIEROWCÓW
     # ==================================================
-
     player_blocks = []
-
 
     for player in ranking:
 
-        player_blocks.append(
+        position = player["position"]
 
-            create_player_block(
-                player
+        if position == 1:
+            medal = "🥇"
+
+        elif position == 2:
+            medal = "🥈"
+
+        elif position == 3:
+            medal = "🥉"
+
+        else:
+            medal = "🏁"
+
+        # ==================================================
+        # SCORE
+        # ==================================================
+        if player["score"] is None:
+            score_text = "?"
+
+        else:
+            score_text = (
+                f"{player['score']:.2f}"
             )
 
+        # ==================================================
+        # POZYCJA PL
+        # ==================================================
+        if player["country_position"] is None:
+            country_position_text = "?"
+
+        else:
+            country_position_text = str(
+                player["country_position"]
+            )
+
+        # ==================================================
+        # BLOK KIEROWCY
+        # ==================================================
+        block = (
+            f"{medal} **{position}. "
+            f"{player['username']}**\n"
+
+            f"🏅 PK **{player['pk']}** • "
+            f"PPK **{player['ppk']}**\n"
+
+            f"📊 Score: **{score_text}**\n"
+
+            f"🇵🇱 Pozycja PL: "
+            f"**{country_position_text}**\n\n"
+
+            "━━━━━━━━━━━━━━━━━━━━\n\n"
         )
 
+        player_blocks.append(
+            block
+        )
 
     # ==================================================
     # STOPKA
     # ==================================================
-
     update_time = datetime.now(
-
-        ZoneInfo(
-            "Europe/Warsaw"
-        )
-
+        ZoneInfo("Europe/Warsaw")
     ).strftime(
         "%d.%m.%Y %H:%M"
     )
 
-
     footer = (
-
-        "🚗 Każdy kierowca otrzymuje "
-        "miejsce w rankingu "
-        "zgodnie ze swoim aktualnym "
+        "🚗 Każdy kierowca otrzymuje miejsce "
+        "w rankingu zgodnie ze swoim aktualnym "
         "EDGE SCORE.\n\n"
 
         "📊 **Ranking SRS tworzony jest "
         "na podstawie danych z DG EDGE**\n\n"
 
-        "🇵🇱 Pozycja PL jest pobierana "
-        "automatycznie z rankingu "
-        "krajowego DG EDGE.\n\n"
+        "🇵🇱 Pozycja PL jest pobierana automatycznie "
+        "z rankingu krajowego DG EDGE.\n\n"
 
-        "🔄 Dane są automatycznie "
-        "odświeżane, dzięki czemu "
-        "ranking zawsze uwzględnia "
+        "🔄 Dane są automatycznie odświeżane, "
+        "dzięki czemu ranking zawsze uwzględnia "
         "najnowsze wyniki z **DG EDGE**.\n\n"
 
         "━━━━━━━━━━━━━━━━━━━━\n"
@@ -904,65 +583,43 @@ def main():
         "🏁 **RANKING GŁÓWNY SRS** 🏁"
     )
 
-
     # ==================================================
     # DZIELENIE NA WIADOMOŚCI DISCORD
     # ==================================================
-
     messages = []
 
-
-    current_message = (
-        "\u200b\n"
-    )
-
+    current_message = "\u200b\n"
 
     for block in player_blocks:
 
         if (
-
             len(current_message)
-
             + len(block)
-
             > MAX_MESSAGE_LENGTH
-
         ):
 
             messages.append(
                 current_message
             )
 
-
-            current_message = (
-                "\u200b\n"
-            )
-
+            current_message = "\u200b\n"
 
         current_message += block
-
 
     # ==================================================
     # OSTATNIA WIADOMOŚĆ + STOPKA
     # ==================================================
-
     if (
-
         len(current_message)
-
         + len(footer)
-
         <= MAX_MESSAGE_LENGTH
-
     ):
 
         current_message += footer
 
-
         messages.append(
             current_message
         )
-
 
     else:
 
@@ -970,45 +627,24 @@ def main():
             current_message
         )
 
-
         messages.append(
-
-            "\u200b\n"
-            + footer
-
+            "\u200b\n" + footer
         )
 
-
     # ==================================================
-    # INFORMACJE KOŃCOWE
+    # INFORMACJE
     # ==================================================
-
     print(
-        "=================================="
+        "----------------------------------"
     )
 
-
     print(
-        f"Sprawdzono kierowców: "
-        f"{len(PLAYERS)}"
+        f"Liczba kierowców: {len(ranking)}"
     )
 
-
     print(
-        f"Dodano do rankingu: "
-        f"{len(ranking)}"
+        f"Liczba wiadomości: {len(messages)}"
     )
-
-
-    print(
-        f"Błędy pobierania: "
-        f"{len(failed_players)}"
-    )
-
-
-    # ==================================================
-    # KIEROWCY Z BŁĘDAMI
-    # ==================================================
 
     if failed_players:
 
@@ -1016,87 +652,43 @@ def main():
             "----------------------------------"
         )
 
-
         print(
-            "KIEROWCY Z BŁĘDAMI:"
+            "KIEROWCY Z BŁĘDEM:"
         )
 
-
-        for player in failed_players:
+        for username in failed_players:
 
             print(
-
-                f"- {player['username']} "
-
-                f"({player['psn']}): "
-
-                f"{player['error']}"
-
+                f" - {username}"
             )
 
-
-    print(
-        "=================================="
-    )
-
-
-    print(
-        f"Liczba wiadomości Discord: "
-        f"{len(messages)}"
-    )
-
-
     for number, message in enumerate(
-
         messages,
-
         start=1
-
     ):
 
         print(
-
             f"Część {number}: "
-
             f"{len(message)} znaków"
-
         )
-
 
     # ==================================================
     # STARE ID WIADOMOŚCI
     # ==================================================
-
-    old_message_ids = (
-        load_message_ids()
-    )
-
+    old_message_ids = load_message_ids()
 
     print(
-        f"Starych ID wiadomości: "
-        f"{len(old_message_ids)}"
+        f"Starych ID: {len(old_message_ids)}"
     )
 
-
-    # ==================================================
-    # NOWE ID
-    # ==================================================
-
     new_message_ids = []
-
 
     # ==================================================
     # AKTUALIZOWANIE / TWORZENIE
     # ==================================================
-
     for index, message in enumerate(
         messages
     ):
-
-
-        # ==================================================
-        # ISTNIEJE STARE ID
-        # ==================================================
 
         if index < len(
             old_message_ids
@@ -1106,45 +698,28 @@ def main():
                 old_message_ids[index]
             )
 
-
             try:
 
                 update_discord_message(
-
                     message_id,
-
                     message
-
                 )
-
 
                 new_message_ids.append(
                     message_id
                 )
 
-
                 print(
-
-                    f"OK - nadpisano "
-                    f"część {index + 1}"
-
+                    f"OK - nadpisano część "
+                    f"{index + 1}"
                 )
-
 
             except Exception as error:
 
                 print(
-
-                    f"BŁĄD nadpisywania "
-                    f"części {index + 1}: "
-                    f"{error}"
-
+                    f"BŁĄD nadpisywania części "
+                    f"{index + 1}: {error}"
                 )
-
-
-                # ==================================================
-                # STARE ID NIE DZIAŁA
-                # ==================================================
 
                 try:
 
@@ -1154,34 +729,21 @@ def main():
                         )
                     )
 
-
                     new_message_ids.append(
                         new_id
                     )
 
-
                     print(
-
-                        f"Utworzono nową "
-                        f"część {index + 1}"
-
+                        f"Utworzono nową część "
+                        f"{index + 1}"
                     )
-
 
                 except Exception as send_error:
 
                     print(
-
-                        f"BŁĄD wysyłania "
-                        f"części {index + 1}: "
+                        f"BŁĄD wysyłania: "
                         f"{send_error}"
-
                     )
-
-
-        # ==================================================
-        # BRAK STAREGO ID
-        # ==================================================
 
         else:
 
@@ -1193,55 +755,35 @@ def main():
                     )
                 )
 
-
                 new_message_ids.append(
                     new_id
                 )
 
-
                 print(
-
-                    f"OK - wysłano nową "
-                    f"część {index + 1}"
-
+                    f"OK - wysłano nową część "
+                    f"{index + 1}"
                 )
-
 
             except Exception as error:
 
                 print(
-
-                    f"BŁĄD wysyłania "
-                    f"części {index + 1}: "
-                    f"{error}"
-
+                    f"BŁĄD wysyłania części "
+                    f"{index + 1}: {error}"
                 )
-
 
     # ==================================================
     # STARE DODATKOWE WIADOMOŚCI
     # ==================================================
-
-    if (
-
-        len(old_message_ids)
-
-        > len(messages)
-
-    ):
+    if len(old_message_ids) > len(messages):
 
         for index in range(
-
             len(messages),
-
             len(old_message_ids)
-
         ):
 
             old_id = (
                 old_message_ids[index]
             )
-
 
             try:
 
@@ -1249,60 +791,42 @@ def main():
                     old_id
                 )
 
-
                 print(
-
-                    f"Wyczyszczono starą "
-                    f"część {index + 1}"
-
+                    f"Wyczyszczono starą część "
+                    f"{index + 1}"
                 )
-
 
             except Exception as error:
 
                 print(
-
                     f"Nie można wyczyścić "
                     f"starej części "
-                    f"{index + 1}: "
-                    f"{error}"
-
+                    f"{index + 1}: {error}"
                 )
-
 
     # ==================================================
     # ZAPIS ID
     # ==================================================
-
     save_message_ids(
         new_message_ids
     )
 
-
     # ==================================================
     # KONIEC
     # ==================================================
-
     print(
         "----------------------------------"
     )
 
-
     print(
-
         f"Wysłano/nadpisano "
         f"{len(new_message_ids)} części."
-
     )
-
 
     print(
-
         f"W rankingu jest "
         f"{len(ranking)} kierowców."
-
     )
-
 
     print(
         "========== KONIEC =========="
@@ -1312,7 +836,5 @@ def main():
 # ==================================================
 # START
 # ==================================================
-
 if __name__ == "__main__":
-
     main()
