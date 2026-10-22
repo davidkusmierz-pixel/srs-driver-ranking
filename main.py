@@ -12,7 +12,7 @@ from urllib.parse import quote
 # ==================================================
 WEBHOOK_URL = os.getenv(
     "DISCORD_WEBHOOK_URL",
-    "https://discord.com/api/webhooks/1562080154212114513/hQpA1SHrCahtASdbTP96j4_6bNToZkkSag3CdN1hzziI-G517FWisr-6LmF_kXVrVXQD"
+    "https://discord.com/api/webhooks/1562819721051512894/oaakug1Jgl9RZdOuDjb4W0cVxbrHKJajIPmpMdKCcTrP5US-LJ6av-ypXlfLUCEFt74u"
 )
 
 # ==================================================
