@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101114">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SRS Studio">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>SRS YouTube Miniaturka Studio</title>
+<style>
+:root{color-scheme:dark;--bg:#090a0d;--panel:#15171c;--line:#30343d;--red:#ed182d;--muted:#a9adb6}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(160deg,#1b1d23,#08090b 48%);font-family:system-ui,-apple-system,sans-serif;color:#f6f6f7;padding:env(safe-area-inset-top) 14px calc(22px + env(safe-area-inset-bottom))}
+main{max-width:680px;margin:auto}.brand{display:flex;align-items:center;gap:12px;padding:22px 4px 16px}.logo{font-weight:1000;font-style:italic;font-size:28px;letter-spacing:-2px;background:linear-gradient(100deg,#fff 30%,#ed1c32 31%,#ed1c32 54%,#aaa 55%);-webkit-background-clip:text;background-clip:text;color:transparent}.brand small{display:block;color:var(--muted);font-size:11px;letter-spacing:2px}.hero{border:1px solid #3b3e46;border-radius:18px;padding:20px;background:linear-gradient(120deg,#20232b,#101115);box-shadow:0 12px 35px #0008}.hero h1{font-size:23px;line-height:1.1;margin:0 0 8px}.hero p{color:var(--muted);margin:0;font-size:13px}.stripe{height:4px;width:78px;background:var(--red);margin:15px 0 0;border-radius:9px}
+.card{background:#14161b;border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:14px}.section{font-weight:800;margin:0 0 11px;font-size:15px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.choice{position:relative}.choice input{position:absolute;opacity:0}.choice label{display:flex;align-items:center;min-height:44px;padding:10px 12px;border:1px solid #383c45;border-radius:11px;background:#1b1e24;color:#e9e9eb;font-size:13px;cursor:pointer}.choice input:checked+label{border-color:var(--red);background:#35141b;box-shadow:inset 0 0 0 1px var(--red)}input[type=text],select{width:100%;background:#0d0f13;border:1px solid #414650;color:white;border-radius:11px;padding:13px;font:inherit;font-size:14px}
+button{border:0;border-radius:12px;padding:14px 16px;font:800 14px system-ui;cursor:pointer}.primary{background:linear-gradient(100deg,#f21b32,#a80e20);color:white;width:100%;box-shadow:0 7px 18px #d10d2838}.secondary{background:#292d35;color:white;border:1px solid #454a55;width:100%;margin-top:9px}.hint{font-size:12px;color:var(--muted);line-height:1.5}.preview{width:100%;aspect-ratio:16/9;object-fit:contain;background:#090a0d;border:1px dashed #535965;border-radius:12px;display:block}.item{border:1px solid var(--line);border-radius:12px;padding:9px;background:#101216}.item img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px}.item button{margin-top:7px;width:100%;padding:9px;font-size:12px}.gallery{display:grid;grid-template-columns:1fr 1fr;gap:10px}.empty{padding:18px;text-align:center;color:var(--muted);border:1px dashed #424752;border-radius:12px;font-size:13px}
+footer{text-align:center;color:#777d87;font-size:11px;padding:22px 5px}
+@media(min-width:560px){.grid{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<main>
+ <header class="brand"><div class="logo">SRS</div><div><b>SIM RACING SQUAD</b><small>YOUTUBE MINIATURKA STUDIO</small></div></header>
+ <section class="hero"><h1>Twoja miniaturka.<br>Twój styl SRS.</h1><p>Wybierz ustawienia, przygotuj opis dla ChatGPT, wygeneruj obraz w rozmowie i dodaj gotową miniaturkę do swojej galerii.</p><div class="stripe"></div></section>
+
+ <section class="card">
+  <h2 class="section">01 · Samochód</h2><div class="grid" id="cars">
+   <div class="choice"><input type="radio" name="car" id="c1" value="BMW M4 GT3" checked><label for="c1">BMW M4 GT3</label></div>
+   <div class="choice"><input type="radio" name="car" id="c2" value="Nissan GT-R GT3"><label for="c2">Nissan GT-R GT3</label></div>
+   <div class="choice"><input type="radio" name="car" id="c3" value="Audi R8 LMS GT3"><label for="c3">Audi R8 LMS GT3</label></div>
+   <div class="choice"><input type="radio" name="car" id="c4" value="Mercedes-AMG GT3"><label for="c4">Mercedes-AMG GT3</label></div>
+   <div class="choice"><input type="radio" name="car" id="c5" value="Porsche 911 GT3"><label for="c5">Porsche 911 GT3</label></div>
+   <div class="choice"><input type="radio" name="car" id="c6" value="Inny samochód"><label for="c6">Inny samochód</label></div>
+  </div>
+ </section>
+ <section class="card">
+  <h2 class="section">02 · Ukształtowanie toru</h2><div class="grid" id="tracks">
+   <div class="choice"><input type="radio" name="track" id="t1" value="Długa prosta"><label for="t1">Długa prosta</label></div>
+   <div class="choice"><input type="radio" name="track" id="t2" value="Szybki zakręt" checked><label for="t2">Szybki zakręt</label></div>
+   <div class="choice"><input type="radio" name="track" id="t3" value="Podjazd pod górę"><label for="t3">Podjazd pod górę</label></div>
+   <div class="choice"><input type="radio" name="track" id="t4" value="Zjazd z górki"><label for="t4">Zjazd z górki</label></div>
+   <div class="choice"><input type="radio" name="track" id="t5" value="Zakręt z tarką"><label for="t5">Zakręt z tarką</label></div>
+   <div class="choice"><input type="radio" name="track" id="t6" value="Szykana"><label for="t6">Szykana</label></div>
+  </div>
+ </section>
+ <section class="card">
+  <h2 class="section">03 · Pozycja aparatu</h2><div class="grid">
+   <div class="choice"><input type="radio" name="camera" id="a1" value="Z samego dołu, przy asfalcie" checked><label for="a1">Z samego dołu</label></div>
+   <div class="choice"><input type="radio" name="camera" id="a2" value="Z boku toru"><label for="a2">Z boku</label></div>
+   <div class="choice"><input type="radio" name="camera" id="a3" value="Z przodu pod kątem"><label for="a3">Z przodu pod kątem</label></div>
+   <div class="choice"><input type="radio" name="camera" id="a4" value="Od tyłu pod kątem"><label for="a4">Od tyłu pod kątem</label></div>
+   <div class="choice"><input type="radio" name="camera" id="a5" value="Z góry"><label for="a5">Z góry</label></div>
+   <div class="choice"><input type="radio" name="camera" id="a6" value="Tuż przy tarce"><label for="a6">Przy tarce</label></div>
+  </div>
+ </section>
+ <section class="card">
+  <h2 class="section">04 · Pogoda</h2><div class="grid">
+   <div class="choice"><input type="radio" name="weather" id="w1" value="Słonecznie" checked><label for="w1">☀️ Słonecznie</label></div>
+   <div class="choice"><input type="radio" name="weather" id="w2" value="Pochmurno"><label for="w2">☁️ Pochmurno</label></div>
+   <div class="choice"><input type="radio" name="weather" id="w3" value="Deszcz i mokry asfalt"><label for="w3">🌧️ Deszcz</label></div>
+   <div class="choice"><input type="radio" name="weather" id="w4" value="Mgła"><label for="w4">🌫️ Mgła</label></div>
+   <div class="choice"><input type="radio" name="weather" id="w5" value="Po deszczu"><label for="w5">🌦️ Po deszczu</label></div>
+  </div>
+ </section>
+ <section class="card">
+  <h2 class="section">05 · Pora dnia</h2><div class="grid">
+   <div class="choice"><input type="radio" name="time" id="d1" value="Poranek"><label for="d1">🌄 Poranek</label></div>
+   <div class="choice"><input type="radio" name="time" id="d2" value="Popołudnie" checked><label for="d2">🌤️ Popołudnie</label></div>
+   <div class="choice"><input type="radio" name="time" id="d3" value="Zachód słońca"><label for="d3">🌅 Zachód słońca</label></div>
+   <div class="choice"><input type="radio" name="time" id="d4" value="Noc"><label for="d4">🌙 Noc</label></div>
+  </div>
+ </section>
+ <section class="card">
+  <h2 class="section">06 · Tytuł filmu</h2><input id="title" type="text" maxlength="42" value="TRENING" placeholder="Np. NIEDZIELNE WOŻONKO">
+  <p class="hint">Tytuł zostanie umieszczony na miniaturce. Krótkie hasła najlepiej wyglądają na telefonie.</p>
+ </section>
+ <section class="card">
+  <h2 class="section">07 · Przygotuj miniaturkę</h2>
+  <p class="hint">Aplikacja przygotuje dokładny opis. Otwórz ChatGPT i wklej go, aby wygenerować obraz. Nie jest potrzebny klucz API.</p>
+  <button class="primary" id="makePrompt">PRZYGOTUJ OPIS MINIATURKI</button>
+  <textarea id="prompt" readonly style="display:none;width:100%;min-height:180px;margin-top:12px;padding:12px;border-radius:10px;background:#090a0d;color:#eee;border:1px solid #424752;font:13px/1.5 system-ui"></textarea>
+  <button class="secondary" id="copyPrompt" style="display:none">KOPIUJ OPIS</button>
+  <p class="hint">Po wygenerowaniu obrazu w ChatGPT zapisz go w Zdjęciach. Następnie wróć tutaj i dodaj go do galerii.</p>
+ </section>
+ <section class="card">
+  <h2 class="section">08 · Moja galeria SRS</h2>
+  <label class="choice" style="display:block"><input type="file" id="upload" accept="image/*" style="display:none"><span class="primary" style="display:block;text-align:center;padding:14px;border-radius:12px;cursor:pointer">＋ DODAJ GOTOWĄ MINIATURKĘ</span></label>
+  <div id="gallery" class="gallery" style="margin-top:12px"><div class="empty" style="grid-column:1/-1">Twoje zapisane miniaturki pojawią się tutaj.</div></div>
+  <p class="hint">Galeria zapisuje obrazy lokalnie w tej przeglądarce na tym urządzeniu. Nie czyść danych witryny, jeśli chcesz zachować galerię.</p>
+ </section>
+ <footer>SRS SIM RACING SQUAD · YOUTUBE MINIATURKA STUDIO</footer>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+function val(name){return document.querySelector('input[name="'+name+'"]:checked')?.value||''}
+function buildPrompt(){
+ const title=$('#title').value.trim()||'TRENING';
+ return `Wygeneruj miniaturkę YouTube SRS w formacie 16:9. Samochód: ${val('car')}. Tor: ${val('track')}. Pozycja aparatu: ${val('camera')}. Pogoda: ${val('weather')}. Pora dnia: ${val('time')}. Tytuł: ${title}. Styl: fotorealistyczna fotografia motorsportowa, naturalne proporcje auta, dynamiczna ale wiarygodna scena na prawdziwym torze. Zachowaj stałą identyfikację SRS: czerwony, czarny i srebrny, logo SRS w lewym górnym rogu, czytelny tytuł, samochód dobrze widoczny. Bez pada, kontrolera i zbędnych elementów.`;
+}
+$('#makePrompt').onclick=()=>{const p=$('#prompt');p.value=buildPrompt();p.style.display='block';$('#copyPrompt').style.display='block';p.scrollIntoView({behavior:'smooth',block:'center'})};
+$('#copyPrompt').onclick=async()=>{try{await navigator.clipboard.writeText($('#prompt').value);$('#copyPrompt').textContent='SKOPIOWANO ✓'}catch(e){$('#prompt').select();document.execCommand('copy');$('#copyPrompt').textContent='SKOPIOWANO ✓'}};
+const DB='srsThumbGalleryV1';
+function getItems(){try{return JSON.parse(localStorage.getItem(DB)||'[]')}catch(e){return []}}
+function saveItems(items){try{localStorage.setItem(DB,JSON.stringify(items));return true}catch(e){alert('Brak miejsca w pamięci przeglądarki. Usuń część starych miniaturek i spróbuj ponownie.');return false}}
+function render(){
+ const g=$('#gallery'),items=getItems();g.innerHTML='';
+ if(!items.length){g.innerHTML='<div class="empty" style="grid-column:1/-1">Twoje zapisane miniaturki pojawią się tutaj.</div>';return}
+ items.forEach((it,i)=>{const d=document.createElement('div');d.className='item';const img=document.createElement('img');img.src=it.data;img.alt=it.name;const name=document.createElement('div');name.className='hint';name.textContent=it.name;const down=document.createElement('button');down.textContent='ZAPISZ NA IPHONIE';down.onclick=()=>{const a=document.createElement('a');a.href=it.data;a.download=it.name.replace(/[^a-z0-9-_]/gi,'_')+'.png';a.click()};const del=document.createElement('button');del.className='secondary';del.textContent='USUŃ';del.onclick=()=>{const arr=getItems();arr.splice(i,1);saveItems(arr);render()};d.append(img,name,down,del);g.append(d)})
+}
+$('#upload').onchange=async e=>{const file=e.target.files[0];if(!file)return;if(!file.type.startsWith('image/'))return alert('Wybierz plik graficzny.');const reader=new FileReader();reader.onload=()=>{const items=getItems();items.unshift({name:($('#title').value.trim()||'Miniaturka SRS')+' · '+new Date().toLocaleDateString('pl-PL'),data:reader.result});if(saveItems(items.slice(0,12)))render();e.target.value=''};reader.readAsDataURL(file)};
+render();
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+</script>
+</body></html>
