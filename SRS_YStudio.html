@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101114">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SRS Studio">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>SRS YouTube Miniaturka Studio</title>
+<style>
+:root{color-scheme:dark;--bg:#090a0d;--panel:#15171c;--line:#30343d;--red:#ed182d;--muted:#a9adb6}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(160deg,#1b1d23,#08090b 48%);font-family:system-ui,-apple-system,sans-serif;color:#f6f6f7;padding:env(safe-area-inset-top) 14px calc(22px + env(safe-area-inset-bottom))}
+main{max-width:680px;margin:auto}.brand{display:flex;align-items:center;gap:12px;padding:22px 4px 16px}.logo{font-weight:1000;font-style:italic;font-size:28px;letter-spacing:-2px;background:linear-gradient(100deg,#fff 30%,#ed1c32 31%,#ed1c32 54%,#aaa 55%);-webkit-background-clip:text;background-clip:text;color:transparent}.brand small{display:block;color:var(--muted);font-size:11px;letter-spacing:2px}.hero{border:1px solid #3b3e46;border-radius:18px;padding:20px;background:linear-gradient(120deg,#20232b,#101115);box-shadow:0 12px 35px #0008}.hero h1{font-size:23px;line-height:1.1;margin:0 0 8px}.hero p{color:var(--muted);margin:0;font-size:13px}.stripe{height:4px;width:78px;background:var(--red);margin:15px 0 0;border-radius:9px}
+.card{background:#14161b;border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:14px}.section{font-weight:800;margin:0 0 11px;font-size:15px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.choice{position:relative}.choice input{position:absolute;opacity:0}.choice label{display:flex;align-items:center;min-height:44px;padding:10px 12px;border:1px solid #383c45;border-radius:11px;background:#1b1e24;color:#e9e9eb;font-size:13px;cursor:pointer}.choice input:checked+label{border-color:var(--red);background:#35141b;box-shadow:inset 0 0 0 1px var(--red)}input[type=text],select{width:100%;background:#0d0f13;border:1px solid #414650;color:white;border-radius:11px;padding:13px;font:inherit;font-size:14px}
+button{border:0;border-radius:12px;padding:14px 16px;font:800 14px system-ui;cursor:pointer}.primary{background:linear-gradient(100deg,#f21b32,#a80e20);color:white;width:100%;box-shadow:0 7px 18px #d10d2838}.secondary{background:#292d35;color:white;border:1px solid #454a55;width:100%;margin-top:9px}.hint{font-size:12px;color:var(--muted);line-height:1.5}.preview{width:100%;aspect-ratio:16/9;object-fit:contain;background:#090a0d;border:1px dashed #535965;border-radius:12px;display:block}.item{border:1px solid var(--line);border-radius:12px;padding:9px;background:#101216}.item img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px}.item button{margin-top:7px;width:100%;padding:9px;font-size:12px}.gallery{display:grid;grid-template-columns:1fr 1fr;gap:10px}.empty{padding:18px;text-align:center;color:var(--muted);border:1px dashed #424752;border-radius:12px;font-size:13px}
+footer{text-align:center;color:#777d87;font-size:11px;padding:22px 5px}
+@media(min-width:560px){.grid{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<main>
+ <header class="brand"><div class="logo">SRS</div><div><b>SIM RACING SQUAD</b><small>YOUTUBE MINIATURKA STUDIO</small></div></header>
+ <section class="hero"><h1>Twoja miniaturka.<br>Twój styl SRS.</h1><p>Wybierz ustawienia, przygotuj opis dla ChatGPT, wygeneruj obraz w rozmowie i dodaj gotową miniaturkę do swojej galerii.</p><div class="stripe"></div></section>
+
+ <section class="card">
+  <h2 class="section">01 · Samochody na miniaturce</h2>
+  <p class="hint">Wybierz, ile samochodów ma znaleźć się na miniaturce.</p>
+  <div class="grid" style="margin-bottom:12px">
+   <div class="choice"><input type="radio" name="carCount" id="cc0" value="0"><label for="cc0">Bez samochodu</label></div>
+   <div class="choice"><input type="radio" name="carCount" id="cc1" value="1" checked><label for="cc1">1 samochód</label></div>
+   <div class="choice"><input type="radio" name="carCount" id="cc2" value="2"><label for="cc2">2 samochody</label></div>
+  </div>
+  <div id="carOne">
+   <h3 class="section">Samochód 1</h3>
+   <select id="car1"><optgroup label="Gr.3 — wszystkie samochody"><option>Alfa Romeo 4C Gr.3</option><option>Mercedes-AMG GT3 '16</option><option>Mercedes-AMG GT3 '20</option><option>Mercedes-Benz SLS AMG GT3 '11</option><option>Aston Martin DBR9 GT1 '10</option><option>Aston Martin V12 Vantage GT3 '12</option><option>Audi R8 LMS '15</option><option>Audi R8 LMS Evo '19</option><option>BMW M3 GT '11</option><option>BMW M6 GT3 Endurance Model '16</option><option>BMW M6 GT3 Sprint Model '16</option><option>BMW Z4 GT3 '11</option><option>Chevrolet Corvette C7 Gr.3</option><option>GT by Citroën Race Car (Gr.3)</option><option>Dodge Viper SRT GT3-R '15</option><option>Ferrari 296 GT3 '23</option><option>Ferrari 458 Italia GT3 '13</option><option>Ford GT LM Race Car Spec II</option><option>Ford GT LM Spec II Test Car</option><option>Ford GT Race Car '18</option><option>Ford Mustang Gr.3</option><option>Genesis X GR3</option><option>Honda NSX Gr.3</option><option>Honda NSX GT500 '00</option><option>Jaguar F-type Gr.3</option><option>Lamborghini Huracán GT3 '15</option><option>Lexus RC F GT3 '17</option><option>Lexus RC F GT3 prototype '16</option><option>Mazda Atenza Gr.3</option><option>Mazda RX-VISION GT3 CONCEPT</option><option>Mazda RX-VISION GT3 CONCEPT Stealth Model</option><option>Mazda RX-VISION GT3 EVO '26</option><option>McLaren 650S GT3 '15</option><option>McLaren F1 GTR - BMW '95</option><option>Mitsubishi Lancer Evolution Final Gr.3</option><option>Nissan GT-R GT500 '99</option><option>Nissan GT-R NISMO GT3 '13</option><option>Nissan GT-R NISMO GT3 '18</option><option>Nissan Skyline Super Silhouette '84</option><option>Peugeot VGT (Gr.3)</option><option>Peugeot RCZ Gr.3</option><option>Porsche 911 GT3 R (992) '22</option><option>Porsche 911 RSR (991) '17</option><option>Renault R.S.01 GT3 '16</option><option>Subaru BRZ GT300 '21</option><option>Subaru WRX Gr.3</option><option>Suzuki VGT (Gr.3)</option><option>Toyota FT-1 VGT (Gr.3)</option><option>Toyota GR Supra Racing Concept '18</option><option>Toyota Supra GT500 '97</option><option>Volkswagen Beetle Gr.3</option><option>Volkswagen GTI VGT (Gr.3)</option></optgroup><optgroup label="Gr.4 — wszystkie samochody"><option>Alfa Romeo 155 2.5 V6 TI '93</option><option>Alfa Romeo 4C Gr.4</option><option>Mercedes-Benz SLS AMG Gr.4</option><option>Aston Martin V8 Vantage Gr.4</option><option>Audi TT Cup '16</option><option>BMW M4 Gr.4</option><option>Bugatti Veyron Gr.4</option><option>Chevrolet Corvette C7 Gr.4</option><option>GT by Citroën Gr.4</option><option>Dodge Viper Gr.4</option><option>Ferrari 458 Italia Gr.4</option><option>Ford Mustang Gr.4</option><option>Genesis G70 GR4</option><option>Honda NSX Gr.4</option><option>Hyundai ELANTRA N TC '24</option><option>Hyundai Genesis Gr.4</option><option>Jaguar F-type Gr.4</option><option>Lamborghini Huracán Gr.4</option><option>Lexus RC F Gr.4</option><option>Mazda Atenza Gr.4</option><option>Mazda MAZDA3 Gr.4</option><option>McLaren 650S Gr.4</option><option>Mitsubishi Lancer Evolution Final Gr.4</option><option>Nissan GT-R Gr.4</option><option>Nissan Silvia spec-R Aero (S15) Touring Car</option><option>Peugeot RCZ Gr.4</option><option>Porsche Cayman GT4 Clubsport '16</option><option>Renault Mégane Gr.4</option><option>Renault Mégane Trophy '11</option><option>Subaru WRX Gr.4</option><option>Suzuki Swift Sport Gr.4</option><option>Toyota 86 Gr.4</option><option>Toyota GR Supra Race Car '19</option><option>Volkswagen Scirocco Gr.4</option></optgroup><optgroup label="Formuła i Red Bull"><option>Gran Turismo F1500T-A</option><option>Super Formula SF19 / Honda '19</option><option>Super Formula SF19 / Toyota '19</option><option>Super Formula SF23 / Honda '23</option><option>Super Formula SF23 / Toyota '23</option><option>Red Bull X2014 Junior</option><option>Red Bull X2014 Standard</option><option>Red Bull X2019 Competition</option></optgroup><optgroup label="Inne klasy"><option>Toyota GR010 HYBRID '21</option><option>Porsche 919 Hybrid '16</option><option>Audi R18 '16</option><option>Mazda 787B '91</option><option>McLaren MP4/4 '88</option><option>Honda Civic Type R</option><option>Nissan Silvia</option></optgroup><option value="custom">Wpiszę własną nazwę auta…</option></select>
+   <input type="text" id="customCar1" placeholder="Lub wpisz własną nazwę auta (opcjonalnie)" style="margin-top:9px">
+  </div>
+  <div id="carTwo" style="display:none;margin-top:14px">
+   <h3 class="section">Samochód 2</h3>
+   <select id="car2"><optgroup label="Gr.3 — wszystkie samochody"><option>Alfa Romeo 4C Gr.3</option><option>Mercedes-AMG GT3 '16</option><option>Mercedes-AMG GT3 '20</option><option>Mercedes-Benz SLS AMG GT3 '11</option><option>Aston Martin DBR9 GT1 '10</option><option>Aston Martin V12 Vantage GT3 '12</option><option>Audi R8 LMS '15</option><option>Audi R8 LMS Evo '19</option><option>BMW M3 GT '11</option><option>BMW M6 GT3 Endurance Model '16</option><option>BMW M6 GT3 Sprint Model '16</option><option>BMW Z4 GT3 '11</option><option>Chevrolet Corvette C7 Gr.3</option><option>GT by Citroën Race Car (Gr.3)</option><option>Dodge Viper SRT GT3-R '15</option><option>Ferrari 296 GT3 '23</option><option>Ferrari 458 Italia GT3 '13</option><option>Ford GT LM Race Car Spec II</option><option>Ford GT LM Spec II Test Car</option><option>Ford GT Race Car '18</option><option>Ford Mustang Gr.3</option><option>Genesis X GR3</option><option>Honda NSX Gr.3</option><option>Honda NSX GT500 '00</option><option>Jaguar F-type Gr.3</option><option>Lamborghini Huracán GT3 '15</option><option>Lexus RC F GT3 '17</option><option>Lexus RC F GT3 prototype '16</option><option>Mazda Atenza Gr.3</option><option>Mazda RX-VISION GT3 CONCEPT</option><option>Mazda RX-VISION GT3 CONCEPT Stealth Model</option><option>Mazda RX-VISION GT3 EVO '26</option><option>McLaren 650S GT3 '15</option><option>McLaren F1 GTR - BMW '95</option><option>Mitsubishi Lancer Evolution Final Gr.3</option><option>Nissan GT-R GT500 '99</option><option>Nissan GT-R NISMO GT3 '13</option><option>Nissan GT-R NISMO GT3 '18</option><option>Nissan Skyline Super Silhouette '84</option><option>Peugeot VGT (Gr.3)</option><option>Peugeot RCZ Gr.3</option><option>Porsche 911 GT3 R (992) '22</option><option>Porsche 911 RSR (991) '17</option><option>Renault R.S.01 GT3 '16</option><option>Subaru BRZ GT300 '21</option><option>Subaru WRX Gr.3</option><option>Suzuki VGT (Gr.3)</option><option>Toyota FT-1 VGT (Gr.3)</option><option>Toyota GR Supra Racing Concept '18</option><option>Toyota Supra GT500 '97</option><option>Volkswagen Beetle Gr.3</option><option>Volkswagen GTI VGT (Gr.3)</option></optgroup><optgroup label="Gr.4 — wszystkie samochody"><option>Alfa Romeo 155 2.5 V6 TI '93</option><option>Alfa Romeo 4C Gr.4</option><option>Mercedes-Benz SLS AMG Gr.4</option><option>Aston Martin V8 Vantage Gr.4</option><option>Audi TT Cup '16</option><option>BMW M4 Gr.4</option><option>Bugatti Veyron Gr.4</option><option>Chevrolet Corvette C7 Gr.4</option><option>GT by Citroën Gr.4</option><option>Dodge Viper Gr.4</option><option>Ferrari 458 Italia Gr.4</option><option>Ford Mustang Gr.4</option><option>Genesis G70 GR4</option><option>Honda NSX Gr.4</option><option>Hyundai ELANTRA N TC '24</option><option>Hyundai Genesis Gr.4</option><option>Jaguar F-type Gr.4</option><option>Lamborghini Huracán Gr.4</option><option>Lexus RC F Gr.4</option><option>Mazda Atenza Gr.4</option><option>Mazda MAZDA3 Gr.4</option><option>McLaren 650S Gr.4</option><option>Mitsubishi Lancer Evolution Final Gr.4</option><option>Nissan GT-R Gr.4</option><option>Nissan Silvia spec-R Aero (S15) Touring Car</option><option>Peugeot RCZ Gr.4</option><option>Porsche Cayman GT4 Clubsport '16</option><option>Renault Mégane Gr.4</option><option>Renault Mégane Trophy '11</option><option>Subaru WRX Gr.4</option><option>Suzuki Swift Sport Gr.4</option><option>Toyota 86 Gr.4</option><option>Toyota GR Supra Race Car '19</option><option>Volkswagen Scirocco Gr.4</option></optgroup><optgroup label="Formuła i Red Bull"><option>Gran Turismo F1500T-A</option><option>Super Formula SF19 / Honda '19</option><option>Super Formula SF19 / Toyota '19</option><option>Super Formula SF23 / Honda '23</option><option>Super Formula SF23 / Toyota '23</option><option>Red Bull X2014 Junior</option><option>Red Bull X2014 Standard</option><option>Red Bull X2019 Competition</option></optgroup><optgroup label="Inne klasy"><option>Toyota GR010 HYBRID '21</option><option>Porsche 919 Hybrid '16</option><option>Audi R18 '16</option><option>Mazda 787B '91</option><option>McLaren MP4/4 '88</option><option>Honda Civic Type R</option><option>Nissan Silvia</option></optgroup><option value="custom">Wpiszę własną nazwę auta…</option></select>
+   <input type="text" id="customCar2" placeholder="Lub wpisz własną nazwę drugiego auta (opcjonalnie)" style="margin-top:9px">
+  </div>
+  <p class="hint" style="margin-bottom:0">Możesz wybrać dwa różne auta albo wpisać własne nazwy. Przy opcji „Bez samochodu” miniaturka będzie bez auta.</p>
+ </section>
+<section class="card">
+  <h2 class="section">02 · Ukształtowanie toru</h2><div class="grid" id="tracks">
+   <div class="choice"><input type="radio" name="track" id="t1" value="Długa prosta"><label for="t1">Długa prosta</label></div>
+   <div class="choice"><input type="radio" name="track" id="t2" value="Szybki zakręt" checked><label for="t2">Szybki zakręt</label></div>
+   <div class="choice"><input type="radio" name="track" id="t3" value="Podjazd pod górę"><label for="t3">Podjazd pod górę</label></div>
+   <div class="choice"><input type="radio" name="track" id="t4" value="Zjazd z górki"><label for="t4">Zjazd z górki</label></div>
+   <div class="choice"><input type="radio" name="track" id="t5" value="Zakręt z tarką"><label for="t5">Zakręt z tarką</label></div>
+   <div class="choice"><input type="radio" name="track" id="t6" value="Szykana"><label for="t6">Szykana</label></div>
+  </div>
+ </section>
+ <section class="card">
+  <h2 class="section">03 · Pozycja aparatu</h2><div class="grid">
+   <div class="choice"><input type="radio" name="camera" id="a1" value="Z samego dołu, przy asfalcie" checked><label for="a1">Z samego dołu</label></div>
+   <div class="choice"><input type="radio" name="camera" id="a2" value="Z boku toru"><label for="a2">Z boku</label></div>
+   <div class="choice"><input type="radio" name="camera" id="a3" value="Z przodu pod kątem"><label for="a3">Z przodu pod kątem</label></div>
+   <div class="choice"><input type="radio" name="camera" id="a4" value="Od tyłu pod kątem"><label for="a4">Od tyłu pod kątem</label></div>
+   <div class="choice"><input type="radio" name="camera" id="a5" value="Z góry"><label for="a5">Z góry</label></div>
+   <div class="choice"><input type="radio" name="camera" id="a6" value="Tuż przy tarce"><label for="a6">Przy tarce</label></div>
+  </div>
+ </section>
+ <section class="card">
+  <h2 class="section">04 · Pogoda</h2><div class="grid">
+   <div class="choice"><input type="radio" name="weather" id="w1" value="Słonecznie" checked><label for="w1">☀️ Słonecznie</label></div>
+   <div class="choice"><input type="radio" name="weather" id="w2" value="Pochmurno"><label for="w2">☁️ Pochmurno</label></div>
+   <div class="choice"><input type="radio" name="weather" id="w3" value="Deszcz i mokry asfalt"><label for="w3">🌧️ Deszcz</label></div>
+   <div class="choice"><input type="radio" name="weather" id="w4" value="Mgła"><label for="w4">🌫️ Mgła</label></div>
+   <div class="choice"><input type="radio" name="weather" id="w5" value="Po deszczu"><label for="w5">🌦️ Po deszczu</label></div>
+  </div>
+ </section>
+ <section class="card">
+  <h2 class="section">05 · Pora dnia</h2><div class="grid">
+   <div class="choice"><input type="radio" name="time" id="d1" value="Poranek"><label for="d1">🌄 Poranek</label></div>
+   <div class="choice"><input type="radio" name="time" id="d2" value="Popołudnie" checked><label for="d2">🌤️ Popołudnie</label></div>
+   <div class="choice"><input type="radio" name="time" id="d3" value="Zachód słońca"><label for="d3">🌅 Zachód słońca</label></div>
+   <div class="choice"><input type="radio" name="time" id="d4" value="Noc"><label for="d4">🌙 Noc</label></div>
+  </div>
+ </section>
+ <section class="card">
+  <h2 class="section">06 · Tytuł filmu</h2><input id="title" type="text" maxlength="42" value="TRENING" placeholder="Np. NIEDZIELNE WOŻONKO">
+  <p class="hint">Tytuł zostanie umieszczony na miniaturce. Krótkie hasła najlepiej wyglądają na telefonie.</p>
+ </section>
+ <section class="card">
+  <h2 class="section">07 · Przygotuj miniaturkę</h2>
+  <p class="hint">Aplikacja przygotuje dokładny opis. Otwórz ChatGPT i wklej go, aby wygenerować obraz. Nie jest potrzebny klucz API.</p>
+  <button class="primary" id="makePrompt">PRZYGOTUJ OPIS MINIATURKI</button>
+  <textarea id="prompt" readonly style="display:none;width:100%;min-height:180px;margin-top:12px;padding:12px;border-radius:10px;background:#090a0d;color:#eee;border:1px solid #424752;font:13px/1.5 system-ui"></textarea>
+  <button class="secondary" id="copyPrompt" style="display:none">KOPIUJ OPIS</button>
+  <p class="hint">Po wygenerowaniu obrazu w ChatGPT zapisz go w Zdjęciach. Następnie wróć tutaj i dodaj go do galerii.</p>
+ </section>
+ <section class="card">
+  <h2 class="section">08 · Moja galeria SRS</h2>
+  <label class="choice" style="display:block"><input type="file" id="upload" accept="image/*" style="display:none"><span class="primary" style="display:block;text-align:center;padding:14px;border-radius:12px;cursor:pointer">＋ DODAJ GOTOWĄ MINIATURKĘ</span></label>
+  <div id="gallery" class="gallery" style="margin-top:12px"><div class="empty" style="grid-column:1/-1">Twoje zapisane miniaturki pojawią się tutaj.</div></div>
+  <p class="hint">Galeria zapisuje obrazy lokalnie w tej przeglądarce na tym urządzeniu. Nie czyść danych witryny, jeśli chcesz zachować galerię.</p>
+ </section>
+ <footer>SRS SIM RACING SQUAD · YOUTUBE MINIATURKA STUDIO</footer>
+</main>
+<script>
+const $ = (s) => document.querySelector(s);
+function val(name) {
+  return document.querySelector('input[name="' + name + '"]:checked')?.value || '';
+}
+function selectedCar(id) {
+  const select = document.getElementById(id);
+  const custom = document.getElementById('customCar' + id.slice(-1));
+  const typedName = custom ? custom.value.trim() : '';
+  if (typedName) return typedName;
+  if (!select || select.value === 'custom') return '';
+  return select.value;
+}
+function updateCarOptions() {
+  const count = Number(val('carCount') || 1);
+  document.getElementById('carOne').style.display = count >= 1 ? 'block' : 'none';
+  document.getElementById('carTwo').style.display = count === 2 ? 'block' : 'none';
+}
+function buildPrompt() {
+  const title = document.getElementById('title').value.trim() || 'TRENING';
+  const count = Number(val('carCount') || 1);
+
+  if (count >= 1 && !selectedCar('car1')) {
+    alert('Wybierz samochód 1 albo wpisz jego nazwę w polu poniżej.');
+    return null;
+  }
+  if (count === 2 && !selectedCar('car2')) {
+    alert('Wybierz samochód 2 albo wpisz jego nazwę w polu poniżej.');
+    return null;
+  }
+
+  let carDescription = '';
+  let carInstruction = '';
+  if (count === 0) {
+    carDescription = 'Na miniaturce nie może być żadnego samochodu.';
+    carInstruction = 'Nie pokazuj żadnych aut ani sylwetek samochodów. Głównym motywem ma być tor wyścigowy, atmosfera motorsportu i grafika SRS.';
+  } else if (count === 1) {
+    carDescription = 'Dokładnie jeden samochód: ' + selectedCar('car1') + '.';
+    carInstruction = 'Pokaż dokładnie jedno auto. Nie dodawaj drugiego samochodu w tle.';
+  } else {
+    carDescription = 'Dokładnie dwa samochody: ' + selectedCar('car1') + ' oraz ' + selectedCar('car2') + '.';
+    carInstruction = 'Pokaż oba wskazane auta jednocześnie, wyraźnie i w naturalnej skali. Nie zamieniaj ich na inne modele i nie dodawaj trzeciego samochodu.';
+  }
+
+  return 'Wygeneruj miniaturkę YouTube SRS w formacie 16:9. ' +
+    carDescription + ' ' + carInstruction +
+    ' Tor: ' + val('track') + '.' +
+    ' Pozycja aparatu: ' + val('camera') + '.' +
+    ' Pogoda: ' + val('weather') + '.' +
+    ' Pora dnia: ' + val('time') + '.' +
+    ' Tytuł: ' + title + '.' +
+    ' Styl: fotorealistyczna fotografia motorsportowa, naturalne proporcje, dynamiczna ale wiarygodna scena na prawdziwym torze.' +
+    ' Zachowaj stałą identyfikację SRS: czerwony, czarny i srebrny, logo SRS w lewym górnym rogu, czytelny tytuł.' +
+    ' Bez pada, kontrolera i zbędnych elementów.';
+}
+
+document.querySelectorAll('input[name="carCount"]').forEach((radio) => {
+  radio.addEventListener('change', updateCarOptions);
+});
+updateCarOptions();
+
+document.getElementById('makePrompt').addEventListener('click', () => {
+  const promptText = buildPrompt();
+  if (!promptText) return;
+  const output = document.getElementById('prompt');
+  output.value = promptText;
+  output.style.display = 'block';
+  document.getElementById('copyPrompt').style.display = 'block';
+  output.scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+
+document.getElementById('copyPrompt').addEventListener('click', async () => {
+  const output = document.getElementById('prompt');
+  try {
+    await navigator.clipboard.writeText(output.value);
+  } catch (e) {
+    output.focus();
+    output.select();
+    document.execCommand('copy');
+  }
+  document.getElementById('copyPrompt').textContent = 'SKOPIOWANO ✓';
+});
+
+const DB = 'srsThumbGalleryV1';
+function getItems() {
+  try { return JSON.parse(localStorage.getItem(DB) || '[]'); }
+  catch (e) { return []; }
+}
+function saveItems(items) {
+  try {
+    localStorage.setItem(DB, JSON.stringify(items));
+    return true;
+  } catch (e) {
+    alert('Brak miejsca w pamięci przeglądarki. Usuń część starych miniaturek i spróbuj ponownie.');
+    return false;
+  }
+}
+function render() {
+  const gallery = document.getElementById('gallery');
+  const items = getItems();
+  gallery.innerHTML = '';
+  if (!items.length) {
+    gallery.innerHTML = '<div class="empty" style="grid-column:1/-1">Twoje zapisane miniaturki pojawią się tutaj.</div>';
+    return;
+  }
+  items.forEach((item, index) => {
+    const card = document.createElement('div');
+    card.className = 'item';
+    const img = document.createElement('img');
+    img.src = item.data;
+    img.alt = item.name;
+    const name = document.createElement('div');
+    name.className = 'hint';
+    name.textContent = item.name;
+    const download = document.createElement('button');
+    download.textContent = 'ZAPISZ NA IPHONIE';
+    download.onclick = () => {
+      const a = document.createElement('a');
+      a.href = item.data;
+      a.download = item.name.replace(/[^a-z0-9-_]/gi, '_') + '.png';
+      a.click();
+    };
+    const remove = document.createElement('button');
+    remove.className = 'secondary';
+    remove.textContent = 'USUŃ';
+    remove.onclick = () => {
+      const updated = getItems();
+      updated.splice(index, 1);
+      saveItems(updated);
+      render();
+    };
+    card.append(img, name, download, remove);
+    gallery.append(card);
+  });
+}
+document.getElementById('upload').addEventListener('change', (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) {
+    alert('Wybierz plik graficzny.');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    const items = getItems();
+    items.unshift({
+      name: (document.getElementById('title').value.trim() || 'Miniaturka SRS') +
+        ' · ' + new Date().toLocaleDateString('pl-PL'),
+      data: reader.result
+    });
+    if (saveItems(items.slice(0, 12))) render();
+    event.target.value = '';
+  };
+  reader.readAsDataURL(file);
+});
+render();
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+}
+</script>
+</body></html>
