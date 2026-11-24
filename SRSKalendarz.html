@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SRS – Kalendarz wydarzeń</title>
+<style>
+:root{
+  --bg:#111318;--panel:#1b1f29;--panel2:#242a36;--text:#f4f6fb;
+  --muted:#aab2c0;--red:#dc3d46;--green:#25a85b;--blue:#347fe0;--gold:#e5a72f;
+  --line:#343b49;--accent:#e53945;--teal:#d6a500;
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 15% 0%,#3a1118 0%,transparent 38%),linear-gradient(145deg,#08090c,#171a22 55%,#090a0d);color:var(--text);
+  font-family:Arial,Helvetica,sans-serif;padding:22px}
+.app{max-width:1150px;margin:auto}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  border-bottom:2px solid #d93645;padding:0 0 18px;margin-bottom:20px;box-shadow:0 8px 22px -18px #ff2738}
+.brand-wrap{display:flex;align-items:center;gap:14px}
+.srs-mark{width:68px;height:58px;display:grid;place-items:center;border-radius:12px;transform:skew(-8deg);
+  background:linear-gradient(145deg,#30343e,#08090c);border:2px solid #e53945;
+  box-shadow:inset 0 0 0 2px #f4f6fb,0 0 18px #e5394544;color:#fff;font-weight:1000;font-style:italic;
+  letter-spacing:-3px;font-size:25px;text-shadow:3px 2px 0 #e53945}
+.brand{font-weight:900;letter-spacing:2px;font-size:clamp(25px,4vw,38px)}
+.brand span{color:var(--red)}
+.sub{color:var(--muted);margin-top:5px;font-size:14px}
+button,select,input{font:inherit}
+button{border:0;border-radius:9px;padding:11px 15px;font-weight:700;cursor:pointer}
+.primary{background:linear-gradient(135deg,#ff4b55,#a91420);color:white;box-shadow:0 4px 14px #d9364544}
+.secondary{background:var(--panel2);color:white;border:1px solid var(--line)}
+button:hover{filter:brightness(1.12)}
+.layout{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,.9fr);gap:20px}
+.panel{background:linear-gradient(145deg,#20232c,#12141a);border:1px solid #454956;border-top:2px solid #d93645;border-radius:14px;padding:18px;box-shadow:0 12px 30px #0006}
+.monthbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:18px}
+.monthbar h2{font-size:clamp(20px,3vw,28px);margin:0;text-transform:uppercase}
+.nav{display:flex;gap:8px}
+.weekdays,.calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.weekdays div{text-align:center;color:#fff;font-size:12px;font-weight:900;padding:10px 0;background:linear-gradient(90deg,#8e1721,#e53945,#8e1721);border-radius:5px;letter-spacing:.4px}
+.day{min-height:94px;background:linear-gradient(145deg,#292d36,#1d2028);border:1px solid #454956;border-radius:8px;
+  padding:9px 5px;display:flex;flex-direction:column;align-items:center;gap:7px}
+.day.empty{background:transparent;border:1px dashed #2b303b}
+.date{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:900}
+.date.training{background:var(--green);color:#fff}
+.date.race{background:var(--blue);color:#fff}
+.date.live{background:var(--red);color:#fff}
+.date.league{background:#9b59d0;color:#fff}
+.date.sparing{background:#f08a24;color:#171717}
+.date.wydarzenia{background:var(--teal);color:#171717}
+.date.multiple{background:linear-gradient(135deg,var(--blue) 0 16.66%,var(--green) 16.66% 33.32%,var(--red) 33.32% 49.98%,#9b59d0 49.98% 66.64%,#f08a24 66.64% 83.3%,var(--teal) 83.3%);color:#fff}
+.day.today{outline:2px solid #f0c44f;outline-offset:1px}
+.dayname{font-size:10px;color:#e4e8f0;text-align:center;line-height:1.2;max-width:100%;overflow-wrap:anywhere}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;color:var(--muted);font-size:13px}
+.legend span{display:flex;align-items:center;gap:7px}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block}
+.dot.training{background:var(--green)}.dot.race{background:var(--blue)}.dot.live{background:var(--red)}.dot.league{background:#9b59d0}.dot.sparing{background:#f08a24}.dot.wydarzenia{background:var(--teal)}
+h3{margin:0 0 14px;font-size:19px}
+form{display:grid;gap:10px}
+label{font-size:12px;color:var(--muted);font-weight:700}
+input,select{width:100%;padding:11px;border-radius:8px;border:1px solid var(--line);
+  background:#11151d;color:var(--text);margin-top:5px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.events{margin-top:20px}
+.event{background:#242a36;border:1px solid var(--line);border-left:5px solid var(--green);
+  padding:11px;border-radius:9px;margin-bottom:9px}
+.event.race{border-left-color:var(--blue)}.event.live{border-left-color:var(--red)}.event.league{border-left-color:#9b59d0}.event.sparing{border-left-color:#f08a24}.event.wydarzenia{border-left-color:var(--teal)}
+.event strong{display:block;margin-bottom:4px}
+.event small{color:var(--muted)}
+.event-actions{display:flex;gap:7px;margin-top:9px}
+.event-actions button{padding:6px 9px;font-size:12px}
+.emptymsg{color:var(--muted);font-size:14px}
+.note{color:var(--muted);font-size:12px;line-height:1.5;margin-top:14px}
+@media(max-width:800px){body{padding:12px}.layout{grid-template-columns:1fr}.day{min-height:76px;padding:6px 2px}.calendar,.weekdays{gap:4px}.date{width:31px;height:31px}.dayname{font-size:9px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="brand-wrap">
+    <div class="srs-mark" aria-label="SRS">SRS</div>
+    <div><div class="brand"><span>SRS</span> KALENDARZ<div class="sub">SIM RACING SQUAD • KALENDARZ WYDARZEŃ</div></div>
+  </div>
+  <div class="actions">
+    <button class="secondary" id="exportBtn">Pobierz events.json</button>
+    <button class="secondary" id="importBtn">Wczytaj events.json</button>
+    <input type="file" id="importFile" accept=".json,application/json" hidden>
+  </div>
+</header>
+
+<div class="layout">
+  <section class="panel">
+    <div class="monthbar">
+      <button class="secondary" id="prev">‹</button>
+      <h2 id="monthTitle"></h2>
+      <button class="secondary" id="next">›</button>
+    </div>
+    <div class="weekdays">
+      <div>PON</div><div>WT</div><div>ŚR</div><div>CZW</div><div>PT</div><div>SOB</div><div>ND</div>
+    </div>
+    <div class="calendar" id="calendar"></div>
+    <div class="legend">
+      <span><i class="dot training"></i> Trening</span>
+      <span><i class="dot race"></i> Wyścig</span>
+      <span><i class="dot live"></i> Live</span>
+      <span><i class="dot league"></i> Liga</span>
+      <span><i class="dot sparing"></i> Sparing</span>
+      <span><i class="dot wydarzenia"></i> Wydarzenia</span>
+    </div>
+  </section>
+
+  <aside class="panel">
+    <h3 id="formTitle">➕ Dodaj wydarzenie</h3>
+    <form id="eventForm">
+      <input type="hidden" id="editId">
+      <label>Data<input type="date" id="date" required></label>
+      <label>Nazwa wydarzenia<input type="text" id="title" placeholder="Np. SRS Fall Racing" required></label>
+      <label>Rodzaj
+        <select id="type">
+          <option value="trening">🟢 Trening</option>
+          <option value="race">🔵 Wyścig</option>
+          <option value="live">🔴 Live</option>
+          <option value="league">🟣 Liga</option>
+          <option value="sparing">🟠 Sparing</option>
+          <option value="wydarzenia">🟡 Wydarzenia</option>
+        </select>
+      </label>
+      <label>Godzina (opcjonalnie)<input type="time" id="time"></label>
+      <div class="actions">
+        <button class="primary" type="submit" id="saveBtn">Zapisz wydarzenie</button>
+        <button class="secondary" type="button" id="cancelBtn" hidden>Anuluj</button>
+      </div>
+    </form>
+
+    <div style="border-top:1px solid var(--line);margin-top:20px;padding-top:16px">
+      <h3>📨 Publikacja na Discordzie</h3>
+      <label>Adres webhooka Discord
+        <input type="password" id="webhookUrl" placeholder="Wklej adres webhooka z Discorda">
+      </label>
+      <div class="actions" style="margin-top:10px">
+        <button class="primary" type="button" id="sendDiscord">Wyślij / aktualizuj kalendarz</button>
+      </div>
+      <div class="note" id="sendStatus">Kalendarz zostanie wysłany jako obraz PNG na wybrany kanał Discorda.</div>
+    </div>
+    <div class="events">
+      <h3>📅 Wydarzenia w tym miesiącu</h3>
+      <div id="eventList"></div>
+    </div>
+    <p class="note">Wydarzenia zapisują się w tej przeglądarce. Aby przenieść je do bota SRS, pobierz plik <b>events.json</b> i wgraj go do repozytorium GitHub.</p>
+  </aside>
+</div>
+</div>
+
+<script>
+const monthNames=["Styczeń","Luty","Marzec","Kwiecień","Maj","Czerwiec","Lipiec","Sierpień","Wrzesień","Październik","Listopad","Grudzień"];
+const typeNames={training:"Trening",race:"Wyścig",live:"Live",league:"Liga",sparing:"Sparing",wydarzenia:"Wydarzenia"};
+const typeClasses={training:"training",race:"race",live:"live",league:"league",sparing:"sparing",wydarzenia:"wydarzenia"};
+const storageKey="srs_calendar_events_v2";
+let events=[];
+try{events=JSON.parse(localStorage.getItem(storageKey)||"[]")}catch(e){events=[]}
+let shown=new Date();shown.setDate(1);
+
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,"0");
+const dateKey=(y,m,d)=>`${y}-${pad(m+1)}-${pad(d)}`;
+function save(){localStorage.setItem(storageKey,JSON.stringify(events));render()}
+function eventsFor(date){return events.filter(e=>e.date===date)}
+function render(){
+  $("monthTitle").textContent=`${monthNames[shown.getMonth()]} ${shown.getFullYear()}`;
+  const grid=$("calendar");grid.innerHTML="";
+  const y=shown.getFullYear(),m=shown.getMonth();
+  const first=(new Date(y,m,1).getDay()+6)%7;
+  const days=new Date(y,m+1,0).getDate();
+  for(let i=0;i<first;i++){const el=document.createElement("div");el.className="day empty";grid.appendChild(el)}
+  for(let d=1;d<=days;d++){
+    const key=dateKey(y,m,d),list=eventsFor(key);
+    const el=document.createElement("div");el.className="day";
+    const today=new Date();
+    if(today.getFullYear()===y&&today.getMonth()===m&&today.getDate()===d)el.classList.add("today");
+    let cls="";
+    if(list.length===1)cls=typeClasses[list[0].type]||"";
+    else if(list.length>1)cls="multiple";
+    const names=list.slice(0,2).map(e=>e.title).join(" · ");
+    el.innerHTML=`<div class="date ${cls}">${d}</div>${names?`<div class="dayname">${escapeHtml(names)}</div>`:""}`;
+    el.title=list.map(e=>`${typeNames[e.type]||"Wydarzenie"}: ${e.title}`).join("\n");
+    el.addEventListener("click",()=>{$("date").value=key;$("title").focus()});
+    grid.appendChild(el);
+  }
+  renderList();
+}
+function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function renderList(){
+  const y=shown.getFullYear(),m=shown.getMonth();
+  const list=events.filter(e=>{const d=new Date(e.date+"T12:00:00");return d.getFullYear()===y&&d.getMonth()===m})
+    .sort((a,b)=>a.date.localeCompare(b.date)||(a.time||"").localeCompare(b.time||""));
+  $("eventList").innerHTML=list.length?list.map(e=>`
+    <div class="event ${typeClasses[e.type]||""}">
+      <strong>${escapeHtml(e.title)}</strong>
+      <small>${e.date}${e.time?" · "+e.time:""} · ${typeNames[e.type]||"Wydarzenie"}</small>
+      <div class="event-actions">
+        <button class="secondary" onclick="editEvent('${e.id}')">Edytuj</button>
+        <button class="secondary" onclick="deleteEvent('${e.id}')">Usuń</button>
+      </div>
+    </div>`).join(""):`<div class="emptymsg">Brak wydarzeń w tym miesiącu.</div>`;
+}
+function resetForm(){
+  $("eventForm").reset();$("editId").value="";$("formTitle").textContent="➕ Dodaj wydarzenie";
+  $("saveBtn").textContent="Zapisz wydarzenie";$("cancelBtn").hidden=true;
+}
+$("eventForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  const id=$("editId").value||String(Date.now());
+  const item={id,date:$("date").value,title:$("title").value.trim(),type:$("type").value,
+    time:$("time").value};
+  if(!item.date||!item.title)return;
+  const idx=events.findIndex(x=>x.id===id);
+  if(idx>=0)events[idx]=item;else events.push(item);
+  shown=new Date(item.date+"T12:00:00");shown.setDate(1);
+  resetForm();save();
+});
+window.editEvent=id=>{
+  const e=events.find(x=>x.id===id);if(!e)return;
+  $("editId").value=e.id;$("date").value=e.date;$("title").value=e.title;
+  $("type").value=e.type;$("time").value=e.time||"";
+  $("formTitle").textContent="✏️ Edytuj wydarzenie";$("saveBtn").textContent="Zapisz zmiany";
+  $("cancelBtn").hidden=false;
+};
+window.deleteEvent=id=>{
+  if(confirm("Usunąć to wydarzenie?")){events=events.filter(e=>e.id!==id);save()}
+};
+$("cancelBtn").onclick=resetForm;
+$("prev").onclick=()=>{shown.setMonth(shown.getMonth()-1);render()};
+$("next").onclick=()=>{shown.setMonth(shown.getMonth()+1);render()};
+$("exportBtn").onclick=()=>{
+  const data=events.map(({id,date,title,type,time,track})=>({date,title,type:type==="training"?"trening":type==="race"?"wyścig":type==="live"?"live":type==="league"?"liga":type==="sparing"?"sparing":type==="wydarzenia"?"wydarzenia":"trening",time,track}));
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="events.json";a.click();URL.revokeObjectURL(a.href);
+};
+$("importBtn").onclick=()=>$("importFile").click();
+$("importFile").onchange=async e=>{
+  const file=e.target.files[0];if(!file)return;
+  try{
+    const data=JSON.parse(await file.text());
+    if(!Array.isArray(data))throw new Error();
+    events=data.map((x,i)=>({id:String(Date.now()+i),date:x.date,title:x.title||"Wydarzenie",
+      type:normalizeType(x.type||x.emoji),time:x.time||"",track:x.track||""}));
+    save();alert("Wczytano wydarzenia.");
+  }catch(err){alert("Nie udało się wczytać pliku JSON. Sprawdź jego zawartość.")}
+  e.target.value="";
+};
+function normalizeType(t){
+  t=String(t).toLowerCase();
+  if(t.includes("live")||t.includes("🔴"))return "live";
+  if(t.includes("liga")||t.includes("🟣"))return "league";
+  if(t.includes("sparing")||t.includes("🟠"))return "sparing";
+  if(t.includes("wydarzen")||t.includes("🟡"))return "wydarzenia";
+  if(t.includes("wyścig")||t.includes("wyscig")||t.includes("race")||t.includes("🏎"))return "race";
+  return "training";
+}
+
+// Discord webhook: ustawiany przez użytkownika i przechowywany lokalnie w tej przeglądarce.
+$("webhookUrl").value = localStorage.getItem("srs_calendar_webhook") || "";
+
+function canvasFont(ctx, size, weight="700"){
+  ctx.font = `${weight} ${size}px Arial, sans-serif`;
+}
+function roundedRect(ctx,x,y,w,h,r,color){
+  ctx.fillStyle=color;ctx.beginPath();
+  ctx.roundRect(x,y,w,h,r);ctx.fill();
+}
+function makeCalendarPng(){
+  const canvas=document.createElement("canvas");
+  const width=1600,left=45,top=225,cellW=216,cellH=145;
+  const y=shown.getFullYear(),m=shown.getMonth();
+  const first=(new Date(y,m,1).getDay()+6)%7;
+  const count=new Date(y,m+1,0).getDate();
+  const weeks=Math.ceil((first+count)/7);
+  const monthEvents=events.filter(e=>e.date && e.date.slice(0,7)===`${y}-${pad(m+1)}`)
+    .sort((a,b)=>a.date.localeCompare(b.date)||(a.time||"").localeCompare(b.time||""));
+  const groups=[];
+  monthEvents.forEach(e=>{let g=groups.find(x=>x.date===e.date);if(!g){g={date:e.date,items:[]};groups.push(g)}g.items.push(e)});
+  const listHeight=Math.max(110,groups.reduce((n,g)=>n+Math.max(1,g.items.length)*58+13,0));
+  canvas.width=width;canvas.height=top+weeks*cellH+150+listHeight+80;
+  const ctx=canvas.getContext("2d");
+  const colors={training:"#19a65b",race:"#2878ef",live:"#ed2638",league:"#a33bd1",sparing:"#f18a20",wydarzenia:"#17b8b0"};
+  const labels={training:"TRENING",race:"WYŚCIG",live:"LIVE",league:"LIGA",sparing:"SPARING",wydarzenia:"WYDARZENIA"};
+  function rr(x,y,w,h,r,fill,stroke=null,lw=1){ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.lineWidth=lw;ctx.strokeStyle=stroke;ctx.stroke()}}
+  function text(t,x,y,size,weight="700",color="#fff",align="left"){ctx.font=`${weight} ${size}px Arial,sans-serif`;ctx.fillStyle=color;ctx.textAlign=align;ctx.textBaseline="middle";ctx.fillText(t,x,y)}
+  // Carbon-like dark background with subtle diagonal racing stripes.
+  ctx.fillStyle="#090b0f";ctx.fillRect(0,0,width,canvas.height);
+  for(let x=-canvas.height;x<width;x+=95){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x+canvas.height,canvas.height);ctx.strokeStyle="#ffffff08";ctx.lineWidth=22;ctx.stroke()}
+  const topGrad=ctx.createLinearGradient(0,0,width,170);topGrad.addColorStop(0,"#171a22");topGrad.addColorStop(.55,"#30343e");topGrad.addColorStop(1,"#101217");
+  ctx.fillStyle=topGrad;ctx.fillRect(0,0,width,178);
+  ctx.fillStyle="#e52d3b";ctx.fillRect(0,0,width,9);ctx.fillRect(0,174,width,5);
+  // Checkered corner detail.
+  for(let r=0;r<4;r++)for(let c=0;c<8;c++){ctx.fillStyle=(r+c)%2?"#555b66":"#dce0e6";ctx.fillRect(22+c*13,24+r*13,13,13)}
+  // SRS badge and strong headline.
+  rr(55,40,355,100,14,"#101217","#e53945",4);rr(65,49,335,82,10,"#242832","#f0f1f4",2);
+  text("SRS",232,90,66,"900 italic","#fff","center");
+  text("SIM RACING SQUAD",450,53,24,"900","#f04450");
+  text("KALENDARZ WYDARZEŃ",450,101,48,"900 italic","#fff");
+  rr(1120,54,410,64,8,"#e53945");text(`${monthNames[m].toUpperCase()} ${y}`,1325,86,30,"900 italic","#fff","center");
+  // Calendar frame and weekday headers.
+  rr(left-7,top-51,7*cellW+14,weeks*cellH+58,18,"#11141a","#e53945",4);
+  const weekdays=["PONIEDZIAŁEK","WTOREK","ŚRODA","CZWARTEK","PIĄTEK","SOBOTA","NIEDZIELA"];
+  weekdays.forEach((d,i)=>{const x=left+i*cellW;rr(x,top-43,cellW-3,38,4,"#b51f2b");text(d,x+(cellW-3)/2,top-24,15,"900","#fff","center")});
+  for(let i=0;i<weeks*7;i++){
+    const row=Math.floor(i/7),col=i%7,day=i-first+1,x=left+col*cellW,yy=top+row*cellH;
+    const inMonth=day>=1&&day<=count;
+    rr(x,yy,cellW-3,cellH-3,3,inMonth?"#e5e8ed":"#c6cbd3","#353b45",2);
+    if(!inMonth)continue;
+    const list=eventsFor(dateKey(y,m,day));
+    text(String(day),x+15,yy+24,27,"900","#151922");
+    if(list.length){
+      list.slice(0,5).forEach((e,index)=>{const kind=["race","live","league","sparing","wydarzenia"].includes(e.type)?e.type:"training";rr(x+9,yy+43+index*19,cellW-21,13,6,colors[kind]);});
+      if(list.length>5)text(`+${list.length-5}`,x+14,yy+133,14,"900","#151922");
+    }
+  }
+  // Bold week separators.
+  ctx.strokeStyle="#252a33";ctx.lineWidth=4;for(let r=0;r<=weeks;r++){const yy=top+r*cellH-2;ctx.beginPath();ctx.moveTo(left,yy);ctx.lineTo(left+7*cellW-3,yy);ctx.stroke()}
+  // Color legend.
+  const legendY=top+weeks*cellH+24;rr(48,legendY,1504,52,10,"#171a21","#555d6b",2);
+  const legend=[['TRENING',colors.training],['WYŚCIG',colors.race],['LIVE',colors.live],['SPARING',colors.sparing],['LIGA',colors.league],['WYDARZENIA',colors.wydarzenia]];
+  legend.forEach((it,i)=>{const x=65+i*250;rr(x,legendY+13,38,25,8,it[1]);text(it[0],x+49,legendY+26,17,"900","#fff")});
+  // Event list with red title plate and individual dark rows.
+  const listTop=legendY+88;rr(48,listTop-20,540,44,5,"#b51f2b");text("NAJBLIŻSZE WYDARZENIA",68,listTop+2,25,"900 italic","#fff");
+  if(!monthEvents.length){text("Brak zaplanowanych wydarzeń.",65,listTop+65,22,"600","#c6ceda")}
+  else{
+    let rowY=listTop+40;
+    groups.forEach((g,gi)=>{
+      const dateText=g.date.slice(8,10)+"."+g.date.slice(5,7);
+      g.items.forEach((e,ii)=>{
+        const kind=["race","live","league","sparing","wydarzenia"].includes(e.type)?e.type:"training";
+        rr(48,rowY,1504,49,6,gi%2?"#191d25":"#222731","#515866",1);
+        rr(48,rowY,7,49,3,"#e53945");text(dateText,70,rowY+25,23,"900","#fff");
+        rr(205,rowY+9,150,31,6,colors[kind]);text(labels[kind],280,rowY+25,17,"900","#fff","center");
+        let title=e.title||"Wydarzenie";
+        ctx.font="700 22px Arial,sans-serif";
+        const timeWidth=e.time?ctx.measureText(e.time).width:0;
+        const maxTitleWidth=1505-385-timeWidth-(e.time?28:0);
+        while(title.length>4&&ctx.measureText(title).width>maxTitleWidth)title=title.slice(0,-2)+"…";
+        text(title,385,rowY+25,22,"700","#f2f3f6");
+        if(e.time){const timeX=385+ctx.measureText(title).width+16;text(e.time,timeX,rowY+25,22,"900","#fff");}
+        rowY+=58;
+      });
+      rowY+=5;
+    });
+  }
+  const footerY=canvas.height-29;ctx.fillStyle="#e53945";ctx.fillRect(45,footerY-8,width-90,3);text("SRS  •  SIM RACING SQUAD",width-55,footerY+8,14,"700","#aab2c0","right");
+  return new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
+}
+$("sendDiscord").addEventListener("click",async()=>{
+  const url=$("webhookUrl").value.trim();
+  const status=$("sendStatus");
+  if(!url.startsWith("https://discord.com/api/webhooks/") &&
+     !url.startsWith("https://discordapp.com/api/webhooks/")){
+    status.textContent="Wklej prawidłowy adres webhooka Discord.";
+    return;
+  }
+
+  const oldUrl=localStorage.getItem("srs_calendar_webhook") || "";
+  if(oldUrl!==url){
+    localStorage.removeItem("srs_calendar_message_ids");
+  }
+  localStorage.setItem("srs_calendar_webhook",url);
+
+  const button=$("sendDiscord");button.disabled=true;button.textContent="Aktualizowanie…";
+  status.textContent="Przygotowuję kalendarz…";
+  try{
+    const png=await makeCalendarPng();
+    if(!png)throw new Error("Nie udało się przygotować obrazu PNG.");
+
+    const monthKey=`${shown.getFullYear()}-${pad(shown.getMonth()+1)}`;
+    let messageMap={};
+    try{
+      messageMap=JSON.parse(localStorage.getItem("srs_calendar_message_ids")||"{}");
+    }catch(e){
+      messageMap={};
+    }
+    const messageId=messageMap[monthKey]||null;
+    const content=`📅 **SRS CALENDAR – ${monthNames[shown.getMonth()]} ${shown.getFullYear()}**`;
+    const form=new FormData();
+
+    if(messageId){
+      // Edytuj poprzednią wiadomość webhooka zamiast publikować kolejną.
+      form.append("payload_json",JSON.stringify({
+        content,
+        attachments:[{id:0,filename:"srs-calendar.png"}]
+      }));
+      form.append("files[0]",png,"srs-calendar.png");
+      const editUrl=url.replace(/\/$/,"")+"/messages/"+encodeURIComponent(messageId);
+      const response=await fetch(editUrl,{method:"PATCH",body:form});
+      if(response.ok){
+        status.textContent="✅ Zaktualizowano tę samą wiadomość kalendarza na Discordzie.";
+        return;
+      }
+      if(response.status===404){
+        delete messageMap[monthKey];
+        localStorage.setItem("srs_calendar_message_ids",JSON.stringify(messageMap));
+      }else{
+        throw new Error(`Discord zwrócił błąd HTTP ${response.status} podczas aktualizacji.`);
+      }
+    }
+
+    // Pierwsza publikacja: ?wait=true zwraca ID wiadomości do późniejszej edycji.
+    form.append("payload_json",JSON.stringify({content}));
+    form.append("files[0]",png,"srs-calendar.png");
+    const separator=url.includes("?")?"&":"?";
+    const response=await fetch(url+separator+"wait=true",{method:"POST",body:form});
+    if(!response.ok)throw new Error(`Discord zwrócił błąd HTTP ${response.status}.`);
+    const message=await response.json();
+    if(!message.id)throw new Error("Discord nie zwrócił ID wiadomości.");
+    messageMap[monthKey]=message.id;
+    localStorage.setItem("srs_calendar_message_ids",JSON.stringify(messageMap));
+    status.textContent=`✅ Utworzono kalendarz ${monthNames[shown.getMonth()]}. W tym miesiącu kolejne wysłania będą aktualizować tę samą wiadomość; nowy miesiąc dostanie osobną wiadomość.`;
+  }catch(err){
+    status.textContent="Nie udało się wysłać lub zaktualizować. "+err.message+
+      " Jeśli przeglądarka zgłasza błąd sieci/CORS, trzeba będzie użyć bota SRS przez GitHub Actions.";
+  }finally{
+    button.disabled=false;button.textContent="Wyślij / aktualizuj kalendarz";
+  }
+});
+
+render();
+</script>
+</body>
+</html>
